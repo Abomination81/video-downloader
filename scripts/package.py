@@ -21,7 +21,7 @@ def main():
         shutil.copy2(ROOT / "scripts" / name, bundle / "scripts" / name)
     for name in ("Install.command", "Install-Windows.cmd", "Update-engine.command", "Update-engine-Windows.cmd", "Uninstall.command", "Uninstall-Windows.cmd", "extension-identity.json", "README.md", "CHANGELOG.md", "SECURITY.md", "LICENSE"):
         shutil.copy2(ROOT / name, bundle / name)
-    shutil.copytree(ROOT / "docs", bundle / "docs")
+    shutil.copytree(ROOT / "docs", bundle / "docs", ignore=shutil.ignore_patterns(".hallmark", ".DS_Store", "__pycache__"))
     archive = output / "Video-Downloader.zip"
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
         for path in sorted(bundle.rglob("*")):
