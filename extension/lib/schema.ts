@@ -64,6 +64,6 @@ export const jobSchema = z.object({
   detail: z.string().nullable(), created: z.number(),
 }).passthrough();
 export type Job = z.infer<typeof jobSchema>;
-export const settingsSchema = z.object({ restoreMenus: z.boolean().default(true), restoreCopy: z.boolean().default(true), cleanImages: z.boolean().default(true), useCookies: z.boolean().default(true) });
+export const settingsSchema = z.object({ restoreMenus: z.boolean().default(true), restoreCopy: z.boolean().default(true), cleanImages: z.boolean().default(true), useCookies: z.boolean().default(true), compatibleVideo: z.boolean().default(true) });
 export type Settings = z.infer<typeof settingsSchema>;
-export const defaults: Settings = { restoreMenus: true, restoreCopy: true, cleanImages: true, useCookies: true };
+export const defaults: Settings = { restoreMenus: true, restoreCopy: true, cleanImages: true, useCookies: true, compatibleVideo: true };

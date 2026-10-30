@@ -150,7 +150,7 @@ export default defineBackground(() => {
         if (parsed.success) cookies.set(`${c.domain}\t${c.path}\t${c.name}`, parsed.data);
       }
     }
-    const result = z.object({ jobId: z.string().regex(/^[0-9a-f]{32}$/) }).parse(await native('start', { requestId, title: candidate.title, sources: candidate.sources, cookies: [...cookies.values()].slice(0, 500), browserDownload: true, assetType, ...(imageData ? { imageData } : {}) }));
+    const result = z.object({ jobId: z.string().regex(/^[0-9a-f]{32}$/) }).parse(await native('start', { requestId, title: candidate.title, sources: candidate.sources, cookies: [...cookies.values()].slice(0, 500), browserDownload: true, assetType, outputProfile: value.compatibleVideo ? 'compatible' : 'original', ...(imageData ? { imageData } : {}) }));
     await downloads.track(result.jobId);
     await chrome.storage.session.remove(['lastError', 'choices']);
     await chrome.action.setBadgeText({ text: '↓' });

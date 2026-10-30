@@ -415,7 +415,7 @@ def verify(source: Path, output: Path, cancelled=lambda: False) -> dict:
         if tag not in TECHNICAL_TAGS:
             raise MediaError("unverified_metadata", "The file contains metadata that this version cannot safely verify. Update the helper before downloading it.")
     clear_source_attributes(output)
-    return {"width": final["width"], "height": final["height"], "codec": final["codec_name"], "fps": final.get("avg_frame_rate", ""), "seiRemoved": True}
+    return {"width": final["width"], "height": final["height"], "codec": final["codec_name"], "fps": final.get("avg_frame_rate", ""), "audioCodecs": [s['codec_name'] for s in after_audio], "seiRemoved": True}
 
 
 def sanitize(source: Path, target: Path, cancelled=lambda: False, stage=lambda _: None) -> dict:

@@ -8,7 +8,7 @@
 
 ![Video Downloader by Abomination81. Keep the video. Highest source quality, identifying metadata removed.](docs/assets/video-downloader-hero.svg)
 
-**Right-click. Download video. Keep the best source quality.** A Chrome extension and silent local helper find the original source, save it as an MP4, and remove identifying metadata without re-encoding the video.
+**Right-click. Download video. Get a clean, compatible MP4.** A Chrome extension and silent local helper find the highest-resolution source, save H.264 video and AAC audio by default, and remove identifying metadata. Compatible tracks are copied; other tracks are converted when needed.
 
 It also restores text selection and copying, copies links without common tracking parameters, and saves original images with identifying metadata removed. Chrome's ordinary image downloads are cleaned automatically too.
 
@@ -20,7 +20,7 @@ Use **Video-Downloader.zip** from Releases for installation. GitHub's automatic 
 
 | Action | Result |
 | --- | --- |
-| **Download video** | Highest available source quality, copied into a clean MP4; native Chrome download entry |
+| **Download video** | Highest available resolution and frame rate in a compatible H.264/AAC MP4; native Chrome download entry |
 | **Save original image** | Largest exposed image source, original format and quality, identifying metadata removed |
 | Chrome's **Save image as** | Automatic cleanup of newly saved images, preserving your filename |
 | **Copy clean link** | Recognizable tracking fields removed; functional, signed and login links preserved |
@@ -63,11 +63,15 @@ Chrome requires these manual steps for an unpacked extension. Setup does not cha
 
 ## Quality
 
-Original-file downloads only. There is no screen or tab recording fallback.
+The extension downloads the site's source files. There is no screen or tab recording fallback.
 
-There is no resolution cap. The helper ranks available source video by resolution, frame rate, HDR, codec, and bitrate, and downloads separate audio where available. It favors a known site's extractor or a master playlist over the low-quality rendition currently playing. AV1, VP9, HEVC and H.264 can be copied into MP4 without re-encoding when supported by the muxer. An MP4 containing AV1 or VP9 may require a player with support for that codec.
+**Compatible MP4 (H.264 + AAC)** is enabled by default. It keeps the highest available resolution and frame rate. At equal resolution/frame rate, it prefers SDR and original H.264/AAC tracks to avoid needless re-encoding. When necessary, FFmpeg converts incompatible tracks to H.264 High Profile, 8-bit YUV 4:2:0 and AAC-LC mono/stereo. Compatible video or audio tracks are copied without re-encoding, even when the other track needs conversion. Conversion is lossy, takes additional time and can produce a larger file. Silent videos remain silent. Odd dimensions may receive a one-pixel border to fit H.264 chroma requirements.
 
-There is no silent downgrade or lossy conversion. If the highest-quality source cannot be copied safely into MP4, the job fails with an explanation. A site can expose only some formats to your session; the helper cannot download renditions that the site does not expose.
+Turn off **Compatible MP4** in Settings for **Original source mode**. That preserves the original AV1, VP9, HEVC, H.264 and audio codecs without lossy conversion when they can be copied safely into MP4. It retains the original HDR handling. HDR sources requiring tone mapping fail explicitly in compatible mode; they are never silently saved with washed-out colors.
+
+There is no resolution cap or automatic truncation. A known extractor or master playlist is preferred over the low-quality rendition currently playing. Conversion is checked for dimensions, frame rate, frame count where available, track timing, color and rotation before metadata sanitizing. A site can expose only some formats to your session; the helper cannot download renditions it does not expose.
+
+MP4 is a container, not a codec. An AV1/Opus MP4 can play locally yet be rejected by an upload service. The default addresses this codec mismatch. Platform-specific duration, resolution, file-size and account restrictions still apply; codec compatibility alone cannot guarantee acceptance by every service. See [X's technical upload recommendations](https://docs.x.com/x-api/media/quickstart/best-practices) and [web upload guidance](https://help.x.com/en/using-x/x-videos).
 
 ## Browsing and images
 

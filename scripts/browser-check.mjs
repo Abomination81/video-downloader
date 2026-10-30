@@ -138,6 +138,16 @@ try {
   await ui.setViewportSize({ width: 360, height: 800 });
   await checkBrand(ui);
   await ui.screenshot({ path: join(output, 'settings-narrow.png'), fullPage: true });
+  await ui.locator('.settings').screenshot({ path: join(output, 'settings-controls.png') });
+  assert.equal(await ui.locator('#compatible-video').isChecked(), true);
+  await ui.locator('#compatible-video').uncheck();
+  await ui.waitForFunction(async () => (await chrome.storage.local.get('settings')).settings.compatibleVideo === false);
+  assert.equal((await worker.evaluate(() => chrome.storage.local.get('settings'))).settings.compatibleVideo, false);
+  await ui.locator('#restore-copy').uncheck();
+  await ui.waitForFunction(async () => (await chrome.storage.local.get('settings')).settings.restoreCopy === false);
+  assert.equal((await worker.evaluate(() => chrome.storage.local.get('settings'))).settings.compatibleVideo, false, 'Saving another preference reset the explicit original-source mode');
+  await ui.locator('#restore-copy').check();
+  await ui.locator('#compatible-video').check();
   await ui.setViewportSize({ width: 1000, height: 900 });
   await worker.evaluate(() => chrome.contextMenus.update('download-video', { title: 'Download video' }));
   const cases = [];

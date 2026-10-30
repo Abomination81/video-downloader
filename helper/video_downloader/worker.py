@@ -17,7 +17,7 @@ from .media import Cancelled, MediaError, clear_source_attributes, sanitize
 from .models import CleanImage, Start
 
 
-def engine_options(source, directory: Path, progress_hook, impersonate=False):
+def engine_options(source, directory: Path, progress_hook, impersonate=False, output_profile='original'):
     options = {
         "format": "bv*+ba/b",
         "format_sort": ["res", "fps", "hdr", "vcodec", "acodec", "br"],
@@ -40,6 +40,10 @@ def engine_options(source, directory: Path, progress_hook, impersonate=False):
         "progress_hooks": [progress_hook],
         "logger": SilentLogger(),
     }
+    if output_profile == 'compatible':
+        # Keep the best resolution/fps. At equal resolution/fps prefer SDR and
+        # original AVC/AAC tracks so a needless re-encode can be avoided.
+        options['format_sort'] = ['res', 'fps', 'hdr:sdr', 'vcodec:h264', 'acodec:aac', 'br']
     if impersonate:
         from yt_dlp.networking.impersonate import ImpersonateTarget
         options["impersonate"] = ImpersonateTarget(client="chrome")
@@ -99,7 +103,7 @@ def download(request: Start, job_id: str, directory: Path, cancelled):
             work = private_dir(directory / str(index))
             store.update(job_id, state="resolving", progress=0)
             try:
-                with yt_dlp.YoutubeDL(engine_options(source, work, hook, impersonate)) as ydl:
+                with yt_dlp.YoutubeDL(engine_options(source, work, hook, impersonate, request.outputProfile)) as ydl:
                     ydl.cookiejar.set_policy(http.cookiejar.DefaultCookiePolicy(strict_ns_domain=http.cookiejar.DefaultCookiePolicy.DomainStrictNonDomain))
                     for cookie in cookie_jar(request.cookies):
                         ydl.cookiejar.set_cookie(cookie)
@@ -173,6 +177,11 @@ def run_job(request: Start | CleanImage, job_id: str):
             run_image(request, job_id, directory, cancel.is_set)
             return
         source = download(request, job_id, directory, cancel.is_set)
+        converted = False
+        if request.outputProfile == 'compatible':
+            from .compatibility import prepare
+            store.update(job_id, state='converting', progress=0)
+            source, converted = prepare(source, directory / 'compatible.mp4', cancel.is_set)
         target = directory / "clean.mp4"
         result = sanitize(source, target, cancel.is_set, lambda state: store.update(job_id, state=state, progress=100))
         if cancel.is_set() or store.get(job_id)["cancel_requested"]:
@@ -185,6 +194,8 @@ def run_job(request: Start | CleanImage, job_id: str):
         except (ValueError, ZeroDivisionError):
             fps_label = ""
         detail = f"{result['width']} × {result['height']} {fps_label} {result['codec'].upper()}".strip()
+        detail += (' + ' + ', '.join(dict.fromkeys(result['audioCodecs'])).upper()) if result['audioCodecs'] else ' · no audio'
+        if request.outputProfile == 'compatible': detail += ' · converted for compatibility' if converted else ' · original tracks'
         if request.browserDownload:
             delivery.stage(job_id, target, filename, detail)
         else:

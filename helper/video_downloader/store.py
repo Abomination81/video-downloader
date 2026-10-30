@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 from .config import app_dir, private_dir
 
-ACTIVE = ("queued", "resolving", "downloading", "cleaning", "verifying", "ready", "finalizing")
+ACTIVE = ("queued", "resolving", "downloading", "converting", "cleaning", "verifying", "ready", "finalizing")
 TERMINAL = ("done", "error", "cancelled", "interrupted")
 
 
@@ -45,10 +45,10 @@ def create(request_id: str, title: str, kind="download") -> tuple[str, bool]:
         previous = con.execute("SELECT id FROM jobs WHERE request_id = ?", (key,)).fetchone()
         if previous:
             return previous["id"], False
-        con.execute("UPDATE jobs SET state='interrupted', error='The download was interrupted. Start it again from the video page.' WHERE state IN ('queued','resolving','downloading','cleaning','verifying','finalizing') AND updated < ?", (now - 90,))
+        con.execute("UPDATE jobs SET state='interrupted', error='The download was interrupted. Start it again from the video page.' WHERE state IN ('queued','resolving','downloading','converting','cleaning','verifying','finalizing') AND updated < ?", (now - 90,))
         # Cleanup uses its own small pool, so a long video download does not
         # leave a newly saved photograph waiting with private metadata intact.
-        active = con.execute("SELECT count(*) FROM jobs WHERE state IN ('queued','resolving','downloading','cleaning','verifying','ready','finalizing') AND (request_id LIKE 'cleanup:%') = ?", (kind == "cleanup",)).fetchone()[0]
+        active = con.execute("SELECT count(*) FROM jobs WHERE state IN ('queued','resolving','downloading','converting','cleaning','verifying','ready','finalizing') AND (request_id LIKE 'cleanup:%') = ?", (kind == "cleanup",)).fetchone()[0]
         if active >= (2 if kind == "cleanup" else 3):
             raise ValueError("queue_full")
         job_id = uuid.uuid4().hex
@@ -75,9 +75,9 @@ def get(job_id: str):
 def list_jobs():
     now = time.time()
     with connection() as con:
-        con.execute("UPDATE jobs SET state='interrupted', error='The download was interrupted. Start it again from the video page.' WHERE state IN ('queued','resolving','downloading','cleaning','verifying','finalizing') AND updated < ?", (now - 90,))
+        con.execute("UPDATE jobs SET state='interrupted', error='The download was interrupted. Start it again from the video page.' WHERE state IN ('queued','resolving','downloading','converting','cleaning','verifying','finalizing') AND updated < ?", (now - 90,))
         con.execute("DELETE FROM jobs WHERE state IN ('done','error','cancelled','interrupted') AND created < ?", (now - 30 * 86400,))
-        return [dict(row) for row in con.execute("SELECT id,state,title,progress,filename,error,detail,created FROM jobs ORDER BY CASE WHEN state IN ('queued','resolving','downloading','cleaning','verifying','ready','finalizing') THEN 0 ELSE 1 END, created DESC LIMIT 50")]
+        return [dict(row) for row in con.execute("SELECT id,state,title,progress,filename,error,detail,created FROM jobs ORDER BY CASE WHEN state IN ('queued','resolving','downloading','converting','cleaning','verifying','ready','finalizing') THEN 0 ELSE 1 END, created DESC LIMIT 50")]
 
 
 def clear():

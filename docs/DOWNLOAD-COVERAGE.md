@@ -13,7 +13,7 @@ Researched and implemented on 2026-10-30. “Verified” below means a controlle
 | Closed shadow root, sandboxed player or restrictive page CSP | Isolated extension scripts inspect reachable media and captured network responses | Chrome fixtures for all three |
 | `controlsList=nodownload`, hidden video or canvas presentation | Selection uses sources/network captures rather than the player's download button | Chrome: disabled controls and canvas with hidden video |
 | `blob:`/MSE URL, including revocation | Use observed HLS/DASH source manifests; never treat blob URLs as files readable by the helper | Chrome: active and revoked MSE URLs |
-| Adaptive quality and separate audio | Prefer a master manifest/known extractor; yt-dlp selects the highest available rendition and merges without re-encoding | HLS/DASH fixtures and real Chrome download |
+| Adaptive quality and separate audio | Prefer a master manifest/known extractor and the highest resolution/frame rate. Compatible mode prefers H.264/AAC tracks at that quality, converting incompatible tracks; Original source mode preserves codecs | HLS/DASH fixtures, codec conversion regressions and real Chrome download |
 | Temporary segment failure | Bounded yt-dlp retries; missing fragments are fatal instead of silently omitted | Chrome: injected 503 on the highest rendition |
 | Hotlink checks and signed-in media | Retain observed Referer/Origin/User-Agent/Accept and relevant site/media cookies | Chrome: a video requiring both cookie and Referer |
 | Third-party partitioned cookie | Query the selected frame's partition key on Chrome 132+, then export only matching relevant cookies | API path exercised in Chrome; no live authenticated service certified |

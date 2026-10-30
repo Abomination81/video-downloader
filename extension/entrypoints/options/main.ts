@@ -18,8 +18,9 @@ async function init() {
   el<HTMLInputElement>('#restore-copy').checked = settings.restoreCopy;
   el<HTMLInputElement>('#clean-images').checked = settings.cleanImages;
   el<HTMLInputElement>('#use-cookies').checked = settings.useCookies;
-  for (const id of ['#restore-menus', '#restore-copy', '#clean-images', '#use-cookies']) el<HTMLInputElement>(id).onchange = async () => {
-    try { await chrome.storage.local.set({ settings: { restoreMenus: el<HTMLInputElement>('#restore-menus').checked, restoreCopy: el<HTMLInputElement>('#restore-copy').checked, cleanImages: el<HTMLInputElement>('#clean-images').checked, useCookies: el<HTMLInputElement>('#use-cookies').checked } }); }
+  el<HTMLInputElement>('#compatible-video').checked = settings.compatibleVideo;
+  for (const id of ['#restore-menus', '#restore-copy', '#clean-images', '#use-cookies', '#compatible-video']) el<HTMLInputElement>(id).onchange = async () => {
+    try { await chrome.storage.local.set({ settings: { restoreMenus: el<HTMLInputElement>('#restore-menus').checked, restoreCopy: el<HTMLInputElement>('#restore-copy').checked, cleanImages: el<HTMLInputElement>('#clean-images').checked, useCookies: el<HTMLInputElement>('#use-cookies').checked, compatibleVideo: el<HTMLInputElement>('#compatible-video').checked } }); }
     catch { notice('The preference could not be saved. Try again.'); }
   };
   await check();

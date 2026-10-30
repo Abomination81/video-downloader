@@ -89,7 +89,7 @@ def ensure_idle(app):
     if not database.exists():
         return
     with sqlite3.connect(database, timeout=10) as connection:
-        count = connection.execute("SELECT count(*) FROM jobs WHERE state IN ('queued','resolving','downloading','cleaning','verifying','finalizing') AND updated > ?", (time.time() - 90,)).fetchone()[0]
+        count = connection.execute("SELECT count(*) FROM jobs WHERE state IN ('queued','resolving','downloading','converting','cleaning','verifying','finalizing') AND updated > ?", (time.time() - 90,)).fetchone()[0]
         if count:
             raise RuntimeError("Wait for current downloads to finish, then run the installer again.")
 

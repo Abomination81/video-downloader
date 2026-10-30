@@ -73,6 +73,7 @@ class Start(Request):
     cookies: list[Cookie] = Field(default_factory=list, max_length=500)
     browserDownload: bool = False
     assetType: Literal["video", "image"] = "video"
+    outputProfile: Literal["compatible", "original"] = "compatible"
     imageData: str | None = Field(default=None, max_length=700000)
 
     @model_validator(mode="after")
