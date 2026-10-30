@@ -1,0 +1,15 @@
+node_modules/
+.output/
+.wxt/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+output/
+.env*
+!.env.example
+.DS_Store
+coverage/
+**/.hallmark/

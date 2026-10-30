@@ -1,0 +1,71 @@
+/* Abomination81 · black, neon green, Anton, and the original ghoul artwork. */
+@import url('./tokens.css');
+@import url('./base.css');
+
+:root { --app-width: 680px; --popup-width: 380px; --control-height: 40px; --font-size-title: 22px; }
+body { min-width: 320px; }
+body.popup { width: var(--popup-width); max-width: 100%; margin-inline: auto; }
+main { width: 100%; max-width: var(--app-width); margin-inline: auto; padding: var(--space-lg); }
+.popup main { padding: var(--space-md); }
+.topbar, .row, .section-head, .job-head { display: flex; align-items: center; gap: var(--space-sm); justify-content: space-between; }
+.topbar { padding-bottom: var(--space-md); }
+.topbar h1 { font-size: 27px; letter-spacing: 0.015em; text-transform: uppercase; color: var(--color-accent-deep); }
+.topbar a { font-size: var(--text-sm); color: var(--color-muted); }
+.intro { position: relative; isolation: isolate; overflow: hidden; padding: var(--space-lg); border: 1px solid var(--color-rule); border-radius: var(--radius-card); background: var(--color-paper-3); }
+.intro h2 { font-size: 32px; line-height: 1.15; text-transform: uppercase; }
+.intro-art { position: absolute; z-index: -1; top: -20px; right: -22px; width: 175px; height: 175px; object-fit: cover; opacity: 0.7; mask-image: linear-gradient(to right, transparent, #000 70%); pointer-events: none; }
+.popup .intro > p:first-of-type { max-width: 24ch; }
+.intro > :not(.intro-art) { position: relative; }
+.eyebrow { margin-bottom: var(--space-sm); color: var(--color-accent-deep); font: 10px var(--font-outlier); letter-spacing: 0.14em; text-transform: uppercase; }
+.intro p { margin-top: var(--space-xs); color: var(--color-ink-2); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.intro .btn { margin-top: var(--space-md); width: 100%; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: var(--control-height); padding: var(--space-xs) var(--space-md); border: 1px solid var(--color-accent-deep); border-radius: var(--radius-input); background: var(--color-accent-deep); color: var(--color-accent-ink); font-family: var(--font-display); font-size: 18px; font-weight: 400; letter-spacing: 0.035em; text-transform: uppercase; text-decoration: none; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-micro), transform var(--dur-micro); }
+.btn:hover { background: var(--color-accent); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { background: var(--color-paper-3); color: var(--color-muted); border-color: var(--color-rule); opacity: 0.7; cursor: not-allowed; transform: none; }
+.btn[aria-busy='true'] { cursor: progress; }
+.btn.quiet { background: var(--color-paper); color: var(--color-ink-2); border-color: var(--color-rule); }
+.btn.quiet:hover { background: var(--color-paper-2); }
+button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.link-button { border: 0; padding: var(--space-xs) 0; background: var(--color-paper); color: var(--color-muted); font-size: var(--text-sm); cursor: pointer; }
+.link-button:hover { color: var(--color-accent-deep); text-decoration: underline; }
+.link-button:active { color: var(--color-ink); }
+.link-button:disabled { opacity: 0.55; cursor: not-allowed; }
+.section { margin-top: var(--space-lg); }
+.section-head { padding-bottom: var(--space-xs); border-bottom: 2px solid var(--color-accent-deep); }
+.section h2 { text-transform: uppercase; }
+.section-head h2 { font-size: 23px; }
+.job h3, .candidate h3 { font-family: var(--font-body); letter-spacing: normal; }
+.muted, .empty, .footnote { color: var(--color-muted); font-size: var(--text-sm); }
+.empty { padding-block: var(--space-md); }
+.footnote { margin-top: var(--space-md); }
+.notice { margin-top: var(--space-md); padding-block: var(--space-sm); color: var(--color-ink-2); border-block: 1px solid var(--color-rule); font-size: var(--text-sm); }
+.job, .candidate { padding-block: var(--space-md); border-bottom: 1px solid var(--color-rule); }
+.job h3, .candidate h3 { font-size: var(--text-sm); font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+.job p, .candidate p { font-size: var(--text-xs); color: var(--color-muted); margin-top: var(--space-2xs); }
+.job .error { color: var(--color-ink-2); }
+progress { display: block; width: 100%; height: 5px; margin-block: var(--space-sm); accent-color: var(--color-accent-deep); }
+.job .link-button { font-size: var(--text-xs); }
+.candidate .btn { margin-top: var(--space-sm); }
+.status { font-weight: 600; color: var(--color-accent-deep); }
+.settings { display: grid; gap: var(--space-md); margin-top: var(--space-lg); }
+.setting { display: flex; align-items: flex-start; gap: var(--space-sm); }
+.setting input { width: 20px; height: 20px; margin: var(--space-2xs) 0 0; accent-color: var(--color-accent-deep); flex-shrink: 0; }
+.setting label { font-size: var(--text-sm); }
+.setting small { display: block; font-size: var(--text-xs); color: var(--color-muted); margin-top: var(--space-2xs); }
+.steps { padding-left: var(--space-lg); }
+.steps li { margin-block: var(--space-sm); }
+details { margin-top: var(--space-lg); font-size: var(--text-sm); }
+summary { cursor: pointer; }
+.brand-footer { margin-top: var(--space-lg); padding-top: var(--space-md); border-top: 1px solid var(--color-rule); display: flex; justify-content: space-between; gap: var(--space-sm); flex-wrap: wrap; font-size: var(--text-xs); color: var(--color-muted); }
+.brand-footer a { text-decoration: none; }
+.brand-footer strong { color: var(--color-accent-deep); font-weight: 600; }
+.brand-socials { display: flex; align-items: center; gap: var(--space-sm); }
+.brand-socials a { display: inline-flex; align-items: center; gap: 5px; }
+a:hover { color: var(--color-accent); }
+.save-location { display: flex; gap: var(--space-2xs) var(--space-sm); align-items: baseline; flex-wrap: wrap; padding: var(--space-sm) 0; margin-top: var(--space-sm); border-bottom: 1px solid var(--color-rule); font-size: var(--text-sm); }
+.save-location span { color: var(--color-muted); }
+.save-location strong { color: var(--color-accent-deep); font-weight: 600; }
+code { font-family: var(--font-outlier); overflow-wrap: anywhere; font-size: var(--text-xs); }
+noscript { display: block; padding: var(--space-lg); }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active { transform: none; } }

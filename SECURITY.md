@@ -1,0 +1,15 @@
+# Security and privacy
+
+Video Downloader is a local Chrome extension and native helper. The helper accepts framed, validated requests only from the stable extension identity registered by setup. It runs known media tools with argument arrays, not page-supplied shell commands. Source cookies are scoped to relevant domains and travel over a private local pipe; they are not written to job history.
+
+Prepared files are verified before the extension asks Chrome to save them. A short-lived loopback server transfers one file using an unguessable capability. It rejects unexpected website origins and hosts. The saved file is checked again, and Chrome-added source-URL attributes are cleared without removing filesystem quarantine/ZoneId security markings.
+
+Chrome's ordinary image downloads are cleaned after completion, so original metadata can briefly exist on disk. Automatic replacement is atomic and checks that the user has not changed the file. Unsupported structures fail explicitly and leave the original untouched. Necessary playback, color, orientation and animation data remain. Metadata cleaning does not remove visible information, watermarks or information encoded in the actual picture or audio.
+
+The extension can read pages, relevant cookies, network headers and local download filenames to perform these commands. Install only builds you trust, protect the unpacked extension folder, and keep the helper and extraction engine updated. No developer-operated upload service, telemetry or account is required.
+
+## Reporting
+
+Do not put cookies, credentials, signed media URLs, personal media or unredacted browser logs in public issues. Use GitHub's private vulnerability reporting if available. Otherwise contact [@Abomination81 on X](https://x.com/Abomination81) to arrange a private reporting route before sharing sensitive details.
+
+For an ordinary compatibility issue, include the extension/helper version, operating system, public site name, and the displayed error. Share only media you are comfortable making public. Windows installation is not yet certified; tested coverage is recorded in [VALIDATION.md](docs/VALIDATION.md).

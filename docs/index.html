@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Downloader by Abomination81 | Download and install</title>
+  <meta name="description" content="Right-click video and original-image downloads with identifying metadata removed. A local Chrome extension and silent helper. Built by Abomination81.">
+  <meta name="theme-color" content="#000000">
+  <link rel="canonical" href="https://abomination81.com/video-downloader/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Video Downloader by Abomination81">
+  <meta property="og:description" content="Keep the video. Highest source quality, identifying metadata removed. Original images and useful browsing tools included.">
+  <meta property="og:url" content="https://abomination81.com/video-downloader/">
+  <meta property="og:image" content="https://abomination81.com/assets/og/card-a078560e.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@Abomination81">
+  <meta name="twitter:creator" content="@Abomination81">
+  <link rel="icon" href="./assets/icon-192.png" type="image/png">
+  <link rel="preload" href="./site/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./site/page.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="container">
+    <nav aria-label="Main navigation">
+      <a class="creator" href="https://abomination81.com"><img src="./assets/icon-192.png" width="40" height="40" alt="">Abomination81</a>
+      <div class="navlinks"><a href="#install">Install</a><a href="https://github.com/Abomination81/video-downloader">GitHub</a></div>
+    </nav>
+    <main id="main">
+      <header class="hero">
+        <div>
+          <h1>Right-click.<br>Keep quality.<br>Strip metadata.</h1>
+          <p>Video Downloader saves clean MP4s and original images in Chrome.</p>
+          <div class="actions"><a class="button" href="https://github.com/Abomination81/video-downloader/releases/latest/download/Video-Downloader.zip">Download installer ZIP</a><a href="#install">How to install</a></div>
+        </div>
+        <figure class="product">
+          <picture class="product-shot" data-slot="extension" data-kind="product" data-alt="The actual Video Downloader extension with completed MP4 downloads."><source media="(max-width:700px)" srcset="./assets/video-entry.png"><img src="./assets/video-downloads.png" width="380" height="880" fetchpriority="high" alt="The actual extension showing a completed MP4 download with metadata removed."></picture>
+          <figcaption>A verified MP4 in the actual extension.</figcaption>
+        </figure>
+      </header>
+      <section class="section" aria-labelledby="tools">
+        <h2 id="tools">Save what you came for.</h2>
+        <dl class="tools">
+          <div><dt>Download video</dt><dd>Highest available source quality, copied into MP4 without re-encoding.</dd></div>
+          <div><dt>Save original image</dt><dd>The largest exposed source, with original format, rotation and animation retained. Identifying metadata removed.</dd></div>
+          <div><dt>Leave the page</dt><dd>Background jobs keep running. Finished files appear in Chrome’s download panel and normal download folder.</dd></div>
+        </dl>
+      </section>
+      <section class="section browsing" aria-labelledby="browsing">
+        <div><h2 id="browsing">Copy without blockers.</h2><p>Restore right-click, copying and selection. <strong>Copy clean link</strong> removes tracking while preserving functional URLs.</p><p>Chrome image saves are cleaned after completion. Our image command cleans first. Change defaults in Settings.</p></div>
+        <figure><div class="settings-shot"><img src="./assets/settings.png" width="360" height="1733" loading="lazy" alt="The actual settings screen with right-click, selection, automatic image cleanup and site-session preferences."></div><figcaption>Controls in the actual extension settings.</figcaption></figure>
+      </section>
+      <section class="section install" id="install" aria-labelledby="setup">
+        <div><h2 id="setup">One setup.<br>Then right-click.</h2><p>Installs the extension and silent local helper.</p></div>
+        <ol>
+          <li>Unzip the installer download.</li>
+          <li>Run <strong>Install.command</strong> (Mac) or <strong>Install-Windows.cmd</strong> (Windows).</li>
+          <li>At <code>chrome://extensions</code>, enable <strong>Developer mode</strong> and <strong>Load unpacked</strong>. Select setup’s extension folder.</li>
+          <li>Refresh webpages, then right-click and choose <strong>Download video</strong>.</li>
+        </ol>
+        <details class="setup-note"><summary>Requirements: Chrome 127+. Mac tested; Windows installation unverified.</summary><p>Internet required. Mac setup may install Homebrew and ask for your password. Windows requires WinGet. Use the installer ZIP, not GitHub’s automatic source archives.</p></details>
+      </section>
+      <section class="section coverage" aria-labelledby="coverage">
+        <h2 id="coverage">Know what you’re downloading.</h2>
+        <div class="coverage-copy">
+          <p>Original files only. No DRM or recording fallback. Technical playback and color data remain. <a href="https://github.com/Abomination81/video-downloader/blob/main/docs/VALIDATION.md">Coverage and validation</a>. <a href="https://github.com/Abomination81/video-downloader/releases/latest">Release notes and checksums</a>.</p>
+        </div>
+      </section>
+    </main>
+    <footer><a href="https://abomination81.com">Built by abomination81</a><nav aria-label="Creator links"><a href="https://x.com/Abomination81">X @Abomination81</a><a href="https://github.com/Abomination81">GitHub</a></nav></footer>
+  </div>
+  <script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

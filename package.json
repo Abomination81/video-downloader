@@ -1,0 +1,26 @@
+{
+  "name": "video-downloader",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "typecheck": "wxt prepare && tsc --noEmit",
+    "test": "vitest run",
+    "test:helper": "uv run --project helper --extra dev pytest helper/tests -q",
+    "test:browser": "node scripts/browser-check.mjs",
+    "package": "npm run build && uv run --python 3.13 scripts/package.py"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.7",
+    "@types/node": "^26.6.6",
+    "playwright": "^1.64.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5",
+    "wxt": "^0.21.5"
+  }
+}
