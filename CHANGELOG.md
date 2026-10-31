@@ -6,6 +6,7 @@
 - Add right-click **Download audio as MP3**. Prefer audio-only sources, default to up to 320 kbps, and preserve existing MP3 audio without re-encoding when possible. Optional lower bitrates apply to one download.
 - Remove MP3 tags, chapters and artwork. Check frame structure, independent metadata readers, full decoding and duration; compare decoded-audio hashes when copying MP3. Retain necessary playback headers.
 - Keep highest-quality compatible H.264/AAC MP4 as the one-click default, along with normal Chrome download entries, each person's download folder, tab-independent jobs and signed updates.
+- Reduce local-transfer cold-start overhead and allow a slower Mac more time to start its transfer server.
 - Run format inspection in a separate bounded background pool. Resume the picker after closing it, expire selections after 15 minutes, and fail explicitly if a selected format changes or disappears. Cookies and source URLs are absent from the private format cache.
 
 ## 0.5.2 — 2026-10-31

@@ -129,3 +129,32 @@ def test_interrupted_final_check_can_resume_from_the_verified_private_copy(isola
     assert jobs[0]["state"] == ("ready" if receipt_present else "error")
     assert (store.get(job)["error"] is None) == receipt_present
     assert (delivery.directory(job) / "clean.mp4").exists()
+
+
+@pytest.mark.parametrize('audio', [False, True])
+def test_real_transfer_subprocess_starts_and_serves_verified_bytes(isolated_app, monkeypatch, audio):
+    import urllib.request
+    job, name = ready_file(isolated_app)
+    if audio:
+        old = delivery.prepared_file(job)
+        old.rename(old.with_suffix('.mp3'))
+        info = delivery.receipt(job)
+        info.update(filename=name.replace('Video ', 'Audio ').replace('.mp4', '.mp3'), prepared_name='clean.mp3', mime='audio/mpeg')
+        delivery.write_receipt(job, info)
+    processes = []
+    original = delivery.spawn
+    def tracked(*args, **kwargs):
+        process = original(*args, **kwargs)
+        processes.append(process)
+        return process
+    monkeypatch.setattr(delivery, 'spawn', tracked)
+    try:
+        value = delivery.prepare(job)
+        with urllib.request.urlopen(value['url'], timeout=5) as response:
+            assert response.read() == b'verified test payload'
+            assert response.headers['Content-Type'] == ('audio/mpeg' if audio else 'video/mp4')
+        assert store.get(job)['state'] == 'ready'
+    finally:
+        for process in processes:
+            process.terminate()
+            process.wait(timeout=5)

@@ -217,7 +217,9 @@ def prepare(job_id):
     result = queue.Queue(maxsize=1)
     threading.Thread(target=lambda: result.put(process.stdout.readline(2048)), daemon=True).start()
     try:
-        line = result.get(timeout=5)
+        # Stay within the browser's 15-second native RPC limit while allowing
+        # a cold Python process to start on slower Macs.
+        line = result.get(timeout=10)
         value = json.loads(line)
         if not isinstance(value.get("url"), str) or not value["url"].startswith("http://127.0.0.1:"):
             raise ValueError()

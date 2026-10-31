@@ -11,8 +11,6 @@ import sys
 import time
 from pathlib import Path
 
-import av
-
 from .config import binary
 
 
@@ -192,6 +190,7 @@ def scrub_hevc_config(data: bytes) -> tuple[bytes, int]:
 
 
 def remux_packets(source: Path, target: Path, cancelled=lambda: False) -> int:
+    import av
     removed = 0
     av.logging.set_level(av.logging.ERROR)
     with av.open(str(source)) as input_file, av.open(str(target), "w", format="mp4", options={"movflags": "+faststart", "fflags": "+bitexact", "strict": "experimental"}) as output_file:
@@ -419,6 +418,7 @@ def verify(source: Path, output: Path, cancelled=lambda: False) -> dict:
 
 
 def sanitize(source: Path, target: Path, cancelled=lambda: False, stage=lambda _: None) -> dict:
+    import av
     normalized_file = target.with_suffix(".timed.mp4")
     packet_file = target.with_suffix(".packets.mp4")
     try:
