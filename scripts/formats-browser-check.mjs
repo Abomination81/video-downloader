@@ -43,11 +43,23 @@ try {
   const worker = context.serviceWorkers()[0] ?? await context.waitForEvent('serviceworker');
   const cdp = await context.browser().newBrowserCDPSession();
   await cdp.send('Browser.setDownloadBehavior', { behavior: 'default' });
-  await worker.evaluate(() => chrome.contextMenus.update('download-audio', { title: 'Download audio as MP3' }));
-  await worker.evaluate(() => chrome.contextMenus.update('choose-format', { title: 'Choose video format…' }));
   const ui = await context.newPage(); await ui.goto(`chrome-extension://${identity.id}/options.html`);
   const rpc = message => ui.evaluate(data => chrome.runtime.sendMessage(data), message);
   assert.equal((await rpc({ type: 'ping' })).result.ready, true);
+  // Chrome can expose the worker before delivering its first onInstalled event.
+  // Observe menu registration rather than racing the removeAll/create callback.
+  await worker.evaluate(async () => {
+    for (let attempt = 0; attempt < 150; attempt++) {
+      try {
+        await chrome.contextMenus.update('download-audio', { title: 'Download audio as MP3' });
+        await chrome.contextMenus.update('choose-format', { title: 'Choose video format…' });
+        return;
+      } catch (error) {
+        if (attempt === 149) throw error;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+  });
   const sourcePage = await context.newPage(); await sourcePage.goto(base);
   const candidate = { id: 'format-fixture', title: 'Source fixture', frameId: 0, score: 1, protected: false, exact: true, sources: [{ url: base + '/master.m3u8', kind: 'manifest', headers: {} }], cookieUrls: [], width: 320, height: 180 };
   const seed = async (value, intent) => worker.evaluate(data => chrome.storage.session.set({ choices: data }), { tabId: 99999, at: Date.now(), candidates: [value], intent });
