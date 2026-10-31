@@ -9,7 +9,7 @@ const working = new Set(['checking', 'downloading', 'preparing', 'waiting', 'app
 export class Updates {
   private running = false;
 
-  constructor() {
+  constructor(private readonly isBusy: () => boolean = () => false) {
     chrome.alarms.onAlarm.addListener((event) => { if (event.name === alarm) void this.tick(); });
     chrome.runtime.onStartup.addListener(() => { void this.tick(); });
     chrome.runtime.onInstalled.addListener(() => { void this.tick(); });
@@ -42,7 +42,7 @@ export class Updates {
     const period = polling ? 0.5 : 60;
     const current = await chrome.alarms.get(alarm);
     if (current?.periodInMinutes !== period) await chrome.alarms.create(alarm, { delayInMinutes: period, periodInMinutes: period });
-    if (value.installedVersion === chrome.runtime.getManifest().version || value.state === 'applying') return;
+    if (value.installedVersion === chrome.runtime.getManifest().version || value.state === 'applying' || this.isBusy()) return;
     const pages = await chrome.tabs.query({});
     if (pages.some(tab => tab.url?.startsWith(chrome.runtime.getURL('')))) return;
     const views = await chrome.runtime.getContexts({ contextTypes: ['POPUP' as chrome.runtime.ContextType, 'SIDE_PANEL' as chrome.runtime.ContextType] });
@@ -51,6 +51,7 @@ export class Updates {
     // Recheck here so a newly started job also keeps its Chrome handoff alive.
     const jobs = z.object({ jobs: z.array(z.object({ state: z.string() })) }).parse(await native('jobs'));
     if (jobs.jobs.some(job => ['queued', 'resolving', 'downloading', 'converting', 'cleaning', 'verifying', 'ready', 'finalizing'].includes(job.state))) return;
+    if (this.isBusy()) return;
     chrome.runtime.reload();
   }
 

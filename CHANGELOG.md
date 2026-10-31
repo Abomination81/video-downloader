@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2 — 2026-10-31
+
+- Defer update activation while a foreground action is selecting a video, collecting session details, starting a download, saving an image or copying a link.
+- Recheck foreground activity after the helper idle query, so a newly started request cannot race the extension reload.
+- Retain the signed updates, Mac background agent, metadata cleanup and highest-source compatible MP4 behavior from 0.5.1.
+
 ## 0.5.1 — 2026-10-31
 
 - Run Mac updates through a standard per-user launchd agent, on demand or every six hours. A live rollout check found that installing native Python libraries from Chrome’s process context could be rejected by macOS; agent-based preparation succeeds without changing security settings.

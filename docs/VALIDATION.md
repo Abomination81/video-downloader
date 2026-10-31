@@ -120,3 +120,7 @@ Production update signatures use the repository's Actions-only private key, with
 A live package check exposed macOS rejecting a freshly installed native CFFI module when the update worker ran as a Chrome descendant. The previous version remained intact. Update preparation now runs through a standard per-user launchd agent, kicked off by the native broker or its six-hour schedule. No Gatekeeper or quarantine setting was changed.
 
 An isolated Mac test drives a real Chrome native-message request, a real temporary launchd agent, the actual signed release package, hash-locked dependency installation, a new helper runtime, the bootstrap pointer switch and automatic Chrome activation. The release bytes use deterministic local transport for this regression; the production signature remains verified with the real embedded public key. Preferences, form/page state, content-script replacement, selection cleanup and seeking survive the update. The temporary job is removed afterward. Agent tests also cover the registered kickstart target, opt-out, manual request consumption and interval throttling; installer cases check each account's own agent path and runtime.
+
+## 0.5.2 foreground-action protection
+
+26 TypeScript tests pass, including activation while idle, deferral during a foreground action and a new action starting while the helper idle query is pending. Foreground commands hold the update guard until their asynchronous selection, session collection and native handoff finish. This complements the helper's job/commit lock and the UI-open check.

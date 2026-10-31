@@ -82,7 +82,13 @@ export default defineBackground(() => {
   }
   const downloads = new ChromeDownloads(report);
   const savedImages = new SavedImages(report);
-  const updates = new Updates();
+  let activeActions = 0;
+  async function action<T>(run: () => Promise<T>): Promise<T> {
+    activeActions++;
+    try { return await run(); }
+    finally { activeActions--; }
+  }
+  const updates = new Updates(() => activeActions > 0);
   chrome.runtime.onInstalled.addListener((event) => {
     chrome.contextMenus.removeAll(() => {
       chrome.contextMenus.create({ id: 'download-video', title: 'Download video', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
@@ -217,19 +223,19 @@ export default defineBackground(() => {
     }
   }
   chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === 'save-original-image' && tab?.id !== undefined) { void saveImage(tab.id, info.frameId ?? 0, info.srcUrl).catch(report); return; }
+    if (info.menuItemId === 'save-original-image' && tab?.id !== undefined) { void action(() => saveImage(tab.id!, info.frameId ?? 0, info.srcUrl)).catch(report); return; }
     if (info.menuItemId === 'copy-clean-link') {
       const source = info.linkUrl ?? info.pageUrl ?? tab?.url;
-      if (source) void (async () => copyLink(cleanLink(source)))().catch(report);
+      if (source) void action(() => copyLink(cleanLink(source))).catch(report);
       return;
     }
-    if (info.menuItemId === 'download-video' && tab?.id !== undefined) void downloadFrom(tab.id, info).catch(async (error) => {
+    if (info.menuItemId === 'download-video' && tab?.id !== undefined) void action(() => downloadFrom(tab.id!, info)).catch(async (error) => {
       await report(error);
       try { await chrome.action.openPopup(); } catch { /* The badge retains the error if Chrome cannot open the popup. */ }
     });
   });
   chrome.commands.onCommand.addListener((command, tab) => {
-    if (command === 'download-video' && tab?.id !== undefined) void downloadFrom(tab.id).catch(report);
+    if (command === 'download-video' && tab?.id !== undefined) void action(() => downloadFrom(tab.id!)).catch(report);
   });
   chrome.runtime.onMessage.addListener((raw: unknown, sender, respond) => {
     if (raw && typeof raw === 'object' && 'target' in raw && raw.target === 'clipboard') return;
@@ -269,7 +275,7 @@ export default defineBackground(() => {
     ]).safeParse(raw);
     if (!parsed.success) { respond({ ok: false, error: { code: 'invalid_request', message: 'Reload the extension and try again.' } }); return; }
     const request = parsed.data;
-    void (async () => {
+    void action(async () => {
       if (request.type === 'find') return { candidates: await find(request.tabId) };
       if (request.type === 'start') return start(request.candidate, request.requestId);
       if (request.type === 'copy-link') { await copyLink(cleanLink(request.url)); return {}; }
@@ -283,7 +289,7 @@ export default defineBackground(() => {
         return { jobs: await downloads.decorate(value.jobs) };
       }
       return native(request.type, 'jobId' in request ? { jobId: request.jobId } : {});
-    })().then((result) => respond({ ok: true, result })).catch((error) => respond({ ok: false, error: errorResult(error) }));
+    }).then((result) => respond({ ok: true, result })).catch((error) => respond({ ok: false, error: errorResult(error) }));
     return true;
   });
 });

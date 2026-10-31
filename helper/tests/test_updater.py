@@ -23,7 +23,7 @@ from video_downloader import __version__, bootstrap, native, store, updater
 def signed():
     key = Ed25519PrivateKey.generate()
     public = key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
-    value = {"schema": 1, "repository": updater.REPOSITORY, "version": "0.5.2", "sha256": "a" * 64, "size": 123, "commit": "b" * 40, "minimumChrome": 127, "bootstrap": 1}
+    value = {"schema": 1, "repository": updater.REPOSITORY, "version": "0.5.3", "sha256": "a" * 64, "size": 123, "commit": "b" * 40, "minimumChrome": 127, "bootstrap": 1}
     def sign(value):
         raw = json.dumps(value, sort_keys=True).encode()
         return raw, base64.b64encode(key.sign(raw)), public
@@ -86,7 +86,7 @@ def installed(tmp_path, monkeypatch):
     return app, identity, manifest
 
 
-def bundle(tmp_path, identity, manifest, version="0.5.2"):
+def bundle(tmp_path, identity, manifest, version="0.5.3"):
     root = tmp_path / "new bundle"
     (root / "extension").mkdir(parents=True)
     (root / "extension/manifest.json").write_text(json.dumps({**manifest, "version": version}))
@@ -109,7 +109,7 @@ def test_update_waits_for_jobs_and_preserves_settings(installed, tmp_path, signe
     assert bootstrap.pointer(app) is None
     store.update(job, state="done")
     assert updater.commit(new, update) is True
-    assert bootstrap.pointer(app) == {"version": "0.5.2"}
+    assert bootstrap.pointer(app) == {"version": "0.5.3"}
     assert (app / "config.json").read_bytes() == original_config
     assert (app / "extension.previous/old.txt").exists()
     assert updater.status()["state"] == "ready"
@@ -142,7 +142,7 @@ def test_bootstrap_recovers_interrupted_commit(installed):
     app, _, _ = installed
     (app / "extension").rename(app / "extension.previous")
     (app / "extension").mkdir()
-    bootstrap.atomic_json(app / "active-runtime.json", {"version": "0.5.2"})
+    bootstrap.atomic_json(app / "active-runtime.json", {"version": "0.5.3"})
     bootstrap.atomic_json(app / "update-journal.json", {"pointer": None})
     with bootstrap.locked(app): bootstrap.recover(app)
     assert (app / "extension/old.txt").exists()
@@ -224,11 +224,11 @@ def test_update_requests_cannot_supply_commands_or_urls():
 
 def test_bootstrap_switches_to_selected_runtime(installed):
     app, _, _ = installed
-    runtime = app / "runtimes/0.5.2/.venv/bin"
+    runtime = app / "runtimes/0.5.3/.venv/bin"
     runtime.mkdir(parents=True)
     python = runtime / "python"
     python.symlink_to(sys.executable)
-    bootstrap.atomic_json(app / "active-runtime.json", {"version": "0.5.2"})
+    bootstrap.atomic_json(app / "active-runtime.json", {"version": "0.5.3"})
     assert bootstrap.runtime_python(app) == python
     with bootstrap.locked(app):
         with pytest.raises(TimeoutError):
@@ -247,11 +247,11 @@ def test_signed_update_installs_real_runtime_and_switches_native_host(installed,
     shutil.copy2(root / "helper/video_downloader/bootstrap.py", app / "bootstrap.py")
     package = tmp_path / "helper source"
     shutil.copytree(root / "helper/video_downloader", package / "video_downloader", ignore=shutil.ignore_patterns("__pycache__"))
-    project = (root / "helper/pyproject.toml").read_text().replace(f'version = "{__version__}"', 'version = "0.5.2"')
+    project = (root / "helper/pyproject.toml").read_text().replace(f'version = "{__version__}"', 'version = "0.5.3"')
     (package / "pyproject.toml").write_text(project)
-    (package / "video_downloader/__init__.py").write_text('__version__ = "0.5.2"\n')
+    (package / "video_downloader/__init__.py").write_text('__version__ = "0.5.3"\n')
     new = bundle(tmp_path, identity, manifest)
-    wheel = new / "helper-wheel/video_downloader_helper-0.5.2-py3-none-any.whl"
+    wheel = new / "helper-wheel/video_downloader_helper-0.5.3-py3-none-any.whl"
     wheel.unlink()
     subprocess.run([uv, "build", "--wheel", "--out-dir", str(wheel.parent), str(package)], check=True, capture_output=True, timeout=120)
     requirements = subprocess.check_output([uv, "export", "--project", str(root / "helper"), "--no-dev", "--no-emit-project", "--no-header"], text=True)
@@ -263,18 +263,18 @@ def test_signed_update_installs_real_runtime_and_switches_native_host(installed,
     payload = data.getvalue()
     update.update(size=len(payload), sha256=hashlib.sha256(payload).hexdigest())
     raw, signature, public = sign(update)
-    base = f"https://github.com/{updater.REPOSITORY}/releases/download/v0.5.2/"
-    remote = {updater.API: json.dumps({"tag_name": "v0.5.2", "assets": [{"name": name, "browser_download_url": base + name} for name in ["update.json", "update.json.sig", "Video-Downloader.zip"]]}).encode(), base + "update.json": raw, base + "update.json.sig": signature, base + "Video-Downloader.zip": payload}
+    base = f"https://github.com/{updater.REPOSITORY}/releases/download/v0.5.3/"
+    remote = {updater.API: json.dumps({"tag_name": "v0.5.3", "assets": [{"name": name, "browser_download_url": base + name} for name in ["update.json", "update.json.sig", "Video-Downloader.zip"]]}).encode(), base + "update.json": raw, base + "update.json.sig": signature, base + "Video-Downloader.zip": payload}
     original_verify = updater.verify_manifest
     monkeypatch.setattr(updater, "verify_manifest", lambda raw, sig: original_verify(raw, sig, public))
     monkeypatch.setattr(updater, "fetch", lambda url, limit: remote[url])
     updater.run(127)
     assert updater.status()["state"] == "ready"
-    assert bootstrap.pointer(app)["version"] == "0.5.2"
+    assert bootstrap.pointer(app)["version"] == "0.5.3"
     request, output = io.BytesIO(), io.BytesIO()
     native.write_message(request, {"id": "ping", "type": "ping"})
     result = subprocess.run([sys.executable, str(app / "bootstrap.py"), f"chrome-extension://{updater.EXTENSION_ID}/"], input=request.getvalue(), capture_output=True, timeout=30, check=True)
     response = native.read_message(io.BytesIO(result.stdout))
-    assert response["ok"] and response["result"]["version"] == "0.5.2"
+    assert response["ok"] and response["result"]["version"] == "0.5.3"
     assert response["result"]["downloadDir"] == config["download_dir"]
     assert json.loads((app / "config.json").read_text()) == config
