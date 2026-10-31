@@ -23,7 +23,7 @@ await writeFile(join(app, 'config.json'), JSON.stringify({ download_dir: downloa
 await writeFile(join(profile, 'Default/Preferences'), JSON.stringify({ download: { default_directory: downloads, prompt_for_download: false } }));
 const python = join(root, 'helper/.venv/bin/python');
 const host = join(app, 'native-host');
-await writeFile(host, `#!/bin/sh\nexec '${python.replaceAll("'", "'\\''")}' -m video_downloader.native "$@"\n`, { mode: 0o700 });
+await writeFile(host, `#!/bin/sh\nexec '${python.replaceAll("'", "'\\''")}' -m video_downloader.native "$@" 2>>'${join(app, 'native-stderr.log').replaceAll("'", "'\\''")}'\n`, { mode: 0o700 });
 await writeFile(join(profile, 'NativeMessagingHosts/com.video_downloader.helper.json'), JSON.stringify({ name: 'com.video_downloader.helper', description: 'Isolated source helper', path: host, type: 'stdio', allowed_origins: [`chrome-extension://${identity.id}/`] }));
 const server = createServer(async (req, res) => {
   if (req.url === '/') { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end('<video src="/source.mp4" controls muted autoplay></video>'); return; }
@@ -45,7 +45,8 @@ try {
   await cdp.send('Browser.setDownloadBehavior', { behavior: 'default' });
   const ui = await context.newPage(); await ui.goto(`chrome-extension://${identity.id}/options.html`);
   const rpc = message => ui.evaluate(data => chrome.runtime.sendMessage(data), message);
-  assert.equal((await rpc({ type: 'ping' })).result.ready, true);
+  const ping = await rpc({ type: 'ping' });
+  assert.equal(ping.result?.ready, true, JSON.stringify({ ping, native: await readFile(join(app, 'native-stderr.log'), 'utf8').catch(() => '') }));
   // Chrome can expose the worker before delivering its first onInstalled event.
   // Observe menu registration rather than racing the removeAll/create callback.
   await worker.evaluate(async () => {
@@ -67,12 +68,15 @@ try {
   const jobIds = async () => (await rpc({ type: 'jobs' })).result.jobs.map(j => j.id);
   const newJob = async before => { const jobs = (await rpc({ type: 'jobs' })).result.jobs; const job = jobs.find(j => !before.includes(j.id)); assert.ok(job); return job; };
   const waitDone = async id => {
+    let latest;
     for (let attempt = 0; attempt < 180; attempt++) {
       const job = (await rpc({ type: 'jobs' })).result.jobs.find(j => j.id === id);
-      if (['done', 'error', 'cancelled'].includes(job?.state)) { assert.equal(job.state, 'done', JSON.stringify(job)); return job; }
+      latest = job;
+      if (['done', 'error', 'cancelled', 'interrupted', 'save_error'].includes(job?.state)) { assert.equal(job.state, 'done', JSON.stringify(job)); return job; }
       await new Promise(resolve => setTimeout(resolve, 500));
     }
-    throw new Error('Job did not finish');
+    const diagnostic = await worker.evaluate(async () => ({ saved: await chrome.storage.local.get(['pendingChromeDownloads', 'lastError']), downloads: (await chrome.downloads.search({})).map(item => ({ state: item.state, error: item.error, danger: item.danger, mime: item.mime, filename: item.filename })) }));
+    throw new Error('Job did not finish: ' + JSON.stringify({ job: latest, ...diagnostic }));
   };
   const info = file => JSON.parse(execFileSync(binaries.ffprobe, ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', file], { encoding: 'utf8' }));
   const chromeFile = async job => {
