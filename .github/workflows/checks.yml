@@ -27,6 +27,12 @@ jobs:
           sudo apt-get install -y ffmpeg
           npx playwright install --with-deps chromium
       - run: npm run test:interactions
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.9.28'
+          python-version: '3.13'
+      - run: uv sync --project helper --locked --python 3.13
+      - run: npm run test:updates
   helper:
     runs-on: macos-latest
     timeout-minutes: 20

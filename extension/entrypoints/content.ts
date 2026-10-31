@@ -7,7 +7,7 @@ import { imageSources } from '../lib/images';
 export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'],
   allFrames: true, matchAboutBlank: true, matchOriginAsFallback: true, runAt: 'document_start',
-  main() {
+  main(ctx) {
     const token = uuid();
     const frameTokens = new WeakMap<HTMLIFrameElement, string>();
     const ids = new WeakMap<Element, string>();
@@ -34,7 +34,7 @@ export default defineContentScript({
     function announce() {
       if (window.parent !== window) window.parent.postMessage({ channel, type: 'hello', token }, '*');
     }
-    window.addEventListener('message', (event) => {
+    ctx.addEventListener(window, 'message', (event) => {
       const data = event.data;
       if (!data || data.channel !== channel) return;
       if (data.type === 'identify') { announce(); return; }
@@ -82,13 +82,13 @@ export default defineContentScript({
       return { token, url: location.href.slice(0, 16384), title: document.title.slice(0, 300), viewport: { width: innerWidth, height: innerHeight }, media, images, frames, ...(point ? { point } : {}) };
     }
     // Capture before site bubble/inline handlers. Do not prevent the native menu.
-    window.addEventListener('contextmenu', (event) => {
+    ctx.addEventListener(window, 'contextmenu', (event) => {
       point = { x: event.clientX, y: event.clientY, at: Date.now() };
       const data = snapshot();
       void chrome.runtime.sendMessage({ type: 'context', snapshot: data }).catch(() => { /* A stale content script has no privileged fallback. */ });
       if (restoreMenus) event.stopImmediatePropagation();
     }, { capture: true });
-    window.addEventListener('pointerdown', (event) => {
+    ctx.addEventListener(window, 'pointerdown', (event) => {
       // Left-button events belong to the page: custom seek bars, sliders and
       // drag controls often use plain divs without roles or tabindex.
       if (event.button !== 2) return;
@@ -97,16 +97,16 @@ export default defineContentScript({
       void chrome.runtime.sendMessage({ type: 'context', snapshot: data }).catch(() => { /* Page reload reconnects an invalidated content script. */ });
       if (restoreMenus) event.stopImmediatePropagation();
     }, { capture: true });
-    window.addEventListener('mousedown', (event) => {
+    ctx.addEventListener(window, 'mousedown', (event) => {
       if (event.button === 2 && restoreMenus) event.stopImmediatePropagation();
     }, { capture: true });
-    for (const name of ['copy', 'selectstart']) window.addEventListener(name, (event) => {
+    for (const name of ['copy', 'selectstart']) ctx.addEventListener(window, name, (event) => {
       if (restoreCopy && !isEditing(event.target) && (name !== 'selectstart' || !isSelectionControl(event))) event.stopImmediatePropagation();
     }, { capture: true });
-    window.addEventListener('keydown', (event) => {
+    ctx.addEventListener(window, 'keydown', (event) => {
       if (restoreCopy && !isEditing(event.target) && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && ['a', 'c'].includes(event.key.toLowerCase())) event.stopImmediatePropagation();
     }, { capture: true });
-    chrome.runtime.onMessage.addListener((message, _sender, respond) => {
+    const onRuntimeMessage: Parameters<typeof chrome.runtime.onMessage.addListener>[0] = (message, _sender, respond) => {
       if (message?.type === 'probe') respond(snapshot());
       if (message?.type === 'image-data' && typeof message.id === 'string') {
         const image = elements().find((el) => el instanceof HTMLImageElement && ids.get(el) === message.id) as HTMLImageElement | undefined;
@@ -124,20 +124,24 @@ export default defineContentScript({
         return true;
       }
       if (message?.type === 'menu-policy') { tabHasMedia = message.hasMedia === true; restoreMenus = message.restoreMenus !== false; restoreCopy = message.restoreCopy !== false; respond({ ok: true }); }
-    });
+    };
+    chrome.runtime.onMessage.addListener(onRuntimeMessage);
+    ctx.onInvalidated(() => { if (chrome.runtime?.id) chrome.runtime.onMessage.removeListener(onRuntimeMessage); });
     void chrome.storage.local.get('settings').then((result) => { const value = settingsSchema.parse({ ...defaults, ...(result.settings as object ?? {}) }); restoreMenus = value.restoreMenus; restoreCopy = value.restoreCopy; });
-    chrome.storage.onChanged.addListener((changes, area) => {
+    const onSettingsChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (changes, area) => {
       if (area === 'local' && changes.settings) {
         const parsed = settingsSchema.safeParse(changes.settings.newValue);
         if (parsed.success) { restoreMenus = parsed.data.restoreMenus; restoreCopy = parsed.data.restoreCopy; }
       }
-    });
-    document.addEventListener('loadedmetadata', () => { if (!announced) snapshot(); }, true);
-    document.addEventListener('play', () => { if (!announced) snapshot(); }, true);
-    document.addEventListener('DOMContentLoaded', () => { announce(); snapshot(); }, { once: true });
+    };
+    chrome.storage.onChanged.addListener(onSettingsChanged);
+    ctx.onInvalidated(() => { if (chrome.runtime?.id) chrome.storage.onChanged.removeListener(onSettingsChanged); });
+    ctx.addEventListener(document, 'loadedmetadata', () => { if (!announced) snapshot(); }, { capture: true });
+    ctx.addEventListener(document, 'play', () => { if (!announced) snapshot(); }, { capture: true });
+    ctx.addEventListener(document, 'DOMContentLoaded', () => { announce(); snapshot(); }, { once: true });
     announce();
     void chrome.runtime.sendMessage({ type: 'frame-ready' }).catch(() => { /* No privileges are available after an extension reload. */ });
-    setTimeout(announce, 250);
-    setTimeout(announce, 1000);
+    ctx.setTimeout(announce, 250);
+    ctx.setTimeout(announce, 1000);
   },
 });

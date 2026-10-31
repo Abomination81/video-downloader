@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 — 2026-10-31
+
+- Add silent signed updates for the helper and personal unpacked Chrome extension. Existing users need one final installer run and extension reload to enable them.
+- Preserve download destinations, settings and history; wait for active jobs, prepare a separate runtime, and recover the previous installation after a failed commit.
+- Activate updated content scripts on existing pages without refreshing pages or losing unsent forms. Keep old event listeners from interfering after future updates.
+- Add update status, installed versions, a manual check and an automatic-update preference in Settings.
+- Publish signed versioned releases automatically after main-branch checks pass. Keep download-engine dependencies hash-locked and retain the stable extension identity.
+
 ## 0.4.1 — 2026-10-31
 
 - Fix copy/selection restoration swallowing left clicks and drags on custom video seek bars, including players with plain div controls.

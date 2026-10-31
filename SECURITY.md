@@ -8,6 +8,8 @@ Chrome's ordinary image downloads are cleaned after completion, so original meta
 
 The extension can read pages, relevant cookies, network headers and local download filenames to perform these commands. Install only builds you trust, protect the unpacked extension folder, and keep the helper and extraction engine updated. No developer-operated upload service, telemetry or account is required.
 
+Automatic updates contact the public GitHub release endpoint without site cookies or media URLs. An embedded Ed25519 public key verifies the update manifest, which binds the version and SHA-256 of the complete archive. The private signing key is held in a repository Actions secret. The helper accepts no page-supplied update URL or command. Downloads and redirects are restricted to HTTPS GitHub release hosts, with time/size limits; archive traversal, symlinks and duplicate paths are rejected. Dependencies are hash-locked. A separate runtime is smoke-tested before the activation pointer changes; a recovery journal rolls back an interrupted commit. Additional Chrome permissions require a manual installation. Both the repository and its signing workflow must remain trusted.
+
 ## Reporting
 
 Do not put cookies, credentials, signed media URLs, personal media or unredacted browser logs in public issues. Use GitHub's private vulnerability reporting if available. Otherwise contact [@Abomination81 on X](https://x.com/Abomination81) to arrange a private reporting route before sharing sensitive details.

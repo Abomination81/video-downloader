@@ -4,6 +4,7 @@ import argparse
 import base64
 import hashlib
 import json
+import importlib.util
 import os
 import platform
 import shlex
@@ -85,6 +86,11 @@ def install_tools():
 
 
 def ensure_idle(app):
+    update_state = app / "update-state.json"
+    if update_state.is_file():
+        value = json.loads(update_state.read_text())
+        if value.get("state") in {"checking", "downloading", "preparing", "waiting", "applying"} and time.time() - value.get("updated", 0) < 20 * 60:
+            raise RuntimeError("Wait for the automatic update to finish, then run the installer again.")
     database = app / "state/jobs.sqlite3"
     if not database.exists():
         return
@@ -95,12 +101,13 @@ def ensure_idle(app):
 
 
 def register(app, python, extension_id):
+    bootstrap = app / "bootstrap.py"
     if os.name == "nt":
         launcher = app / "native-host.cmd"
-        launcher.write_text(f'@echo off\r\n"{python}" -m video_downloader.native %*\r\n')
+        launcher.write_text(f'@echo off\r\n"{python}" "{bootstrap}" %*\r\n')
     else:
         launcher = app / "native-host"
-        launcher.write_text("#!/bin/sh\nexec " + shlex.quote(str(python)) + ' -m video_downloader.native "$@"\n')
+        launcher.write_text("#!/bin/sh\nexec " + shlex.quote(str(python)) + " " + shlex.quote(str(bootstrap)) + ' "$@"\n')
         launcher.chmod(0o700)
     manifest = {"name": HOST, "description": "Video Downloader · Built by abomination81", "path": str(launcher), "type": "stdio", "allowed_origins": [f"chrome-extension://{extension_id}/"]}
     manifest_path = app / f"{HOST}.json"
@@ -126,6 +133,18 @@ def main():
         raise RuntimeError("Run Install.command or Install-Windows.cmd to start setup.")
     app = app_directory()
     app.mkdir(parents=True, exist_ok=True, mode=0o700)
+    bootstrap_source = ROOT / "scripts/native_bootstrap.py"
+    if not bootstrap_source.exists():
+        bootstrap_source = ROOT / "helper/video_downloader/bootstrap.py"
+    spec = importlib.util.spec_from_file_location("vd_native_bootstrap", bootstrap_source)
+    bootstrap = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bootstrap)
+    with bootstrap.locked(app):
+        bootstrap.recover(app)
+        setup(args, app, bootstrap)
+
+
+def setup(args, app, bootstrap):
     ensure_idle(app)
     environment = app / ".venv"
     python = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
@@ -163,11 +182,20 @@ def main():
     execute([python, "-c", "import video_downloader.native, yt_dlp, av, PIL, lxml.etree; print('Helper installed.')"])
     config_path = app / "config.json"
     config = json.loads(config_path.read_text()) if config_path.exists() else {}
-    config.update({"binaries": binaries, "extension_id": extension_id})
+    tools = app / "tools"
+    tools.mkdir(mode=0o700, exist_ok=True)
+    updater_uv = tools / ("uv.exe" if os.name == "nt" else "uv")
+    uv_source = Path(shutil.which(args.uv) or args.uv).resolve()
+    if uv_source != updater_uv.resolve():
+        shutil.copy2(uv_source, updater_uv)
+    if os.name != "nt": updater_uv.chmod(0o700)
+    shutil.copy2(bootstrap.__file__, app / "bootstrap.py")
+    config.update({"binaries": binaries, "extension_id": extension_id, "updater_uv": str(updater_uv)})
+    config.setdefault("auto_updates", True)
     config.setdefault("download_dir", str(Path.home() / "Downloads"))
     if Path(config["download_dir"]).expanduser().resolve() == (Path.home() / "Downloads/Video Downloader").resolve():
         config["download_dir"] = str(Path.home() / "Downloads")
-    config_path.write_text(json.dumps(config, indent=2) + "\n")
+    bootstrap.atomic_json(config_path, config)
     temporary = app / "extension.new"
     shutil.rmtree(temporary, ignore_errors=True)
     shutil.copytree(extension, temporary)
@@ -178,6 +206,8 @@ def main():
         destination.rename(backup)
     temporary.rename(destination)
     register(app, python, extension_id)
+    (app / "active-runtime.json").unlink(missing_ok=True)
+    bootstrap.atomic_json(app / "update-state.json", {"state": "current", "message": "Automatic updates are ready. Future updates install silently.", "updated": time.time()})
     shutil.rmtree(backup, ignore_errors=True)
     print("\nSetup complete. The helper starts silently when you download.")
     print("1. Open chrome://extensions and turn on Developer mode.")

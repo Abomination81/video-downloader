@@ -108,6 +108,17 @@ class Clear(Request):
     type: Literal["clear"]
 
 
+class Updates(Request):
+    type: Literal["updates"]
+    enabled: bool = True
+    force: bool = False
+    chromeVersion: int = Field(default=127, ge=127, le=1000)
+
+
+class UpdateStatus(Request):
+    type: Literal["update-status"]
+
+
 class Finish(Request):
     type: Literal["finish"]
     jobId: str = Field(pattern=r"^[0-9a-f]{32}$")
@@ -129,4 +140,4 @@ class CleanImage(Request):
     _path = field_validator("path")(Finish.safe_path.__func__)
 
 
-RequestAdapter = TypeAdapter(Annotated[Ping | Start | Jobs | JobAction | Clear | Finish | CleanImage, Field(discriminator="type")])
+RequestAdapter = TypeAdapter(Annotated[Ping | Start | Jobs | JobAction | Clear | Finish | CleanImage | Updates | UpdateStatus, Field(discriminator="type")])

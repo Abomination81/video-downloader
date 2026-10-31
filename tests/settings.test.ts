@@ -11,4 +11,8 @@ describe('output defaults', () => {
   it('preserves an explicit original-source preference', () => {
     expect(settingsSchema.parse({ compatibleVideo: false }).compatibleVideo).toBe(false);
   });
+  it('enables automatic updates for old preferences and preserves opting out', () => {
+    expect(settingsSchema.parse({}).autoUpdates).toBe(true);
+    expect(settingsSchema.parse({ autoUpdates: false }).autoUpdates).toBe(false);
+  });
 });

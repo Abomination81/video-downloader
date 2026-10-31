@@ -11,6 +11,7 @@ import { copyLink } from '../lib/clipboard';
 import { httpUrl } from '../lib/schema';
 import { selectedImage } from '../lib/images';
 import { SavedImages } from '../lib/saved-images';
+import { Updates } from '../lib/updates';
 
 export default defineBackground(() => {
   const captures = new Map<number, Capture[]>();
@@ -20,6 +21,13 @@ export default defineBackground(() => {
   const requestHeaders = new Map<string, Record<string, string>>();
   const imageHeaders = new Map<string, Record<string, string>>();
   const copyStyles = new Map<string, boolean>();
+  const copyTasks = new Map<string, Promise<unknown>>();
+  const copyCssHistory = chrome.storage.local.get('copyCssHistory').then(async saved => {
+    const previous = Array.isArray(saved.copyCssHistory) ? saved.copyCssHistory.filter((css): css is string => typeof css === 'string' && css.length <= 16384).slice(-63) : [];
+    const values = [...new Set([...previous, COPY_CSS])];
+    await chrome.storage.local.set({ copyCssHistory: values });
+    return values;
+  });
   const ready = chrome.storage.session.get('captures').then((saved) => {
     for (const [key, values] of Object.entries(saved.captures ?? {})) {
       if (Array.isArray(values)) captures.set(Number(key), values.filter((v): v is Capture => !!v && typeof v.url === 'string' && typeof v.at === 'number' && Date.now() - v.at < 20 * 60 * 1000).slice(-200));
@@ -37,17 +45,28 @@ export default defineBackground(() => {
     return settingsSchema.parse({ ...defaults, ...(data.settings as object ?? {}) });
   }
   async function menuPolicy(tabId: number) {
-    const value = await settings();
     // A newly created overlay frame gets this again when it probes or reports media.
     const frames = await chrome.webNavigation.getAllFrames({ tabId });
     await Promise.allSettled((frames ?? []).slice(0, 100).map(async (f) => {
-      const key = `${tabId}:${f.frameId}`;
-      if (copyStyles.get(key) !== value.restoreCopy) {
-        const injection = { target: { tabId, frameIds: [f.frameId] }, css: COPY_CSS, origin: 'USER' as const };
-        if (value.restoreCopy) await chrome.scripting.insertCSS(injection); else await chrome.scripting.removeCSS(injection);
-        copyStyles.set(key, value.restoreCopy);
-      }
-      return chrome.tabs.sendMessage(tabId, { type: 'menu-policy', hasMedia: mediaTabs.has(tabId) || !!captures.get(tabId)?.length, restoreMenus: value.restoreMenus, restoreCopy: value.restoreCopy }, { frameId: f.frameId });
+      const key = `${tabId}:${f.frameId}:${f.documentId ?? ''}`;
+      const apply = async () => {
+        const value = await settings();
+        const history = await copyCssHistory;
+        if (copyStyles.get(key) !== value.restoreCopy) {
+          const target = { tabId, ...(f.documentId ? { documentIds: [f.documentId] } : { frameIds: [f.frameId] }) };
+          // USER styles can survive an extension reload. Remove prior rules
+          // before inserting once; serialize frame work to prevent duplicates.
+          for (const css of history) await chrome.scripting.removeCSS({ target, css, origin: 'USER' });
+          if (value.restoreCopy) await chrome.scripting.insertCSS({ target, css: COPY_CSS, origin: 'USER' });
+          copyStyles.set(key, value.restoreCopy);
+        }
+        return chrome.tabs.sendMessage(tabId, { type: 'menu-policy', hasMedia: mediaTabs.has(tabId) || !!captures.get(tabId)?.length, restoreMenus: value.restoreMenus, restoreCopy: value.restoreCopy }, f.documentId ? { documentId: f.documentId } : { frameId: f.frameId });
+      };
+      const previous = copyTasks.get(key) ?? Promise.resolve();
+      const task = previous.then(apply, apply);
+      copyTasks.set(key, task);
+      try { return await task; }
+      finally { if (copyTasks.get(key) === task) copyTasks.delete(key); }
     }));
   }
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -63,12 +82,19 @@ export default defineBackground(() => {
   }
   const downloads = new ChromeDownloads(report);
   const savedImages = new SavedImages(report);
-  chrome.runtime.onInstalled.addListener(() => {
+  const updates = new Updates();
+  chrome.runtime.onInstalled.addListener((event) => {
     chrome.contextMenus.removeAll(() => {
       chrome.contextMenus.create({ id: 'download-video', title: 'Download video', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
       chrome.contextMenus.create({ id: 'copy-clean-link', title: 'Copy clean link', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
       chrome.contextMenus.create({ id: 'save-original-image', title: 'Save original image', contexts: ['image'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
     });
+    if (event.reason === 'update') {
+      // Reconnect existing documents without reloading their pages or forms.
+      // The content script disposes its prior event listeners through WXT.
+      const files = chrome.runtime.getManifest().content_scripts?.flatMap(script => script.js ?? []) ?? [];
+      if (files.length) void chrome.tabs.query({}).then(tabs => Promise.allSettled(tabs.filter(tab => tab.id !== undefined && /^https?:/.test(tab.url ?? '')).map(tab => chrome.scripting.executeScript({ target: { tabId: tab.id!, allFrames: true }, files, injectImmediately: true }))));
+    }
   });
   chrome.webRequest.onBeforeSendHeaders.addListener((details) => {
     if (details.tabId < 0) return;
@@ -101,7 +127,7 @@ export default defineBackground(() => {
   chrome.webRequest.onCompleted.addListener(forgetRequest, { urls: ['http://*/*', 'https://*/*'] });
   chrome.webRequest.onErrorOccurred.addListener(forgetRequest, { urls: ['http://*/*', 'https://*/*'] });
   chrome.webNavigation.onCommitted.addListener((details) => {
-    for (const key of copyStyles.keys()) if (key.startsWith(`${details.tabId}:`) && (details.frameId === 0 || key === `${details.tabId}:${details.frameId}`)) copyStyles.delete(key);
+    for (const key of copyStyles.keys()) if (key.startsWith(`${details.tabId}:`) && (details.frameId === 0 || key.startsWith(`${details.tabId}:${details.frameId}:`))) copyStyles.delete(key);
     if (details.frameId === 0) { captures.delete(details.tabId); contexts.delete(details.tabId); selections.delete(details.tabId); mediaTabs.delete(details.tabId); saveCaptures(); }
     else captures.set(details.tabId, (captures.get(details.tabId) ?? []).filter((c) => c.frameId !== details.frameId));
   });
@@ -238,6 +264,7 @@ export default defineBackground(() => {
       z.object({ type: z.literal('copy-link'), url: httpUrl }).strict(),
       z.object({ type: z.literal('save-image'), tabId: z.number().int().nonnegative(), frameId: z.number().int().nonnegative().default(0), srcUrl: z.string().max(16384).optional() }).strict(),
       z.object({ type: z.enum(['ping', 'jobs', 'clear']) }).strict(),
+      z.object({ type: z.enum(['check-updates', 'update-status']) }).strict(),
       z.object({ type: z.enum(['cancel', 'reveal', 'retry-save']), jobId: z.string().regex(/^[0-9a-f]{32}$/) }).strict(),
     ]).safeParse(raw);
     if (!parsed.success) { respond({ ok: false, error: { code: 'invalid_request', message: 'Reload the extension and try again.' } }); return; }
@@ -247,6 +274,8 @@ export default defineBackground(() => {
       if (request.type === 'start') return start(request.candidate, request.requestId);
       if (request.type === 'copy-link') { await copyLink(cleanLink(request.url)); return {}; }
       if (request.type === 'save-image') return saveImage(request.tabId, request.frameId, request.srcUrl);
+      if (request.type === 'check-updates') return updates.check(true);
+      if (request.type === 'update-status') return updates.status();
       if (request.type === 'cancel') return downloads.cancel(request.jobId);
       if (request.type === 'retry-save') return downloads.retry(request.jobId);
       if (request.type === 'jobs') {

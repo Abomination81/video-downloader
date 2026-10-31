@@ -12,6 +12,7 @@ from . import __version__, delivery, store
 from .media import MediaError
 from .config import EXTENSION_ID, app_dir, binary, downloaded_file, output_dir, private_dir
 from .models import CleanImage, RequestAdapter, Start
+from .bootstrap import locked, recover
 
 MAX_MESSAGE = 1024 * 1024
 
@@ -98,7 +99,12 @@ def handle(raw):
         import yt_dlp.version
         return {"version": __version__, "engine": yt_dlp.version.__version__, "dependencies": deps, "ready": all(deps.values()), "downloadDir": str(output_dir())}
     if request.type in ("start", "clean-image"):
-        return launch(request)
+        with locked(app_dir()):
+            recover(app_dir())
+            return launch(request)
+    if request.type in ("updates", "update-status"):
+        from . import updater
+        return updater.status() if request.type == "update-status" else updater.start(request.enabled, request.force, request.chromeVersion)
     if request.type == "jobs":
         delivery.prune()
         jobs = store.list_jobs()

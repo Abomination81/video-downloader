@@ -15,10 +15,13 @@ def main():
     subprocess.run(["uv", "build", "--wheel", "--out-dir", str(bundle / "helper-wheel"), str(ROOT / "helper")], check=True)
     requirements = subprocess.run(["uv", "export", "--project", str(ROOT / "helper"), "--no-dev", "--no-emit-project", "--no-hashes", "--no-header"], capture_output=True, text=True, check=True).stdout
     (bundle / "runtime-requirements.txt").write_text(requirements)
+    update_requirements = subprocess.run(["uv", "export", "--project", str(ROOT / "helper"), "--no-dev", "--no-emit-project", "--no-header"], capture_output=True, text=True, check=True).stdout
+    (bundle / "update-requirements.txt").write_text(update_requirements)
     shutil.copytree(ROOT / ".output/chrome-mv3", bundle / "extension")
     (bundle / "scripts").mkdir()
     for name in ("install.py", "install-windows.ps1", "uninstall.py"):
         shutil.copy2(ROOT / "scripts" / name, bundle / "scripts" / name)
+    shutil.copy2(ROOT / "helper/video_downloader/bootstrap.py", bundle / "scripts/native_bootstrap.py")
     for name in ("Install.command", "Install-Windows.cmd", "Update-engine.command", "Update-engine-Windows.cmd", "Uninstall.command", "Uninstall-Windows.cmd", "extension-identity.json", "README.md", "CHANGELOG.md", "SECURITY.md", "LICENSE"):
         shutil.copy2(ROOT / name, bundle / name)
     shutil.copytree(ROOT / "docs", bundle / "docs", ignore=shutil.ignore_patterns(".hallmark", ".DS_Store", "__pycache__"))
