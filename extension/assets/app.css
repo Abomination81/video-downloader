@@ -69,3 +69,12 @@ a:hover { color: var(--color-accent); }
 code { font-family: var(--font-outlier); overflow-wrap: anywhere; font-size: var(--text-xs); }
 noscript { display: block; padding: var(--space-lg); }
 @media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active { transform: none; } }
+
+.download-extras { display: flex; gap: var(--space-md); justify-content: space-between; margin-top: var(--space-xs); }
+.download-extras .link-button { background: transparent; color: var(--color-accent-deep); }
+.format-title { overflow-wrap: anywhere; font-size: var(--text-sm); margin-top: var(--space-sm); }
+.format-fields { display: grid; gap: var(--space-xs); margin-top: var(--space-md); }
+.format-fields label { display: block; color: var(--color-muted); font-size: var(--text-xs); margin-top: var(--space-xs); }
+.format-fields select { width: 100%; min-width: 0; min-height: 40px; padding: 8px; background: var(--color-paper-2); color: var(--color-ink-2); border: 1px solid var(--color-rule); border-radius: var(--radius-input); font: 12px var(--font-body); }
+.format-fields select:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.format-actions { display: flex; gap: var(--space-md); align-items: center; margin-top: var(--space-md); }

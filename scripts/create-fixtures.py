@@ -17,7 +17,7 @@ class Factory:
         return destination
 
 
-if not (destination / "master.m3u8").exists():
+if not all((destination / name).exists() for name in ("master.m3u8", "dash/manifest.mpd", "source.mp4")):
     module.media_files.__wrapped__(Factory())
 profile = ImageCms.ImageCmsProfile(ImageCms.createProfile('sRGB')).tobytes()
 for name, size in [('preview.jpg', (160, 96)), ('original.jpg', (1200, 720))]:

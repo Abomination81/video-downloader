@@ -52,6 +52,18 @@ export const candidateSchema = z.object({
   cookiePartitionKey: z.object({ topLevelSite: httpUrl, hasCrossSiteAncestor: z.boolean().optional() }).strict().optional(),
 }).strict();
 export type Candidate = z.infer<typeof candidateSchema>;
+export const intentSchema = z.enum(['video', 'audio', 'formats']);
+export type DownloadIntent = z.infer<typeof intentSchema>;
+export const selectionSchema = z.object({ probeId: z.string().regex(/^[0-9a-f]{32}$/), optionId: z.string().regex(/^[0-9a-f]{32}$/) }).strict();
+export const downloadOptionsSchema = z.object({ assetType: z.enum(['video', 'audio']).optional(), outputProfile: z.enum(['compatible', 'original']).optional(), audioBitrate: z.union([z.literal(128), z.literal(192), z.literal(256), z.literal(320)]).optional(), formatSelection: selectionSchema.optional() }).strict();
+export type DownloadOptions = z.infer<typeof downloadOptionsSchema>;
+export const formatOptionSchema = z.object({
+  id: z.string().regex(/^[0-9a-f]{32}$/), kind: z.enum(['video', 'audio']),
+  codec: z.string().max(40), audioCodec: z.string().max(40), hdr: z.string().max(40), language: z.string().max(40),
+  width: finite.positive().optional(), height: finite.positive().optional(), fps: finite.positive().optional(), bitrate: finite.positive().optional(), sampleRate: finite.positive().optional(), size: finite.positive().optional(), approximate: z.boolean().optional(),
+}).strict();
+export type FormatOption = z.infer<typeof formatOptionSchema>;
+export const formatsSchema = z.object({ state: z.enum(['resolving', 'done']), options: z.array(formatOptionSchema).max(110) }).strict();
 export const cookieSchema = z.object({
   name: z.string().max(1024), value: z.string().max(16384),
   domain: z.string().max(253), path: z.string().max(2048),

@@ -30,18 +30,18 @@ def media_files(tmp_path_factory):
     ffmpeg("-f", "lavfi", "-i", "testsrc2=size=160x96:rate=12", "-t", "0.5", "-c:v", "libsvtav1", "-preset", "12", "-crf", "35", "-svtav1-params", "lp=1", root / "av1.mkv")
     for name, size in (("low", "160x90"), ("high", "320x180")):
         directory = root / name
-        directory.mkdir()
+        directory.mkdir(exist_ok=True)
         ffmpeg("-f", "lavfi", "-i", f"testsrc2=size={size}:rate=24", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000", "-t", "2", "-c:v", "libx264", "-profile:v", "baseline", "-level", "3.0", "-preset", "ultrafast", "-g", "24", "-c:a", "aac", "-f", "hls", "-hls_time", "1", "-hls_segment_type", "fmp4", "-hls_playlist_type", "vod", directory / "index.m3u8")
     (root / "master.m3u8").write_text('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=180000,RESOLUTION=160x90,FRAME-RATE=24,CODECS="avc1.42c01e,mp4a.40.2"\nlow/index.m3u8\n#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=320x180,FRAME-RATE=24,CODECS="avc1.42c01e,mp4a.40.2"\nhigh/index.m3u8\n')
     encrypted = root / "encrypted"
-    encrypted.mkdir()
+    encrypted.mkdir(exist_ok=True)
     key = encrypted / "key.bin"
     key.write_bytes(b"0123456789abcdef")
     key_info = root / "key-info.txt"
     key_info.write_text(f"key.bin\n{key}\n")
     ffmpeg("-i", root / "source.mp4", "-map", "0:v", "-map", "0:a", "-c", "copy", "-f", "hls", "-hls_time", "1", "-hls_playlist_type", "vod", "-hls_key_info_file", key_info, encrypted / "index.m3u8")
     dash = root / "dash"
-    dash.mkdir()
+    dash.mkdir(exist_ok=True)
     ffmpeg("-i", root / "source.mp4", "-filter_complex", "[0:v]split=2[lowin][high];[lowin]scale=160:90[low]", "-map", "[low]", "-map", "[high]", "-map", "0:a:0", "-c:v", "libx264", "-preset", "ultrafast", "-g", "24", "-b:v:0", "100k", "-b:v:1", "600k", "-c:a", "aac", "-f", "dash", "-seg_duration", "1", "-adaptation_sets", "id=0,streams=v id=1,streams=a", dash / "manifest.mpd")
     (root / "multiple.html").write_text('<!doctype html><html><head><title>Multiple videos</title></head><body><video src="/vp9.webm"></video><video src="/source.mp4"></video></body></html>')
     (root / "single.html").write_text('<!doctype html><html><head><title>Fresh video link</title></head><body><video src="/source.mp4?signature=fresh"></video></body></html>')

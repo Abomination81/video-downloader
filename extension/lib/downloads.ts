@@ -9,7 +9,7 @@ const transferUrl = z.string().max(1024).refine((value) => {
     return u.protocol === 'http:' && u.hostname === '127.0.0.1' && !!u.port && !u.username && !u.password && !u.search && !u.hash && /^\/video\/[A-Za-z0-9_-]{43}\//.test(u.pathname);
   } catch { return false; }
 });
-const prepared = z.object({ url: transferUrl, filename: z.string().max(200).regex(/^(?:Video|Image) [\d -]+ [a-f0-9]{6}\.(?:mp4|jpg|png|webp|gif|tiff|avif|heic|heif|jxl|svg)$/) }).strict();
+const prepared = z.object({ url: transferUrl, filename: z.string().max(200).regex(/^(?:Video|Audio|Image) [\d -]+ [a-f0-9]{6}\.(?:mp4|mp3|jpg|png|webp|gif|tiff|avif|heic|heif|jxl|svg)$/) }).strict();
 const record = z.object({ jobId, url: transferUrl.optional(), filename: z.string().max(200).optional(), downloadId: z.number().int().nonnegative().optional(), attempts: z.number().int().min(0).max(3).default(0), error: z.string().max(400).optional() }).strict();
 type Record = z.infer<typeof record>;
 const records = z.array(record).max(50);

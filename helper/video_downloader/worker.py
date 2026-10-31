@@ -83,6 +83,8 @@ def classify_download_error(error) -> MediaError:
 
 
 def download(request: Start, job_id: str, directory: Path, cancelled):
+    from . import formats
+    selection = formats.resolve(request)
     latest = 0.0
     def hook(data):
         nonlocal latest
@@ -97,48 +99,42 @@ def download(request: Start, job_id: str, directory: Path, cancelled):
         store.update(job_id, state="downloading", progress=progress)
     last_error = MediaError("unsupported_source", "No downloadable video was found on this page.")
     for index, source in enumerate(request.sources):
+        if selection and index != selection['sourceIndex']: continue
         for impersonate in (False, True):
             if cancelled():
                 raise Cancelled()
             work = private_dir(directory / str(index))
             store.update(job_id, state="resolving", progress=0)
             try:
-                with yt_dlp.YoutubeDL(engine_options(source, work, hook, impersonate, request.outputProfile)) as ydl:
+                options = engine_options(source, work, hook, impersonate, request.outputProfile)
+                if request.assetType == 'audio':
+                    options.update(format='ba/b', format_sort=['abr', 'asr', 'acodec', 'br'])
+                if selection: options['format'] = '+'.join(selection['ids'])
+                with yt_dlp.YoutubeDL(options) as ydl:
                     ydl.cookiejar.set_policy(http.cookiejar.DefaultCookiePolicy(strict_ns_domain=http.cookiejar.DefaultCookiePolicy.DomainStrictNonDomain))
                     for cookie in cookie_jar(request.cookies):
                         ydl.cookiejar.set_cookie(cookie)
                     info = ydl.extract_info(source.url, download=False)
-                    if not info:
-                        raise last_error
-                    if info.get("_type") in ("playlist", "multi_video"):
-                        entries = list(info.get("entries") or [])
-                        if len(entries) > 1 and source.entryIndex and source.entryIndex <= len(entries):
-                            entries = [entries[source.entryIndex - 1]]
-                        if len(entries) != 1:
-                            raise MediaError("ambiguous_video", "This page contains several videos. Use the toolbar to choose the one you want.")
-                        info = entries[0]
-                    if info.get("is_live"):
-                        raise MediaError("live_stream", "This is a live stream. Download it after the broadcast finishes.")
-                    if info.get("has_drm"):
-                        raise MediaError("drm", "This video is protected by DRM and cannot be downloaded by this extension.")
+                    info = formats.single(info, source)
+                    if selection: formats.validate(selection, info)
                     title = str(info.get("title") or request.title).replace("\x00", "")[:300]
                     store.update(job_id, title=title, state="downloading")
                     ydl.process_info(info)
-                    import re
-                    videos = [p for p in work.glob("source.*") if p.is_file() and p.suffix not in (".part", ".ytdl", ".json", ".temp") and ".part" not in p.name and not re.search(r"\.f\d+\.", p.name)]
+                    videos = [p for p in work.glob("source.*") if p.is_file() and len(p.name.split('.')) == 2 and p.suffix not in (".part", ".ytdl", ".json", ".temp")]
                     if not videos:
                         raise MediaError("download_incomplete", "The download did not finish. No incomplete file was saved.")
                     return max(videos, key=lambda p: p.stat().st_size)
             except Cancelled:
                 raise
             except MediaError as error:
-                if error.code in ("live_stream", "drm", "ambiguous_video", "download_incomplete"):
+                if selection or error.code in ("live_stream", "drm", "ambiguous_video", "download_incomplete"):
                     raise
                 last_error = error
             except yt_dlp.utils.DownloadError as error:
                 if cancelled():
                     raise Cancelled() from error
                 last_error = classify_download_error(error)
+                if selection and 'requested format' in str(error).lower(): raise formats.expired() from None
                 if last_error.code == "drm":
                     raise last_error from error
                 # A maintained browser transport can recover fingerprint refusals.
@@ -177,6 +173,14 @@ def run_job(request: Start | CleanImage, job_id: str):
             run_image(request, job_id, directory, cancel.is_set)
             return
         source = download(request, job_id, directory, cancel.is_set)
+        if request.assetType == 'audio':
+            from .mp3 import clean
+            target = directory / 'clean.mp3'
+            result = clean(source, target, request.audioBitrate, cancel.is_set, lambda state: store.update(job_id, state=state, progress=0))
+            filename = f"Audio {datetime.now().strftime('%Y-%m-%d %H-%M-%S')} {job_id[:6]}.mp3"
+            detail = f"MP3 · {result['bitrate']} kbps · {result['sampleRate'] / 1000:g} kHz · " + ('original audio' if result['copied'] else 'converted from source audio')
+            save(request, job_id, target, filename, detail, 'audio/mpeg', cancel.is_set)
+            return
         converted = False
         if request.outputProfile == 'compatible':
             from .compatibility import prepare
@@ -196,17 +200,7 @@ def run_job(request: Start | CleanImage, job_id: str):
         detail = f"{result['width']} × {result['height']} {fps_label} {result['codec'].upper()}".strip()
         detail += (' + ' + ', '.join(dict.fromkeys(result['audioCodecs'])).upper()) if result['audioCodecs'] else ' · no audio'
         if request.outputProfile == 'compatible': detail += ' · converted for compatibility' if converted else ' · original tracks'
-        if request.browserDownload:
-            delivery.stage(job_id, target, filename, detail)
-        else:
-            final = output_dir() / filename
-            # The destination can be on another disk. Publish only a complete file.
-            staging = final.with_suffix(".mp4.partial")
-            try:
-                publish(target, staging, final, cancel.is_set)
-            finally:
-                staging.unlink(missing_ok=True)
-        store.update(job_id, state="ready" if request.browserDownload else "done", filename=filename, progress=100, detail=detail)
+        save(request, job_id, target, filename, detail, 'video/mp4', cancel.is_set)
     except Cancelled:
         delivery.discard(job_id)
         store.update(job_id, state="cancelled", error=None)
@@ -218,6 +212,18 @@ def run_job(request: Start | CleanImage, job_id: str):
         stopped.set()
         thread.join(timeout=3)
         shutil.rmtree(directory, ignore_errors=True)
+
+
+def save(request, job_id, target, filename, detail, mime, cancelled):
+    if cancelled() or store.get(job_id)['cancel_requested']: raise Cancelled()
+    if request.browserDownload:
+        delivery.stage(job_id, target, filename, detail, mime)
+    else:
+        final = output_dir() / filename
+        staging = final.with_suffix(final.suffix + '.partial')
+        try: publish(target, staging, final, cancelled)
+        finally: staging.unlink(missing_ok=True)
+    store.update(job_id, state='ready' if request.browserDownload else 'done', filename=filename, progress=100, detail=detail)
 
 
 def publish(target, staging, final, cancelled):

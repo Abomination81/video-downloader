@@ -10,7 +10,7 @@ export async function request<T = unknown>(message: Record<string, unknown>): Pr
 export const el = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
 export function notice(message: string) { const node = el('#notice'); node.textContent = message; node.hidden = false; }
 export const node = (tag: string, text = '', className = '') => { const result = document.createElement(tag); result.textContent = text; result.className = className; return result; };
-const labels: Record<string, string> = { queued: 'Queued', resolving: 'Finding the best quality…', downloading: 'Downloading…', converting: 'Preparing compatible H.264/AAC…', cleaning: 'Removing metadata…', verifying: 'Checking the file…', ready: 'Saving with Chrome…', finalizing: 'Checking Chrome’s saved file…', save_error: 'Chrome needs your attention', done: 'Saved with metadata removed', error: 'Couldn’t finish', cancelled: 'Cancelled', interrupted: 'Interrupted' };
+const labels: Record<string, string> = { queued: 'Queued', resolving: 'Finding the source…', downloading: 'Downloading…', converting: 'Converting for your selected format…', cleaning: 'Removing metadata…', verifying: 'Checking the file…', ready: 'Saving with Chrome…', finalizing: 'Checking Chrome’s saved file…', save_error: 'Chrome needs your attention', done: 'Saved with metadata removed', error: 'Couldn’t finish', cancelled: 'Cancelled', interrupted: 'Interrupted' };
 export function renderJobs(jobs: Job[], target: HTMLElement) {
   target.replaceChildren();
   if (!jobs.length) { target.append(node('p', 'Your downloads will appear here.', 'empty')); return; }

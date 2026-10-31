@@ -3,9 +3,21 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Highest-quality MP4 downloads with identifying metadata removed. Built by abomination81."><title>Video Downloader · Abomination81</title><link rel="icon" href="/icon-48.png"><link rel="stylesheet" href="../../assets/app.css"></head>
 <body class="popup"><main>
   <header class="topbar"><h1>Video Downloader</h1><a href="../options.html" target="_blank">Settings</a></header>
-  <section class="intro"><img class="intro-art" src="/brand/ghoul.jpg" alt="" width="175" height="175"><div class="eyebrow">An Abomination81 tool</div><h2>Keep the video.</h2><p>Compatible MP4 by default.<br>Identifying metadata removed.</p><button class="btn" id="download" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>Download video</button><p id="helper-status" role="status">Connecting to your local helper…</p></section>
+  <section class="intro"><img class="intro-art" src="/brand/ghoul.jpg" alt="" width="175" height="175"><div class="eyebrow">An Abomination81 tool</div><h2>Keep the video.</h2><p>Compatible MP4 by default.<br>Identifying metadata removed.</p><button class="btn" id="download" type="button"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>Download video</button><div class="download-extras"><button id="choose-format" class="link-button" type="button" disabled>Choose format</button><button id="download-mp3" class="link-button" type="button" disabled>Download MP3</button></div><p id="helper-status" role="status">Connecting to your local helper…</p></section>
   <div id="notice" class="notice" role="alert" hidden></div>
   <section id="choices" class="section" hidden><h2>Choose a video</h2><div id="candidates"></div></section>
+  <section id="format-picker" class="section" hidden aria-labelledby="format-heading">
+    <div class="section-head"><h2 id="format-heading">Choose format</h2><button id="close-formats" class="link-button" type="button">Close</button></div>
+    <p id="format-title" class="format-title"></p>
+    <p id="format-status" class="footnote" role="status">Checking the source formats…</p>
+    <div class="format-fields">
+      <label for="output-format">Save as</label><select id="output-format"><option value="compatible">Compatible MP4 · H.264 / AAC (default)</option><option value="original">Original source codecs · MP4</option><option value="mp3">MP3 audio</option></select>
+      <label for="source-format">Source quality</label><select id="source-format" disabled><option>Checking…</option></select>
+      <div id="mp3-quality" hidden><label for="audio-bitrate">MP3 quality</label><select id="audio-bitrate"><option value="320">Best · up to 320 kbps (default)</option><option value="256">256 kbps</option><option value="192">192 kbps</option><option value="128">128 kbps · smaller file</option></select></div>
+    </div>
+    <p id="format-note" class="footnote"></p>
+    <div class="format-actions"><button id="format-download" class="btn" type="button" disabled>Download MP4</button><button id="refresh-formats" class="link-button" type="button">Refresh formats</button></div>
+  </section>
   <section class="section"><div class="section-head"><h2>Downloads</h2><button id="clear" class="link-button" type="button">Clear history</button></div><div id="jobs" aria-live="polite"><p class="empty">Loading downloads…</p></div></section>
   <p class="footnote">Right-click a video, even through an overlay. If a site blocks the menu, use this button or Alt+Shift+V.</p>
   <footer class="brand-footer"><a href="https://abomination81.com" target="_blank" rel="noopener noreferrer">Built by <strong>abomination81</strong></a><nav class="brand-socials" aria-label="Creator links"><a href="https://x.com/Abomination81" target="_blank" rel="noopener noreferrer"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@Abomination81</a><a href="https://github.com/Abomination81" target="_blank" rel="noopener noreferrer">GitHub</a></nav></footer>

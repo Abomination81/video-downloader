@@ -8,9 +8,9 @@ export default defineConfig({
   publicDir: 'extension/public',
   manifest: {
     name: 'Video Downloader by Abomination81',
-    description: 'Clean video and original-image downloads, restored copying and right-click, and tracker-free links. Built by abomination81.',
+    description: 'Clean MP4, MP3 and original-image downloads, restored copying and right-click, and clean links. Built by abomination81.',
     homepage_url: 'https://abomination81.com',
-    version: '0.5.2',
+    version: '0.6.0',
     key: identity.key,
     minimum_chrome_version: '127',
     permissions: ['contextMenus', 'nativeMessaging', 'storage', 'webRequest', 'webNavigation', 'cookies', 'downloads', 'alarms', 'scripting', 'offscreen', 'clipboardWrite'],

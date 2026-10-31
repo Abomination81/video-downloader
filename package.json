@@ -1,6 +1,6 @@
 {
   "name": "video-downloader",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "test:browser": "node scripts/browser-check.mjs",
     "test:interactions": "node scripts/interaction-check.mjs",
     "test:updates": "node scripts/update-browser-check.mjs",
-    "package": "npm run build && uv run --python 3.13 scripts/package.py"
+    "package": "npm run build && uv run --python 3.13 scripts/package.py",
+    "test:formats": "node scripts/formats-browser-check.mjs"
   },
   "dependencies": {
     "zod": "^4.0.0"

@@ -48,7 +48,7 @@ def write_receipt(job_id, value):
 def prepared_file(job_id):
     info = receipt(job_id)
     name = info.get("prepared_name", "clean.mp4")
-    if not re.fullmatch(r"clean\.(?:mp4|jpg|png|webp|gif|tiff|avif|heic|heif|jxl|svg)", name):
+    if not re.fullmatch(r"clean\.(?:mp4|mp3|jpg|png|webp|gif|tiff|avif|heic|heif|jxl|svg)", name):
         raise MediaError("file_missing", "The prepared file could not be found safely.")
     return directory(job_id) / name
 

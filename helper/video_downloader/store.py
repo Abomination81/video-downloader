@@ -38,7 +38,7 @@ def connection():
 
 def create(request_id: str, title: str, kind="download") -> tuple[str, bool]:
     now = time.time()
-    prefix = "cleanup:" if kind == "cleanup" else ""
+    prefix = "cleanup:" if kind == "cleanup" else "probe:" if kind == "probe" else ""
     key = prefix + request_id
     with connection() as con:
         con.execute("BEGIN IMMEDIATE")
@@ -48,8 +48,9 @@ def create(request_id: str, title: str, kind="download") -> tuple[str, bool]:
         con.execute("UPDATE jobs SET state='interrupted', error='The download was interrupted. Start it again from the video page.' WHERE state IN ('queued','resolving','downloading','converting','cleaning','verifying','finalizing') AND updated < ?", (now - 90,))
         # Cleanup uses its own small pool, so a long video download does not
         # leave a newly saved photograph waiting with private metadata intact.
-        active = con.execute("SELECT count(*) FROM jobs WHERE state IN ('queued','resolving','downloading','converting','cleaning','verifying','ready','finalizing') AND (request_id LIKE 'cleanup:%') = ?", (kind == "cleanup",)).fetchone()[0]
-        if active >= (2 if kind == "cleanup" else 3):
+        lane = "request_id LIKE 'cleanup:%'" if kind == "cleanup" else "request_id LIKE 'probe:%'" if kind == "probe" else "request_id NOT LIKE 'cleanup:%' AND request_id NOT LIKE 'probe:%'"
+        active = con.execute("SELECT count(*) FROM jobs WHERE state IN ('queued','resolving','downloading','converting','cleaning','verifying','ready','finalizing') AND " + lane).fetchone()[0]
+        if active >= (2 if kind in ("cleanup", "probe") else 3):
             raise ValueError("queue_full")
         job_id = uuid.uuid4().hex
         con.execute("INSERT INTO jobs(id,request_id,state,title,created,updated) VALUES(?,?,'queued',?,?,?)", (job_id, key, title, now, now))
@@ -77,9 +78,20 @@ def list_jobs():
     with connection() as con:
         con.execute("UPDATE jobs SET state='interrupted', error='The download was interrupted. Start it again from the video page.' WHERE state IN ('queued','resolving','downloading','converting','cleaning','verifying','finalizing') AND updated < ?", (now - 90,))
         con.execute("DELETE FROM jobs WHERE state IN ('done','error','cancelled','interrupted') AND created < ?", (now - 30 * 86400,))
-        return [dict(row) for row in con.execute("SELECT id,state,title,progress,filename,error,detail,created FROM jobs ORDER BY CASE WHEN state IN ('queued','resolving','downloading','converting','cleaning','verifying','ready','finalizing') THEN 0 ELSE 1 END, created DESC LIMIT 50")]
+        return [dict(row) for row in con.execute("SELECT id,state,title,progress,filename,error,detail,created FROM jobs WHERE request_id NOT LIKE 'probe:%' ORDER BY CASE WHEN state IN ('queued','resolving','downloading','converting','cleaning','verifying','ready','finalizing') THEN 0 ELSE 1 END, created DESC LIMIT 50")]
+
+
+def busy():
+    list_jobs()  # Apply the existing stale-worker recovery before counting.
+    with connection() as con:
+        return con.execute("SELECT count(*) FROM jobs WHERE state IN ('queued','resolving','downloading','converting','cleaning','verifying','ready','finalizing')").fetchone()[0] > 0
+
+
+def prune_probes(before):
+    with connection() as con:
+        con.execute("DELETE FROM jobs WHERE request_id LIKE 'probe:%' AND state IN ('done','error','cancelled','interrupted') AND created < ?", (before,))
 
 
 def clear():
     with connection() as con:
-        con.execute("DELETE FROM jobs WHERE state IN ('done','error','cancelled','interrupted')")
+        con.execute("DELETE FROM jobs WHERE state IN ('done','error','cancelled','interrupted') AND request_id NOT LIKE 'probe:%'")

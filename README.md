@@ -21,6 +21,8 @@ Use **Video-Downloader.zip** from Releases for installation. GitHub's automatic 
 | Action | Result |
 | --- | --- |
 | **Download video** | Highest available resolution and frame rate in a compatible H.264/AAC MP4; native Chrome download entry |
+| **Choose video format…** | Inspect available source resolutions, frame rates, codecs and size estimates; choose a format for this download |
+| **Download audio as MP3** | Best available audio, up to 320 kbps by default; tags, artwork and chapters removed; native Chrome download entry |
 | **Save original image** | Largest exposed image source, original format and quality, identifying metadata removed |
 | Chrome's **Save image as** | Automatic cleanup of newly saved images, preserving your filename |
 | **Copy clean link** | Recognizable tracking fields removed; functional, signed and login links preserved |
@@ -51,12 +53,14 @@ Chrome requires these manual steps for an unpacked extension. Setup does not cha
 
 ## Download
 
-- Play the video, then right-click and select **Download video**.
+- Play the video, then right-click and select **Download video**. This still defaults to the highest available compatible MP4.
+- Choose **Download audio as MP3** for audio only, or **Choose video format…** to inspect source formats. Both are also available in the toolbar popup. The picker can save compatible MP4, original-codec MP4, or MP3, with optional 128/192/256/320 kbps MP3 quality. Choices apply only to that download.
+- The picker resumes if you close and reopen the popup. Its source format choices expire after 15 minutes; use **Refresh formats** if needed. An explicit format that disappears fails with a refresh prompt instead of silently substituting another rendition.
 - **Restore right-click menus** is enabled by default, including on sites that disable the menu. You can disable it in Settings to use a site's custom context menu.
 - Transparent overlays, cross-origin frames, and closed shadow roots are included in discovery.
 - If the menu still cannot open, click the extension's toolbar button or press **Alt+Shift+V**. Pin the extension to make the button easy to reach.
 - If multiple videos match, choose the correct one from the list.
-- Files appear in **Chrome's native download panel**, accessible from its down arrow and Downloads page. The entry appears after the MP4 has passed its metadata checks. The extension shows progress while the helper downloads and prepares the file.
+- Files appear in **Chrome's native download panel**, accessible from its down arrow and Downloads page. The entry appears after the file has passed its metadata checks. The extension shows progress while the helper downloads and prepares the file.
 - Downloads normally save directly in each person's own `Downloads` folder (`~/Downloads` on Mac, `%USERPROFILE%\Downloads` on Windows). A different location deliberately configured in Chrome is respected. The shared bundle contains no personal save location.
 - You can navigate to another video, change pages, or close the video tab and popup after starting. The source and scoped session are captured at selection time; a detached helper continues the work. The browser handoff is tracked independently of the tab.
 - A popup opening another tab does not discard an unfinished video selection. Choose the original video from the extension's list. Frame probes have a time limit, so a stuck player or script dialog can fall back to already-observed media addresses.
@@ -73,6 +77,10 @@ There is no resolution cap or automatic truncation. A known extractor or master 
 
 MP4 is a container, not a codec. An AV1/Opus MP4 can play locally yet be rejected by an upload service. The default addresses this codec mismatch. Platform-specific duration, resolution, file-size and account restrictions still apply; codec compatibility alone cannot guarantee acceptance by every service. See [X's technical upload recommendations](https://docs.x.com/x-api/media/quickstart/best-practices) and [web upload guidance](https://help.x.com/en/using-x/x-videos).
 
+MP3 downloads select the best available audio-only source when the site exposes one, avoiding a video download just to discard the picture. Otherwise the helper extracts audio from the available combined source. AAC, Opus and other audio are converted locally using FFmpeg's LAME encoder; conversion is lossy and does not improve the source. Default output is up to 320 kbps, preserving existing MP3 audio without re-encoding when possible. Explicit lower bitrate limits can require conversion. MP3 supports mono/stereo; multichannel sources are mixed to stereo. Source sizes shown by the picker are estimates where supplied and can differ from the converted output.
+
+The format picker lists the formats the first usable preferred source exposes. It does not invent resolutions or guarantee a site's complete catalogue. Selected video-only tracks are paired with the best available audio from that source. See [yt-dlp format selection](https://github.com/yt-dlp/yt-dlp#format-selection).
+
 ## Browsing and images
 
 - **Enable copying and text selection** is on by default. It restores selection CSS and common copy/selectstart/keyboard blockers. Left clicks and drags always reach the page so video seek bars and other controls keep working. Editors and marked interactive controls retain their selection behavior. Sites that cancel mouse presses themselves can still prevent mouse selection.
@@ -85,6 +93,8 @@ Images retain their original format and encoded picture data; they are never rec
 Simple static SVGs retain their drawing markup while descriptive/editor metadata is removed. Dynamic SVGs, external/embedded resources, unknown color profiles and unverified structures fail explicitly. Automatic cleanup leaves the original file untouched on failure. There is no claim that an unsupported image has been cleaned.
 
 ## Metadata
+
+MP3 output contains one audio track. The helper disables ID3v1/ID3v2 writing, removes cover images and chapters, requires a complete MPEG frame stream without trailing APE or other tag blocks, and checks both FFprobe and ExifTool for remaining descriptive tags. It decodes the entire output to catch damage and verifies duration. When copying MP3, it also compares decoded-audio hashes before and after cleanup. Functional Xing/gapless headers and necessary codec/sample-rate/duration data remain; see [FFmpeg's MP3 muxer documentation](https://ffmpeg.org/ffmpeg-formats.html#mp3). Source-URL file attributes are removed after Chrome saves; quarantine markings remain.
 
 The helper creates a fresh MP4 containing the selected audio/video tracks. It removes descriptive container/track tags, source timestamps, GPS, chapters, cover art, extra data tracks, user-data boxes, and H.264/HEVC unregistered SEI user data. Packet remuxing uses PyAV to remove private SEI messages selectively, retaining HDR, captions, timing, and orientation. FFmpeg performs the final container cleanup. FFprobe and ExifTool check the result before it is published in Downloads.
 

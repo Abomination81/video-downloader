@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from . import __version__, delivery, store
 from .media import MediaError
 from .config import EXTENSION_ID, app_dir, binary, downloaded_file, output_dir, private_dir
-from .models import CleanImage, RequestAdapter, Start
+from .models import CleanImage, Inspect, RequestAdapter, Start
 from .bootstrap import locked, recover
 
 MAX_MESSAGE = 1024 * 1024
@@ -55,7 +55,7 @@ def write_message(stream, message):
     stream.flush()
 
 
-def launch(request: Start | CleanImage):
+def launch(request: Start | CleanImage | Inspect):
     missing = []
     for name in ("ffmpeg", "ffprobe", "deno", "exiftool"):
         try:
@@ -65,15 +65,16 @@ def launch(request: Start | CleanImage):
     if missing:
         raise PublicError("dependencies_missing", "Run the installer again to finish setting up the helper.")
     try:
-        title = ("Image: " + Path(request.path).name)[:300] if request.type == "clean-image" else request.title
-        job_id, created = store.create(request.requestId, title, "cleanup" if request.type == "clean-image" else "download")
+        title = "Format inspection" if request.type == "inspect" else ("Image: " + Path(request.path).name)[:300] if request.type == "clean-image" else request.title
+        job_id, created = store.create(request.requestId, title, "probe" if request.type == "inspect" else "cleanup" if request.type == "clean-image" else "download")
     except ValueError as error:
-        raise PublicError("queue_full", "Three downloads are already running. Wait for one to finish.") from error
+        message = "Two format checks are already running. Wait for one to finish." if request.type == "inspect" else "Three downloads are already running. Wait for one to finish."
+        raise PublicError("queue_full", message) from error
     if created:
         flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS if os.name == "nt" else 0
         try:
             process = subprocess.Popen(
-                [sys.executable, "-m", "video_downloader.worker", job_id],
+                [sys.executable, "-m", "video_downloader.formats" if request.type == "inspect" else "video_downloader.worker", job_id],
                 stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 start_new_session=os.name != "nt", creationflags=flags,
             )
@@ -98,10 +99,13 @@ def handle(raw):
                 deps[name] = False
         import yt_dlp.version
         return {"version": __version__, "engine": yt_dlp.version.__version__, "dependencies": deps, "ready": all(deps.values()), "downloadDir": str(output_dir())}
-    if request.type in ("start", "clean-image"):
+    if request.type in ("start", "clean-image", "inspect"):
         with locked(app_dir()):
             recover(app_dir())
             return launch(request)
+    if request.type == "formats":
+        from .formats import status
+        return status(request.probeId)
     if request.type in ("updates", "update-status"):
         from . import updater
         return updater.status() if request.type == "update-status" else updater.start(request.enabled, request.force, request.chromeVersion)

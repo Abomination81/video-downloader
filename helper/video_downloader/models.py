@@ -65,22 +65,11 @@ class Ping(Request):
     type: Literal["ping"]
 
 
-class Start(Request):
-    type: Literal["start"]
+class MediaRequest(Request):
     requestId: str
     title: str = Field(max_length=300, default="Video")
     sources: list[Source] = Field(min_length=1, max_length=16)
     cookies: list[Cookie] = Field(default_factory=list, max_length=500)
-    browserDownload: bool = False
-    assetType: Literal["video", "image"] = "video"
-    outputProfile: Literal["compatible", "original"] = "compatible"
-    imageData: str | None = Field(default=None, max_length=700000)
-
-    @model_validator(mode="after")
-    def image_only_data(self):
-        if self.imageData and self.assetType != "image": raise ValueError("Image data is only valid for an image")
-        return self
-
     @field_validator("requestId")
     @classmethod
     def uuid_request(cls, value):
@@ -93,6 +82,37 @@ class Start(Request):
         if sum(len(c.name) + len(c.value) for c in cookies) > 256 * 1024:
             raise ValueError("Too many cookies")
         return cookies
+
+
+class FormatSelection(StrictModel):
+    probeId: str = Field(pattern=r"^[0-9a-f]{32}$")
+    optionId: str = Field(pattern=r"^[0-9a-f]{32}$")
+
+
+class Start(MediaRequest):
+    type: Literal["start"]
+    browserDownload: bool = False
+    assetType: Literal["video", "image", "audio"] = "video"
+    outputProfile: Literal["compatible", "original"] = "compatible"
+    audioBitrate: Literal[128, 192, 256, 320] = 320
+    formatSelection: FormatSelection | None = None
+    imageData: str | None = Field(default=None, max_length=700000)
+
+    @model_validator(mode="after")
+    def media_options(self):
+        if self.imageData and self.assetType != "image": raise ValueError("Image data is only valid for an image")
+        if self.formatSelection and self.assetType == "image": raise ValueError("Video/audio format selection cannot select an image")
+        return self
+
+
+class Inspect(MediaRequest):
+    type: Literal["inspect"]
+    outputProfile: Literal["compatible", "original"] = "compatible"
+
+
+class Formats(Request):
+    type: Literal["formats"]
+    probeId: str = Field(pattern=r"^[0-9a-f]{32}$")
 
 
 class Jobs(Request):
@@ -140,4 +160,4 @@ class CleanImage(Request):
     _path = field_validator("path")(Finish.safe_path.__func__)
 
 
-RequestAdapter = TypeAdapter(Annotated[Ping | Start | Jobs | JobAction | Clear | Finish | CleanImage | Updates | UpdateStatus, Field(discriminator="type")])
+RequestAdapter = TypeAdapter(Annotated[Ping | Start | Inspect | Formats | Jobs | JobAction | Clear | Finish | CleanImage | Updates | UpdateStatus, Field(discriminator="type")])

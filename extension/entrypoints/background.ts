@@ -12,6 +12,7 @@ import { httpUrl } from '../lib/schema';
 import { selectedImage } from '../lib/images';
 import { SavedImages } from '../lib/saved-images';
 import { Updates } from '../lib/updates';
+import { downloadOptionsSchema, type DownloadIntent, type DownloadOptions } from '../lib/schema';
 
 export default defineBackground(() => {
   const captures = new Map<number, Capture[]>();
@@ -92,6 +93,8 @@ export default defineBackground(() => {
   chrome.runtime.onInstalled.addListener((event) => {
     chrome.contextMenus.removeAll(() => {
       chrome.contextMenus.create({ id: 'download-video', title: 'Download video', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
+      chrome.contextMenus.create({ id: 'download-audio', title: 'Download audio as MP3', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
+      chrome.contextMenus.create({ id: 'choose-format', title: 'Choose video format…', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
       chrome.contextMenus.create({ id: 'copy-clean-link', title: 'Copy clean link', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
       chrome.contextMenus.create({ id: 'save-original-image', title: 'Save original image', contexts: ['image'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
     });
@@ -171,8 +174,7 @@ export default defineBackground(() => {
       return value?.topLevelSite && /^https?:\/\//.test(value.topLevelSite) ? { ...candidate, cookiePartitionKey: { topLevelSite: value.topLevelSite, ...(value.hasCrossSiteAncestor === undefined ? {} : { hasCrossSiteAncestor: value.hasCrossSiteAncestor }) } } : candidate;
     }));
   }
-  async function start(candidate: Candidate, requestId: string = crypto.randomUUID(), assetType: 'video' | 'image' = 'video', imageData?: string) {
-    if (candidate.protected) throw new HelperError('drm', 'This video is protected by DRM and cannot be downloaded by this extension.');
+  async function sessionCookies(candidate: Candidate, imageData?: string) {
     const value = await settings();
     const cookies = new Map<string, z.infer<typeof cookieSchema>>();
     if (value.useCookies && !imageData) {
@@ -182,10 +184,22 @@ export default defineBackground(() => {
         if (parsed.success) cookies.set(`${c.domain}\t${c.path}\t${c.name}`, parsed.data);
       }
     }
-    const result = z.object({ jobId: z.string().regex(/^[0-9a-f]{32}$/) }).parse(await native('start', { requestId, title: candidate.title, sources: candidate.sources, cookies: [...cookies.values()].slice(0, 500), browserDownload: true, assetType, outputProfile: value.compatibleVideo ? 'compatible' : 'original', ...(imageData ? { imageData } : {}) }));
+    return [...cookies.values()].slice(0, 500);
+  }
+  async function start(candidate: Candidate, requestId: string = crypto.randomUUID(), assetType: 'video' | 'image' | 'audio' = 'video', imageData?: string, options: DownloadOptions = {}) {
+    if (candidate.protected) throw new HelperError('drm', 'This video is protected by DRM and cannot be downloaded by this extension.');
+    const value = await settings();
+    const result = z.object({ jobId: z.string().regex(/^[0-9a-f]{32}$/) }).parse(await native('start', { requestId, title: candidate.title, sources: candidate.sources, cookies: await sessionCookies(candidate, imageData), browserDownload: true, assetType, outputProfile: value.compatibleVideo ? 'compatible' : 'original', ...options, ...(imageData ? { imageData } : {}) }));
     await downloads.track(result.jobId);
-    await chrome.storage.session.remove(['lastError', 'choices']);
+    await chrome.storage.session.remove(['lastError', 'choices', 'formatPicker']);
     await chrome.action.setBadgeText({ text: '↓' });
+    return result;
+  }
+  async function inspect(candidate: Candidate, requestId: string) {
+    if (candidate.protected) throw new HelperError('drm', 'This video is protected by DRM and cannot be downloaded by this extension.');
+    const value = await settings();
+    const result = z.object({ jobId: z.string().regex(/^[0-9a-f]{32}$/) }).parse(await native('inspect', { requestId, title: candidate.title, sources: candidate.sources, cookies: await sessionCookies(candidate), outputProfile: value.compatibleVideo ? 'compatible' : 'original' }));
+    await chrome.storage.session.set({ formatPicker: { candidate, probeId: result.jobId, at: Date.now(), profile: 'compatible', choice: '', bitrate: 320 } });
     return result;
   }
   async function saveImage(tabId: number, frameId: number, srcUrl?: string) {
@@ -209,16 +223,17 @@ export default defineBackground(() => {
     try { const result = await within(chrome.cookies.getPartitionKey({ tabId, frameId }), 1500); if (result.partitionKey.topLevelSite) cookiePartitionKey = { topLevelSite: result.partitionKey.topLevelSite, hasCrossSiteAncestor: result.partitionKey.hasCrossSiteAncestor }; } catch { /* Older Chrome or a closed frame can still use ordinary relevant cookies. */ }
     return start({ id: selection?.image.id ?? 'selected-image', title: selection?.image.title ?? 'Image', frameId, score: 1, exact: true, protected: false, sources, cookieUrls: [...new Set([page, ...alternatives])].slice(0, 16), width: selection?.image.width ?? 0, height: selection?.image.height ?? 0, ...(cookiePartitionKey ? { cookiePartitionKey } : {}) }, crypto.randomUUID(), 'image', data);
   }
-  async function downloadFrom(tabId: number, clicked?: chrome.contextMenus.OnClickData) {
+  async function downloadFrom(tabId: number, clicked?: chrome.contextMenus.OnClickData, intent: DownloadIntent = 'video') {
     // Capture this promise before any await. Navigation may remove the tab's
     // discovery cache, but cannot invalidate an already selected source.
     const selection = selections.get(tabId);
     const found = selection && Date.now() - selection.at < 15000 ? await selection.promise : await find(tabId, clicked);
     const chosen = automaticChoice(found);
-    if (chosen) {
-      await start(chosen);
+    if (chosen && intent !== 'formats') {
+      await start(chosen, crypto.randomUUID(), intent);
     } else {
-      await chrome.storage.session.set({ choices: { tabId, at: Date.now(), candidates: found } });
+      await chrome.storage.session.set({ choices: { tabId, at: Date.now(), candidates: chosen ? [chosen] : found, intent } });
+      await chrome.storage.session.remove('formatPicker');
       await chrome.action.openPopup();
     }
   }
@@ -229,7 +244,7 @@ export default defineBackground(() => {
       if (source) void action(() => copyLink(cleanLink(source))).catch(report);
       return;
     }
-    if (info.menuItemId === 'download-video' && tab?.id !== undefined) void action(() => downloadFrom(tab.id!, info)).catch(async (error) => {
+    if (['download-video', 'download-audio', 'choose-format'].includes(String(info.menuItemId)) && tab?.id !== undefined) void action(() => downloadFrom(tab.id!, info, info.menuItemId === 'download-audio' ? 'audio' : info.menuItemId === 'choose-format' ? 'formats' : 'video')).catch(async (error) => {
       await report(error);
       try { await chrome.action.openPopup(); } catch { /* The badge retains the error if Chrome cannot open the popup. */ }
     });
@@ -266,7 +281,9 @@ export default defineBackground(() => {
     if (sender.id !== chrome.runtime.id || !sender.url?.startsWith(chrome.runtime.getURL(''))) return;
     const parsed = z.discriminatedUnion('type', [
       z.object({ type: z.literal('find'), tabId: z.number().int().nonnegative() }).strict(),
-      z.object({ type: z.literal('start'), candidate: candidateSchema, requestId: z.string().uuid() }).strict(),
+      z.object({ type: z.literal('start'), candidate: candidateSchema, requestId: z.string().uuid(), options: downloadOptionsSchema.optional() }).strict(),
+      z.object({ type: z.literal('inspect'), candidate: candidateSchema, requestId: z.string().uuid() }).strict(),
+      z.object({ type: z.literal('formats'), probeId: z.string().regex(/^[0-9a-f]{32}$/) }).strict(),
       z.object({ type: z.literal('copy-link'), url: httpUrl }).strict(),
       z.object({ type: z.literal('save-image'), tabId: z.number().int().nonnegative(), frameId: z.number().int().nonnegative().default(0), srcUrl: z.string().max(16384).optional() }).strict(),
       z.object({ type: z.enum(['ping', 'jobs', 'clear']) }).strict(),
@@ -277,7 +294,9 @@ export default defineBackground(() => {
     const request = parsed.data;
     void action(async () => {
       if (request.type === 'find') return { candidates: await find(request.tabId) };
-      if (request.type === 'start') return start(request.candidate, request.requestId);
+      if (request.type === 'start') return start(request.candidate, request.requestId, request.options?.assetType ?? 'video', undefined, request.options);
+      if (request.type === 'inspect') return inspect(request.candidate, request.requestId);
+      if (request.type === 'formats') return native('formats', { probeId: request.probeId });
       if (request.type === 'copy-link') { await copyLink(cleanLink(request.url)); return {}; }
       if (request.type === 'save-image') return saveImage(request.tabId, request.frameId, request.srcUrl);
       if (request.type === 'check-updates') return updates.check(true);

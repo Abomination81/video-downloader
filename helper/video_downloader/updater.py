@@ -233,7 +233,7 @@ def prepare_runtime(bundle, update):
 
 
 def busy():
-    return any(job["state"] in store.ACTIVE for job in store.list_jobs())
+    return store.busy()
 
 
 def prune_runtimes(app, keep):
