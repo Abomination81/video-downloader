@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 — 2026-10-31
+
+- Fix copy/selection restoration swallowing left clicks and drags on custom video seek bars, including players with plain div controls.
+- Preserve selection behavior for native media, sliders and other marked interactive controls.
+- Add real Chrome regression checks for seek-bar clicking and pointer-captured scrubbing on ordinary, shadow-root and embedded players, plus native video controls, copying and text selection.
+
 ## 0.4.0 — 2026-10-30
 
 - Compatible H.264/AAC MP4 is now the default, fixing source-codec mismatches such as YouTube AV1/Opus downloads rejected by X.

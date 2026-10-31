@@ -21,6 +21,12 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Install interaction test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          npx playwright install --with-deps chromium
+      - run: npm run test:interactions
   helper:
     runs-on: macos-latest
     timeout-minutes: 20

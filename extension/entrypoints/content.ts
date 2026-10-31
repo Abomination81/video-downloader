@@ -1,7 +1,7 @@
 import { defaults, settingsSchema } from '../lib/schema';
 import { contains } from '../lib/detection';
 import { uuid } from '../lib/uuid';
-import { isEditing, isPlainText } from '../lib/copy-policy';
+import { isEditing, isSelectionControl } from '../lib/copy-policy';
 import { imageSources } from '../lib/images';
 
 export default defineContentScript({
@@ -89,10 +89,8 @@ export default defineContentScript({
       if (restoreMenus) event.stopImmediatePropagation();
     }, { capture: true });
     window.addEventListener('pointerdown', (event) => {
-      if (event.button === 0) {
-        if (restoreCopy && isPlainText(event.target)) event.stopImmediatePropagation();
-        return;
-      }
+      // Left-button events belong to the page: custom seek bars, sliders and
+      // drag controls often use plain divs without roles or tabindex.
       if (event.button !== 2) return;
       point = { x: event.clientX, y: event.clientY, at: Date.now() };
       const data = snapshot();
@@ -101,10 +99,9 @@ export default defineContentScript({
     }, { capture: true });
     window.addEventListener('mousedown', (event) => {
       if (event.button === 2 && restoreMenus) event.stopImmediatePropagation();
-      if (event.button === 0 && restoreCopy && isPlainText(event.target)) event.stopImmediatePropagation();
     }, { capture: true });
     for (const name of ['copy', 'selectstart']) window.addEventListener(name, (event) => {
-      if (restoreCopy && !isEditing(event.target)) event.stopImmediatePropagation();
+      if (restoreCopy && !isEditing(event.target) && (name !== 'selectstart' || !isSelectionControl(event))) event.stopImmediatePropagation();
     }, { capture: true });
     window.addEventListener('keydown', (event) => {
       if (restoreCopy && !isEditing(event.target) && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && ['a', 'c'].includes(event.key.toLowerCase())) event.stopImmediatePropagation();

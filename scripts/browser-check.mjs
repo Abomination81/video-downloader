@@ -41,7 +41,7 @@ const server = createServer(async (req, res) => {
   if (url.pathname === '/overlay') html = page('<h1>Overlay fixture</h1><div class="player">' + video + '<div class="overlay"></div></div>');
   if (url.pathname === '/blocked') html = page('<h1>Blocked menu fixture</h1><div class="player">' + video + '</div>', 'window.blockedCalls=0;window.addEventListener("contextmenu",e=>{window.blockedCalls++;e.preventDefault();e.stopPropagation()},true);document.oncontextmenu=()=>false;');
   if (url.pathname === '/blocked-empty') html = page('<h1>Right-click is blocked on this entire site</h1>', 'window.addEventListener("contextmenu",e=>e.preventDefault(),true);document.oncontextmenu=()=>false;');
-  if (url.pathname === '/copy-blocked') html = page('<h1>Copy restriction fixture</h1><style>p{user-select:none!important;-webkit-user-select:none!important}</style><p id="text">Selectable fixture text</p><textarea id="editor">Editable fixture text</textarea><button id="control">Interactive control</button>', 'for(const type of ["copy","selectstart","keydown","pointerdown","mousedown"])window.addEventListener(type,e=>e.preventDefault(),true);');
+  if (url.pathname === '/copy-blocked') html = page('<h1>Copy restriction fixture</h1><style>p{user-select:none!important;-webkit-user-select:none!important}</style><p id="text">Selectable fixture text</p><textarea id="editor">Editable fixture text</textarea><button id="control">Interactive control</button>', 'for(const type of ["copy","selectstart","keydown"])window.addEventListener(type,e=>e.preventDefault(),true);document.querySelector("#control").addEventListener("mousedown",e=>e.preventDefault());');
   if (url.pathname === '/images') html = page('<h1>Original image fixture</h1><img id="photo" src="/preview.jpg" srcset="/preview.jpg 160w, /original.jpg 1200w" sizes="160px" width="160" alt="Photo fixture"><a href="/original.jpg" download="Chosen photo.jpg">Save through Chrome</a>');
   if (url.pathname === '/inline-image') html = page(`<h1>Inline image fixture</h1><img id="photo" src="data:image/jpeg;base64,${(await readFile(join(fixtureDir, 'preview.jpg'))).toString('base64')}" width="160" alt="Inline fixture">`);
   if (url.pathname === '/shadow') html = page('<h1>Closed shadow fixture</h1><div id="host"></div>', 'const root=document.querySelector("#host").attachShadow({mode:"closed"});root.innerHTML=\'<video style="width:640px;height:360px" src="/source.mp4" controls muted autoplay></video>\';');
@@ -324,7 +324,7 @@ try {
     const event = name === 'keydown' ? new KeyboardEvent(name, { key: 'c', ctrlKey: true, bubbles: true, cancelable: true }) : ['pointerdown', 'mousedown'].includes(name) ? new MouseEvent(name, { button: 0, bubbles: true, cancelable: true }) : new Event(name, { bubbles: true, cancelable: true });
     node.dispatchEvent(event); return event.defaultPrevented;
   }, type);
-  for (const type of ['copy', 'selectstart', 'keydown', 'pointerdown', 'mousedown']) assert.equal(await cancelledEvent('#text', type), false);
+  for (const type of ['copy', 'selectstart', 'keydown']) assert.equal(await cancelledEvent('#text', type), false);
   assert.equal(await cancelledEvent('#editor', 'copy'), true, 'Editable controls must retain their own copy handling');
   assert.equal(await cancelledEvent('#control', 'mousedown'), true, 'Interactive controls must retain their own mouse handling');
   await copyPage.locator('#text').dblclick({ position: { x: 30, y: 8 } });
