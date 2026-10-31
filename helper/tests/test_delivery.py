@@ -133,6 +133,7 @@ def test_interrupted_final_check_can_resume_from_the_verified_private_copy(isola
 
 @pytest.mark.parametrize('audio', [False, True])
 def test_real_transfer_subprocess_starts_and_serves_verified_bytes(isolated_app, monkeypatch, audio):
+    import subprocess
     import urllib.request
     job, name = ready_file(isolated_app)
     if audio:
@@ -144,7 +145,7 @@ def test_real_transfer_subprocess_starts_and_serves_verified_bytes(isolated_app,
     processes = []
     original = delivery.spawn
     def tracked(*args, **kwargs):
-        process = original(*args, **kwargs)
+        process = original(*args, stderr=subprocess.PIPE, **kwargs)
         processes.append(process)
         return process
     monkeypatch.setattr(delivery, 'spawn', tracked)
@@ -158,3 +159,15 @@ def test_real_transfer_subprocess_starts_and_serves_verified_bytes(isolated_app,
         for process in processes:
             process.terminate()
             process.wait(timeout=5)
+            diagnostic = process.stderr.read(16384).decode(errors='replace')
+            if diagnostic: print('Transfer subprocess:', diagnostic)
+
+
+def test_loopback_transfer_never_depends_on_reverse_dns(isolated_app, monkeypatch):
+    import socket
+    job, _ = ready_file(isolated_app)
+    def unavailable(*_): raise AssertionError('Loopback transfer performed a DNS lookup')
+    monkeypatch.setattr(socket, 'getfqdn', unavailable)
+    with delivery.TransferServer(job, 'test-token') as server:
+        assert server.server_name == '127.0.0.1'
+        assert server.server_port > 0

@@ -8,6 +8,7 @@ import queue
 import re
 import secrets
 import shutil
+import socketserver
 import subprocess
 import sys
 import threading
@@ -98,6 +99,13 @@ def prune():
 
 class TransferServer(http.server.HTTPServer):
     allow_reuse_address = False
+
+    def server_bind(self):
+        # HTTPServer normally performs reverse DNS here. A private loopback
+        # transfer has a fixed numeric host and must not wait on a resolver.
+        socketserver.TCPServer.server_bind(self)
+        self.server_name = '127.0.0.1'
+        self.server_port = self.server_address[1]
 
     def __init__(self, job_id, token, ttl=3600):
         self.job_id, self.token = job_id, token
@@ -197,11 +205,11 @@ class TransferHandler(http.server.BaseHTTPRequestHandler):
             return  # Chrome can retry or resume; the prepared file is retained.
 
 
-def spawn(mode, job_id, data=None, stdout=subprocess.DEVNULL):
+def spawn(mode, job_id, data=None, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL):
     flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS if os.name == "nt" else 0
     process = subprocess.Popen([sys.executable, "-m", "video_downloader.delivery", mode, job_id],
                                stdin=subprocess.PIPE if data is not None else subprocess.DEVNULL,
-                               stdout=stdout, stderr=subprocess.DEVNULL,
+                               stdout=stdout, stderr=stderr,
                                start_new_session=os.name != "nt", creationflags=flags)
     if data is not None:
         process.stdin.write(json.dumps(data).encode())
