@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+import subprocess
 from pathlib import Path
 
 from install import HOST, app_directory, native_directories
@@ -12,6 +13,10 @@ def main():
         import install
         install.ensure_idle(app)
     print('Removing the local helper and extension files. Finished downloads will be kept.')
+    if sys.platform == 'darwin':
+        label = 'com.abomination81.video-downloader.updater'
+        subprocess.run(['/bin/launchctl', 'bootout', f'gui/{os.getuid()}/{label}'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        (Path.home() / 'Library/LaunchAgents' / f'{label}.plist').unlink(missing_ok=True)
     if os.name == 'nt':
         import winreg
         for browser in ('Google\\Chrome', 'Chromium'):

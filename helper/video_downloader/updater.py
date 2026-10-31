@@ -20,7 +20,7 @@ from pathlib import Path, PurePosixPath
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from . import __version__, store
-from .bootstrap import VERSION, atomic_json, locked, pointer, recover
+from .bootstrap import AGENT_LABEL, VERSION, atomic_json, locked, pointer, recover
 from .config import EXTENSION_ID, app_dir, private_dir, settings
 
 REPOSITORY = "Abomination81/video-downloader"
@@ -62,17 +62,19 @@ def managed():
     return (app_dir() / "bootstrap.py").is_file() and Path(settings().get("updater_uv", "")).is_file()
 
 
-def configure(enabled):
+def configure(enabled, chrome_version=None):
     with locked(app_dir()):
         value = settings()
         value["auto_updates"] = enabled
+        if chrome_version is not None:
+            value["chrome_major"] = chrome_version
         atomic_json(app_dir() / "config.json", value)
 
 
 def start(enabled=True, force=False, chrome_version=127):
-    if not managed():
+    if not managed() or (sys.platform == "darwin" and not settings().get("update_agent")):
         return {"state": "manual", "message": "Run the latest installer once to enable silent updates.", "installedVersion": __version__, "enabled": enabled}
-    configure(enabled)
+    configure(enabled, chrome_version)
     previous = status()
     if not enabled and not force:
         return {**previous, "state": "disabled", "message": "Automatic updates are off."}
@@ -83,10 +85,17 @@ def start(enabled=True, force=False, chrome_version=127):
     state(state="checking", message="Checking for updates…", checked=time.time())
     flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS | subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     try:
-        subprocess.Popen([sys.executable, "-m", "video_downloader.updater", str(chrome_version), "manual" if force else "auto"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=os.name != "nt", creationflags=flags)
-    except OSError as error:
-        state(state="error", message="The update check could not start. Downloads still work.")
-        raise UpdateError("The update check could not start") from error
+        if sys.platform == "darwin":
+            label = settings()["update_agent"]
+            if not re.fullmatch(re.escape(AGENT_LABEL) + r"(?:\.test\.[0-9a-f]{32})?", label):
+                raise UpdateError("Invalid updater registration")
+            with locked(app_dir()):
+                atomic_json(app_dir() / "update-request.json", {"manual": force, "chromeVersion": chrome_version, "created": time.time()})
+            subprocess.run(["/bin/launchctl", "kickstart", f"gui/{os.getuid()}/{label}"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10, check=True)
+        else:
+            subprocess.Popen([sys.executable, "-m", "video_downloader.updater", str(chrome_version), "manual" if force else "auto"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=os.name != "nt", creationflags=flags)
+    except (OSError, subprocess.SubprocessError, UpdateError):
+        state(state="error", message="The background updater could not start. Downloads still work; rerun the latest installer if this continues.", checked=time.time() - 5 * 3600)
     return status()
 
 
@@ -310,9 +319,30 @@ def run(chrome_version, manual=False):
                 time.sleep(15)
 
 
+def agent():
+    with locked(app_dir()):
+        path = app_dir() / "update-request.json"
+        request = json.loads(path.read_text()) if path.exists() else None
+        path.unlink(missing_ok=True)
+    value = settings()
+    fresh = request is not None and time.time() - request.get("created", 0) < 600
+    manual = fresh and request.get("manual") is True
+    if not value.get("auto_updates", True) and not manual:
+        return
+    if not fresh and time.time() - status().get("checked", 0) < 6 * 3600:
+        return
+    chrome = request.get("chromeVersion", 127) if fresh else value.get("chrome_major", 127)
+    if type(chrome) is not int or not 127 <= chrome <= 1000:
+        raise UpdateError("Invalid Chrome version for the update check")
+    run(chrome, manual)
+
+
 def main():
     try:
-        run(int(sys.argv[1]), len(sys.argv) > 2 and sys.argv[2] == "manual")
+        if sys.argv[1:] == ["agent"]:
+            agent()
+        else:
+            run(int(sys.argv[1]), len(sys.argv) > 2 and sys.argv[2] == "manual")
     except TimeoutError:
         return  # Another updater owns the lock; its status remains authoritative.
     except Exception as error:

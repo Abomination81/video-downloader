@@ -9,7 +9,8 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path
 
-VERSION = 1
+VERSION = 2
+AGENT_LABEL = "com.abomination81.video-downloader.updater"
 
 
 @contextmanager
@@ -102,6 +103,8 @@ def main():
         python = runtime_python(app)
         if not python.is_file():
             raise RuntimeError("The installed helper runtime is missing")
+    if sys.argv[1:] == ["--updater"]:
+        os.execv(str(python), [str(python), "-m", "video_downloader.updater", "agent"])
     os.execv(str(python), [str(python), "-m", "video_downloader.native", *sys.argv[1:]])
 
 

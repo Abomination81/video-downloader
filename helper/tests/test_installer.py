@@ -1,6 +1,7 @@
 """Exercise per-user deployment without installing tools into the test account."""
 import importlib.util
 import json
+import plistlib
 import sys
 from pathlib import Path
 
@@ -25,7 +26,7 @@ def test_shared_bundle_uses_each_accounts_downloads(tmp_path, monkeypatch, accou
     identity = json.loads((root / "extension-identity.json").read_text())
     (bundle / "extension-identity.json").write_text(json.dumps(identity))
     (bundle / "extension/manifest.json").write_text(json.dumps({"key": identity["key"]}))
-    wheel = bundle / "helper-wheel/video_downloader_helper-0.5.0-py3-none-any.whl"
+    wheel = bundle / "helper-wheel/video_downloader_helper-0.5.1-py3-none-any.whl"
     wheel.parent.mkdir()
     wheel.touch()
     constraints = bundle / "runtime-requirements.txt"
@@ -50,6 +51,12 @@ def test_shared_bundle_uses_each_accounts_downloads(tmp_path, monkeypatch, accou
     assert Path(config["updater_uv"]).read_bytes() == uv.read_bytes()
     assert (app / "bootstrap.py").is_file()
     assert "bootstrap.py" in (app / "native-host").read_text()
+    agent = home / "Library/LaunchAgents/com.abomination81.video-downloader.updater.plist"
+    if sys.platform == "darwin":
+        data = plistlib.loads(agent.read_bytes())
+        assert data["StartInterval"] == 21600
+        assert data["ProgramArguments"][-1] == "--updater"
+        assert data["EnvironmentVariables"]["VIDEO_DOWNLOADER_HOME"] == str(app)
     assert (app / "extension/manifest.json").exists()
     install_call = next(args for args in calls if "pip" in args)
     assert install_call[-1] == wheel.as_uri()  # Paths containing spaces stay one requirement.

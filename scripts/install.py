@@ -7,6 +7,7 @@ import json
 import importlib.util
 import os
 import platform
+import plistlib
 import shlex
 import shutil
 import sqlite3
@@ -22,7 +23,21 @@ HOST = "com.video_downloader.helper"
 
 
 def execute(args, **kwargs):
-    subprocess.run([str(a) for a in args], check=True, **kwargs)
+    kwargs.setdefault("check", True)
+    subprocess.run([str(a) for a in args], **kwargs)
+
+
+def register_updater(app, python, label):
+    if sys.platform != "darwin":
+        return
+    directory = Path.home() / "Library/LaunchAgents"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{label}.plist"
+    data = {"Label": label, "ProgramArguments": [str(python), str(app / "bootstrap.py"), "--updater"], "EnvironmentVariables": {"VIDEO_DOWNLOADER_HOME": str(app)}, "RunAtLoad": True, "StartInterval": 21600, "ProcessType": "Background", "StandardOutPath": "/dev/null", "StandardErrorPath": "/dev/null"}
+    path.write_bytes(plistlib.dumps(data))
+    path.chmod(0o600)
+    execute(["/bin/launchctl", "bootout", f"gui/{os.getuid()}/{label}"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    execute(["/bin/launchctl", "bootstrap", f"gui/{os.getuid()}", path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def app_directory():
@@ -179,7 +194,7 @@ def setup(args, app, bootstrap):
     # splits wheel and constraint paths containing spaces.
     execute([*command, package.resolve().as_uri()])
     # Smoke-check imports and protocol code before replacing a working extension.
-    execute([python, "-c", "import video_downloader.native, yt_dlp, av, PIL, lxml.etree; print('Helper installed.')"])
+    execute([python, "-c", "import video_downloader.native, video_downloader.updater, yt_dlp, av, PIL, lxml.etree; print('Helper installed.')"])
     config_path = app / "config.json"
     config = json.loads(config_path.read_text()) if config_path.exists() else {}
     tools = app / "tools"
@@ -192,6 +207,7 @@ def setup(args, app, bootstrap):
     shutil.copy2(bootstrap.__file__, app / "bootstrap.py")
     config.update({"binaries": binaries, "extension_id": extension_id, "updater_uv": str(updater_uv)})
     config.setdefault("auto_updates", True)
+    if sys.platform == "darwin": config["update_agent"] = bootstrap.AGENT_LABEL
     config.setdefault("download_dir", str(Path.home() / "Downloads"))
     if Path(config["download_dir"]).expanduser().resolve() == (Path.home() / "Downloads/Video Downloader").resolve():
         config["download_dir"] = str(Path.home() / "Downloads")
@@ -202,6 +218,7 @@ def setup(args, app, bootstrap):
     destination = app / "extension"
     backup = app / "extension.previous"
     shutil.rmtree(backup, ignore_errors=True)
+    register_updater(app, python, bootstrap.AGENT_LABEL)
     if destination.exists():
         destination.rename(backup)
     temporary.rename(destination)

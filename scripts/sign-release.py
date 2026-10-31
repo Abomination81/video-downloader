@@ -9,6 +9,7 @@ from pathlib import Path
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from video_downloader.bootstrap import VERSION
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -28,7 +29,7 @@ def main():
     if base64.b64encode(public).decode() != pinned:
         raise RuntimeError("Release signing key does not match the pinned public key")
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
-    payload = {"schema": 1, "repository": "Abomination81/video-downloader", "version": version, "sha256": digest, "size": archive.stat().st_size, "commit": commit, "minimumChrome": int(manifest["minimum_chrome_version"]), "bootstrap": 1}
+    payload = {"schema": 1, "repository": "Abomination81/video-downloader", "version": version, "sha256": digest, "size": archive.stat().st_size, "commit": commit, "minimumChrome": int(manifest["minimum_chrome_version"]), "bootstrap": VERSION}
     raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     (ROOT / "dist/update.json").write_bytes(raw)
     (ROOT / "dist/update.json.sig").write_bytes(base64.b64encode(key.sign(raw)))

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1 — 2026-10-31
+
+- Run Mac updates through a standard per-user launchd agent, on demand or every six hours. A live rollout check found that installing native Python libraries from Chrome’s process context could be rejected by macOS; agent-based preparation succeeds without changing security settings.
+- Keep the silent signed update path, idle-job checks, separate runtime, recovery journal and automatic Chrome activation. The updater agent exits after its check and respects the automatic-update preference.
+- Install/remove the agent with the normal per-user installer/uninstaller. Existing 0.4.x and initial 0.5.0 copies need this installer once to enable the complete update path.
+
 ## 0.5.0 — 2026-10-31
 
 - Add silent signed updates for the helper and personal unpacked Chrome extension. Existing users need one final installer run and extension reload to enable them.

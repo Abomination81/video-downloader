@@ -1,6 +1,6 @@
 [project]
 name = "video-downloader-helper"
-version = "0.5.0"
+version = "0.5.1"
 description = "Local Video Downloader helper · Built by abomination81"
 authors = [{ name = "Abomination81" }]
 requires-python = ">=3.11"
