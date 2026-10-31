@@ -66,7 +66,16 @@ try {
   const seed = async (value, intent) => worker.evaluate(data => chrome.storage.session.set({ choices: data }), { tabId: 99999, at: Date.now(), candidates: [value], intent });
   const popup = async () => { const page = await context.newPage(); await page.setViewportSize({ width: 380, height: 780 }); await page.goto(`chrome-extension://${identity.id}/popup.html`); return page; };
   const jobIds = async () => (await rpc({ type: 'jobs' })).result.jobs.map(j => j.id);
-  const newJob = async before => { const jobs = (await rpc({ type: 'jobs' })).result.jobs; const job = jobs.find(j => !before.includes(j.id)); assert.ok(job); return job; };
+  const newJob = async before => {
+    // A real click dispatches the async handler; it does not await native IPC.
+    for (let attempt = 0; attempt < 150; attempt++) {
+      const jobs = (await rpc({ type: 'jobs' })).result.jobs;
+      const job = jobs.find(j => !before.includes(j.id));
+      if (job) return job;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    throw new Error('The clicked action did not create a download job');
+  };
   const waitDone = async id => {
     let latest;
     for (let attempt = 0; attempt < 180; attempt++) {
