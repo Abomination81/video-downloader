@@ -6,6 +6,7 @@ from pathlib import Path
 
 HOST_NAME = "com.video_downloader.helper"
 EXTENSION_ID = "bhglpjejpddnmfgkaakboniplnoemoak"
+AUDIO_COMPANION_ID = "pfbibbaockflnnpdicbkgcnicplpmiif"
 
 
 def app_dir() -> Path:

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 — 2026-11-04
+
+- Replace the branded context-menu tree with direct commands. Video targets show **Download video** and **Download audio**; audio targets show **Download audio**; image targets show **Download photo**.
+- Add a small audio companion extension to keep the audio command separate under Chrome's menu rules. Load its installed folder once; it shares the existing helper, settings and history, and updates with the main extension.
+- Keep **Choose format** and **Copy clean link** in the toolbar popup. Clean-link copying uses the most recently right-clicked link for 15 seconds, then the current page.
+- Preserve selected sources across immediate tab closure while the companion forwards a request. Validate the companion sender, source fields, and request identifiers; repeated requests reuse the same job.
+- Validate the companion's identity, version and limited permissions during future signed updates.
+
 ## 0.6.0 — 2026-10-31
 
 - Add **Choose video format…** in the right-click menu and toolbar popup. Inspect actual source resolutions, frame rates, codecs and source size estimates, with compatible MP4, original-codec MP4 and MP3 output choices.

@@ -52,8 +52,8 @@ try {
   await worker.evaluate(async () => {
     for (let attempt = 0; attempt < 150; attempt++) {
       try {
-        await chrome.contextMenus.update('download-audio', { title: 'Download audio as MP3' });
-        await chrome.contextMenus.update('choose-format', { title: 'Choose video format…' });
+        await chrome.contextMenus.update('download-video', { title: 'Download video' });
+        await chrome.contextMenus.update('save-original-image', { title: 'Download photo' });
         return;
       } catch (error) {
         if (attempt === 149) throw error;

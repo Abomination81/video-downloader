@@ -1,4 +1,4 @@
-import { defaults, settingsSchema } from '../lib/schema';
+import { defaults, httpUrl, settingsSchema } from '../lib/schema';
 import { contains } from '../lib/detection';
 import { uuid } from '../lib/uuid';
 import { isEditing, isSelectionControl } from '../lib/copy-policy';
@@ -82,10 +82,14 @@ export default defineContentScript({
       return { token, url: location.href.slice(0, 16384), title: document.title.slice(0, 300), viewport: { width: innerWidth, height: innerHeight }, media, images, frames, ...(point ? { point } : {}) };
     }
     // Capture before site bubble/inline handlers. Do not prevent the native menu.
+    function clickedLink(event: MouseEvent | PointerEvent) {
+      const anchor = event.composedPath().find((node): node is HTMLAnchorElement => node instanceof HTMLAnchorElement);
+      return anchor && httpUrl.safeParse(anchor.href).success ? { linkUrl: anchor.href } : {};
+    }
     ctx.addEventListener(window, 'contextmenu', (event) => {
       point = { x: event.clientX, y: event.clientY, at: Date.now() };
       const data = snapshot();
-      void chrome.runtime.sendMessage({ type: 'context', snapshot: data }).catch(() => { /* A stale content script has no privileged fallback. */ });
+      void chrome.runtime.sendMessage({ type: 'context', snapshot: data, ...clickedLink(event) }).catch(() => { /* A stale content script has no privileged fallback. */ });
       if (restoreMenus) event.stopImmediatePropagation();
     }, { capture: true });
     ctx.addEventListener(window, 'pointerdown', (event) => {
@@ -94,7 +98,7 @@ export default defineContentScript({
       if (event.button !== 2) return;
       point = { x: event.clientX, y: event.clientY, at: Date.now() };
       const data = snapshot();
-      void chrome.runtime.sendMessage({ type: 'context', snapshot: data }).catch(() => { /* Page reload reconnects an invalidated content script. */ });
+      void chrome.runtime.sendMessage({ type: 'context', snapshot: data, ...clickedLink(event) }).catch(() => { /* Page reload reconnects an invalidated content script. */ });
       if (restoreMenus) event.stopImmediatePropagation();
     }, { capture: true });
     ctx.addEventListener(window, 'mousedown', (event) => {

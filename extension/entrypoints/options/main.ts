@@ -6,10 +6,11 @@ import { updateSchema } from '../../lib/updates';
 async function check() {
   const button = el<HTMLButtonElement>('#check'); button.disabled = true;
   try {
-    const result = z.object({ ready: z.boolean(), version: z.string(), engine: z.string(), downloadDir: z.string() }).parse(await request({ type: 'ping' }));
+    const result = z.object({ ready: z.boolean(), version: z.string(), engine: z.string(), downloadDir: z.string(), audioCompanionDir: z.string().optional() }).parse(await request({ type: 'ping' }));
     el('#connection').textContent = result.ready ? 'Ready when you are.' : 'Finish installing the helper.';
     el('#connection-detail').textContent = result.ready ? 'Downloads keep running when you leave the page. Finished files appear in Chrome’s download panel.' : 'Rerun the installer from your download bundle to install missing tools.';
     el('#versions').textContent = `Extension ${chrome.runtime.getManifest().version} · Helper ${result.version}`;
+    if (result.audioCompanionDir) el('#audio-companion-folder').textContent = result.audioCompanionDir;
   } catch (error) { el('#connection').textContent = 'Install your local helper.'; el('#connection-detail').textContent = (error as Error).message; }
   finally { button.disabled = false; }
 }

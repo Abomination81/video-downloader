@@ -26,7 +26,7 @@ def test_shared_bundle_uses_each_accounts_downloads(tmp_path, monkeypatch, accou
     identity = json.loads((root / "extension-identity.json").read_text())
     (bundle / "extension-identity.json").write_text(json.dumps(identity))
     (bundle / "extension/manifest.json").write_text(json.dumps({"key": identity["key"]}))
-    wheel = bundle / "helper-wheel/video_downloader_helper-0.6.0-py3-none-any.whl"
+    wheel = bundle / "helper-wheel/video_downloader_helper-0.7.0-py3-none-any.whl"
     wheel.parent.mkdir()
     wheel.touch()
     constraints = bundle / "runtime-requirements.txt"

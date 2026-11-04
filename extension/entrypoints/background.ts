@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { automaticChoice, discover, mediaKind, type Capture } from '../lib/detection';
+import { automaticChoice, discover, isVideoPage, mediaKind, type Capture } from '../lib/detection';
 import { candidateSchema, cookieSchema, defaults, settingsSchema, snapshotSchema, type Candidate, type Snapshot } from '../lib/schema';
 import { HelperError, native } from '../lib/native';
 import { ChromeDownloads } from '../lib/downloads';
@@ -13,14 +13,25 @@ import { selectedImage } from '../lib/images';
 import { SavedImages } from '../lib/saved-images';
 import { Updates } from '../lib/updates';
 import { downloadOptionsSchema, type DownloadIntent, type DownloadOptions } from '../lib/schema';
+import { AUDIO_COMPANION_ID, companionRequestSchema, companionSender } from '../lib/companion';
 
 export default defineBackground(() => {
   const captures = new Map<number, Capture[]>();
   const contexts = new Map<number, Snapshot>();
-  const selections = new Map<number, { at: number; promise: Promise<Candidate[]> }>();
+  type Selection = { at: number; pageUrl: string; promise: Promise<Candidate[]> };
+  const selections = new Map<number, Selection>();
+  const departedSelections = new Map<number, Selection>();
+  function rememberSelection(tabId: number) {
+    const selected = selections.get(tabId);
+    if (selected && Date.now() - selected.at < 15000) {
+      departedSelections.set(tabId, selected);
+      setTimeout(() => { if (departedSelections.get(tabId) === selected) departedSelections.delete(tabId); }, 15000);
+    }
+  }
   const mediaTabs = new Set<number>();
   const requestHeaders = new Map<string, Record<string, string>>();
   const imageHeaders = new Map<string, Record<string, string>>();
+  const audioHeaders = new Map<string, Record<string, string>>();
   const copyStyles = new Map<string, boolean>();
   const copyTasks = new Map<string, Promise<unknown>>();
   const copyCssHistory = chrome.storage.local.get('copyCssHistory').then(async saved => {
@@ -92,12 +103,12 @@ export default defineBackground(() => {
   const updates = new Updates(() => activeActions > 0);
   chrome.runtime.onInstalled.addListener((event) => {
     chrome.contextMenus.removeAll(() => {
-      chrome.contextMenus.create({ id: 'download-video', title: 'Download video', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
-      chrome.contextMenus.create({ id: 'download-audio', title: 'Download audio as MP3', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
-      chrome.contextMenus.create({ id: 'choose-format', title: 'Choose video format…', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
-      chrome.contextMenus.create({ id: 'copy-clean-link', title: 'Copy clean link', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
-      chrome.contextMenus.create({ id: 'save-original-image', title: 'Save original image', contexts: ['image'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
+      // PAGE applies only when no more-specific target applies. These two
+      // entries are mutually exclusive, so Chrome never creates a parent tree.
+      chrome.contextMenus.create({ id: 'download-video', title: 'Download video', contexts: ['page', 'video'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
+      chrome.contextMenus.create({ id: 'save-original-image', title: 'Download photo', contexts: ['image'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
     });
+    void chrome.runtime.sendMessage(AUDIO_COMPANION_ID, { type: 'audio-companion-sync' }).catch(() => undefined);
     if (event.reason === 'update') {
       // Reconnect existing documents without reloading their pages or forms.
       // The content script disposes its prior event listeners through WXT.
@@ -122,6 +133,11 @@ export default defineBackground(() => {
       if (imageHeaders.size > 500) imageHeaders.delete(imageHeaders.keys().next().value!);
       return;
     }
+    if (/^audio\//i.test(contentType) && !/mpegurl/i.test(contentType)) {
+      audioHeaders.set(details.url, requestHeaders.get(details.requestId) ?? {});
+      if (audioHeaders.size > 200) audioHeaders.delete(audioHeaders.keys().next().value!);
+      return;
+    }
     const kind = mediaKind(details.url, contentType);
     if (!kind) return;
     const value: Capture = { url: details.url, kind, headers: requestHeaders.get(details.requestId) ?? {}, frameId: details.frameId, at: Date.now(), contentType };
@@ -137,10 +153,15 @@ export default defineBackground(() => {
   chrome.webRequest.onErrorOccurred.addListener(forgetRequest, { urls: ['http://*/*', 'https://*/*'] });
   chrome.webNavigation.onCommitted.addListener((details) => {
     for (const key of copyStyles.keys()) if (key.startsWith(`${details.tabId}:`) && (details.frameId === 0 || key.startsWith(`${details.tabId}:${details.frameId}:`))) copyStyles.delete(key);
-    if (details.frameId === 0) { captures.delete(details.tabId); contexts.delete(details.tabId); selections.delete(details.tabId); mediaTabs.delete(details.tabId); saveCaptures(); }
+    if (details.frameId === 0) { rememberSelection(details.tabId); captures.delete(details.tabId); contexts.delete(details.tabId); selections.delete(details.tabId); mediaTabs.delete(details.tabId); saveCaptures(); }
     else captures.set(details.tabId, (captures.get(details.tabId) ?? []).filter((c) => c.frameId !== details.frameId));
   });
-  chrome.tabs.onRemoved.addListener((tabId) => { captures.delete(tabId); contexts.delete(tabId); selections.delete(tabId); mediaTabs.delete(tabId); for (const key of copyStyles.keys()) if (key.startsWith(`${tabId}:`)) copyStyles.delete(key); saveCaptures(); });
+  chrome.tabs.onRemoved.addListener((tabId) => {
+    rememberSelection(tabId);
+    captures.delete(tabId); contexts.delete(tabId); selections.delete(tabId); mediaTabs.delete(tabId);
+    for (const key of copyStyles.keys()) if (key.startsWith(`${tabId}:`)) copyStyles.delete(key);
+    saveCaptures();
+  });
 
   async function find(tabId: number, clicked?: chrome.contextMenus.OnClickData) {
     const context = contexts.get(tabId);
@@ -148,7 +169,9 @@ export default defineBackground(() => {
     await ready;
     const tab = await chrome.tabs.get(tabId);
     if (!tab.url || !/^https?:\/\//.test(tab.url)) throw new HelperError('restricted_page', 'Open a website with a video first. Chrome blocks extensions on this page.');
+    if (clicked?.pageUrl && clicked.pageUrl !== tab.url) throw new HelperError('source_page_changed', 'The source page changed after selection.');
     const frames = await chrome.webNavigation.getAllFrames({ tabId });
+    if (clicked?.frameUrl && frames?.find(frame => frame.frameId === (clicked.frameId ?? 0))?.url !== clicked.frameUrl) throw new HelperError('source_page_changed', 'The source frame changed after selection.');
     const collected = await Promise.allSettled((frames ?? []).slice(0, 100).map(async (frame) => {
       const raw = await within(chrome.tabs.sendMessage(tabId, { type: 'probe' }, { frameId: frame.frameId }), 1500);
       return { ...snapshotSchema.parse(raw), frameId: frame.frameId, parentFrameId: frame.parentFrameId };
@@ -217,34 +240,53 @@ export default defineBackground(() => {
       data = result.data;
     }
     const alternatives = selection?.image.sources.map((s) => s.url) ?? (srcUrl && /^https?:/.test(srcUrl) ? [srcUrl] : []);
-    if (!alternatives.length && !data) throw new HelperError('image_missing', 'Right-click directly on an image and choose Save original image.');
+    if (!alternatives.length && !data) throw new HelperError('image_missing', 'Right-click directly on an image and choose Download photo.');
     const sources = (data ? [page] : alternatives).slice(0, 16).map((url) => ({ url, kind: 'file' as const, headers: imageHeaders.get(url) ?? { Referer: page, 'User-Agent': navigator.userAgent } }));
     let cookiePartitionKey: Candidate['cookiePartitionKey'];
     try { const result = await within(chrome.cookies.getPartitionKey({ tabId, frameId }), 1500); if (result.partitionKey.topLevelSite) cookiePartitionKey = { topLevelSite: result.partitionKey.topLevelSite, hasCrossSiteAncestor: result.partitionKey.hasCrossSiteAncestor }; } catch { /* Older Chrome or a closed frame can still use ordinary relevant cookies. */ }
     return start({ id: selection?.image.id ?? 'selected-image', title: selection?.image.title ?? 'Image', frameId, score: 1, exact: true, protected: false, sources, cookieUrls: [...new Set([page, ...alternatives])].slice(0, 16), width: selection?.image.width ?? 0, height: selection?.image.height ?? 0, ...(cookiePartitionKey ? { cookiePartitionKey } : {}) }, crypto.randomUUID(), 'image', data);
   }
-  async function downloadFrom(tabId: number, clicked?: chrome.contextMenus.OnClickData, intent: DownloadIntent = 'video') {
+  async function downloadFrom(tabId: number, clicked?: chrome.contextMenus.OnClickData, intent: DownloadIntent = 'video', requestId: string = crypto.randomUUID()) {
     // Capture this promise before any await. Navigation may remove the tab's
     // discovery cache, but cannot invalidate an already selected source.
-    const selection = selections.get(tabId);
-    const found = selection && Date.now() - selection.at < 15000 ? await selection.promise : await find(tabId, clicked);
+    const expectedPage = clicked?.frameUrl ?? clicked?.pageUrl;
+    const selection = [selections.get(tabId), expectedPage ? departedSelections.get(tabId) : undefined].find(value => value && (!expectedPage || value.pageUrl === expectedPage));
+    if (intent === 'audio' && clicked?.mediaType === 'audio' && httpUrl.safeParse(clicked.srcUrl).success) {
+      // Native audio targets have an exact file URL. Capture it before awaiting
+      // any tab API so navigating/closing the player cannot invalidate it.
+      const url = clicked.srcUrl!;
+      const page = clicked.frameUrl ?? clicked.pageUrl ?? contexts.get(tabId)?.url;
+      if (!httpUrl.safeParse(page).success) throw new HelperError('audio_missing', 'Open the audio player on a website first.');
+      const candidate: Candidate = { id: 'native-audio', title: 'Audio', frameId: clicked.frameId ?? 0, score: 1, protected: false, exact: true, width: 0, height: 0,
+        sources: [{ url, kind: 'file', headers: audioHeaders.get(url) ?? { Referer: page! } }], cookieUrls: [...new Set([page!, clicked.pageUrl ?? page!, url])] };
+      try { const value = await within(chrome.cookies.getPartitionKey({ tabId, frameId: candidate.frameId }), 1000); if (value.partitionKey.topLevelSite) candidate.cookiePartitionKey = { topLevelSite: value.partitionKey.topLevelSite, ...(value.partitionKey.hasCrossSiteAncestor === undefined ? {} : { hasCrossSiteAncestor: value.partitionKey.hasCrossSiteAncestor }) }; } catch { /* Closed players can still use the captured address and relevant ordinary cookies. */ }
+      return start(candidate, requestId, 'audio');
+    }
+    let found: Candidate[];
+    try { found = selection && Date.now() - selection.at < 15000 ? await selection.promise : await find(tabId, clicked); }
+    catch (error) {
+      if (!clicked || !httpUrl.safeParse(clicked.pageUrl).success) throw error;
+      const page = clicked.frameUrl ?? clicked.pageUrl!;
+      const file = httpUrl.safeParse(clicked.srcUrl);
+      const sources: Candidate['sources'] = [];
+      if (isVideoPage(page)) sources.push({ url: page, kind: 'page', headers: {} });
+      if (file.success) sources.push({ url: file.data, kind: mediaKind(file.data) ?? 'file', headers: { Referer: page } });
+      if (!sources.some(s => s.url === page)) sources.push({ url: page, kind: 'page', headers: {} });
+      found = [{ id: 'closed-player', title: 'Selected media', frameId: clicked.frameId ?? 0, score: 1, protected: false, exact: true, width: 0, height: 0, sources, cookieUrls: [...new Set([page, clicked.pageUrl!, ...sources.map(s => s.url)])].slice(0, 16) }];
+    }
     const chosen = automaticChoice(found);
     if (chosen && intent !== 'formats') {
-      await start(chosen, crypto.randomUUID(), intent);
+      return start(chosen, requestId, intent);
     } else {
       await chrome.storage.session.set({ choices: { tabId, at: Date.now(), candidates: chosen ? [chosen] : found, intent } });
       await chrome.storage.session.remove('formatPicker');
       await chrome.action.openPopup();
+      return { opened: true };
     }
   }
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === 'save-original-image' && tab?.id !== undefined) { void action(() => saveImage(tab.id!, info.frameId ?? 0, info.srcUrl)).catch(report); return; }
-    if (info.menuItemId === 'copy-clean-link') {
-      const source = info.linkUrl ?? info.pageUrl ?? tab?.url;
-      if (source) void action(() => copyLink(cleanLink(source))).catch(report);
-      return;
-    }
-    if (['download-video', 'download-audio', 'choose-format'].includes(String(info.menuItemId)) && tab?.id !== undefined) void action(() => downloadFrom(tab.id!, info, info.menuItemId === 'download-audio' ? 'audio' : info.menuItemId === 'choose-format' ? 'formats' : 'video')).catch(async (error) => {
+    if (info.menuItemId === 'download-video' && tab?.id !== undefined) void action(() => downloadFrom(tab.id!, info)).catch(async (error) => {
       await report(error);
       try { await chrome.action.openPopup(); } catch { /* The badge retains the error if Chrome cannot open the popup. */ }
     });
@@ -252,15 +294,42 @@ export default defineBackground(() => {
   chrome.commands.onCommand.addListener((command, tab) => {
     if (command === 'download-video' && tab?.id !== undefined) void action(() => downloadFrom(tab.id!)).catch(report);
   });
+  const audioRequests = new Map<string, { at: number; promise: Promise<unknown> }>();
+  chrome.runtime.onMessageExternal.addListener((raw: unknown, sender, respond) => {
+    if (!companionSender(sender)) return;
+    const parsed = companionRequestSchema.safeParse(raw);
+    if (!parsed.success) { respond({ ok: false, error: { code: 'invalid_request', message: 'Update both extensions and try again.' } }); return; }
+    const request = parsed.data;
+    if (request.type === 'audio-companion-status') {
+      respond({ ok: true, result: { version: chrome.runtime.getManifest().version, busy: activeActions > 0 } }); return;
+    }
+    let pending: Promise<unknown>;
+    if (request.type === 'audio-companion-open') pending = action(() => chrome.action.openPopup());
+    else {
+      const previous = audioRequests.get(request.requestId);
+      if (previous) pending = previous.promise;
+      else {
+        for (const [id, value] of audioRequests) if (Date.now() - value.at > 15 * 60 * 1000) audioRequests.delete(id);
+        if (audioRequests.size >= 50) audioRequests.delete(audioRequests.keys().next().value!);
+        pending = action(() => downloadFrom(request.tabId, { menuItemId: 'download-audio', editable: false, frameId: request.frameId, pageUrl: request.pageUrl, ...(request.frameUrl ? { frameUrl: request.frameUrl } : {}), ...(request.mediaType ? { mediaType: request.mediaType } : {}), ...(request.srcUrl ? { srcUrl: request.srcUrl } : {}) }, 'audio', request.requestId));
+        audioRequests.set(request.requestId, { at: Date.now(), promise: pending });
+      }
+    }
+    void pending.then(result => respond({ ok: true, result })).catch(async error => {
+      await report(error); respond({ ok: false, error: errorResult(error) });
+    });
+    return true;
+  });
   chrome.runtime.onMessage.addListener((raw: unknown, sender, respond) => {
     if (raw && typeof raw === 'object' && 'target' in raw && raw.target === 'clipboard') return;
     const contentType = z.object({ type: z.enum(['context', 'media-present', 'frame-ready']) }).passthrough().safeParse(raw);
     if (sender.tab?.id !== undefined && contentType.success) {
       const tabId = sender.tab.id;
       if (contentType.data.type === 'context') {
-        const parsed = z.object({ type: z.literal('context'), snapshot: snapshotSchema }).strict().safeParse(raw);
+        const parsed = z.object({ type: z.literal('context'), snapshot: snapshotSchema, linkUrl: httpUrl.optional() }).strict().safeParse(raw);
         if (parsed.success) {
           contexts.set(tabId, { ...parsed.data.snapshot, frameId: sender.frameId ?? 0, parentFrameId: -1 });
+          void chrome.storage.session.set({ cleanLinkContext: { tabId, at: Date.now(), url: parsed.data.linkUrl ?? parsed.data.snapshot.url } });
           if (parsed.data.snapshot.media.length) mediaTabs.add(tabId);
           const previous = selections.get(tabId);
           if (!previous || Date.now() - previous.at > 100) {
@@ -268,7 +337,7 @@ export default defineBackground(() => {
             // Keep a failed probe observable to the click handler, without an
             // unhandled rejection if the user dismisses the menu.
             void promise.catch(() => undefined);
-            selections.set(tabId, { at: Date.now(), promise });
+            selections.set(tabId, { at: Date.now(), pageUrl: parsed.data.snapshot.url, promise });
           }
         }
       }
@@ -285,6 +354,7 @@ export default defineBackground(() => {
       z.object({ type: z.literal('inspect'), candidate: candidateSchema, requestId: z.string().uuid() }).strict(),
       z.object({ type: z.literal('formats'), probeId: z.string().regex(/^[0-9a-f]{32}$/) }).strict(),
       z.object({ type: z.literal('copy-link'), url: httpUrl }).strict(),
+      z.object({ type: z.literal('copy-context-link'), tabId: z.number().int().nonnegative() }).strict(),
       z.object({ type: z.literal('save-image'), tabId: z.number().int().nonnegative(), frameId: z.number().int().nonnegative().default(0), srcUrl: z.string().max(16384).optional() }).strict(),
       z.object({ type: z.enum(['ping', 'jobs', 'clear']) }).strict(),
       z.object({ type: z.enum(['check-updates', 'update-status']) }).strict(),
@@ -298,6 +368,12 @@ export default defineBackground(() => {
       if (request.type === 'inspect') return inspect(request.candidate, request.requestId);
       if (request.type === 'formats') return native('formats', { probeId: request.probeId });
       if (request.type === 'copy-link') { await copyLink(cleanLink(request.url)); return {}; }
+      if (request.type === 'copy-context-link') {
+        const saved = z.object({ tabId: z.number(), at: z.number(), url: httpUrl }).safeParse((await chrome.storage.session.get('cleanLinkContext')).cleanLinkContext);
+        const tab = await chrome.tabs.get(request.tabId);
+        const url = saved.success && saved.data.tabId === request.tabId && Date.now() - saved.data.at < 15000 ? saved.data.url : httpUrl.parse(tab.url);
+        await copyLink(cleanLink(url)); return {};
+      }
       if (request.type === 'save-image') return saveImage(request.tabId, request.frameId, request.srcUrl);
       if (request.type === 'check-updates') return updates.check(true);
       if (request.type === 'update-status') return updates.status();

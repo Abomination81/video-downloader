@@ -145,6 +145,14 @@ el<HTMLButtonElement>('#refresh-formats').onclick = async () => {
   try { await openPicker(candidate); } catch (error) { notice((error as Error).message); } finally { button.disabled = false; }
 };
 el<HTMLButtonElement>('#clear').onclick = async () => { try { await request({ type: 'clear' }); await refresh(); } catch (error) { notice((error as Error).message); } };
+el<HTMLButtonElement>('#copy-clean-link').onclick = async () => {
+  const button = el<HTMLButtonElement>('#copy-clean-link'); button.disabled = true;
+  try {
+    if (tabId === undefined) throw new Error('Open a website first.');
+    await request({ type: 'copy-context-link', tabId }); button.textContent = 'Link copied';
+  } catch (error) { notice((error as Error).message); }
+  finally { button.disabled = false; }
+};
 async function init() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }); tabId = tab?.id;
   const state = await chrome.storage.session.get(['lastError', 'choices', 'formatPicker']);

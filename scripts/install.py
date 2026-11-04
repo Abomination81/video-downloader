@@ -230,7 +230,9 @@ def setup(args, app, bootstrap):
     print("1. Open chrome://extensions and turn on Developer mode.")
     print("2. Choose Load unpacked and select this folder:")
     print(destination)
-    print("3. Reload video pages that were already open.")
+    print("3. Choose Load unpacked again and select the audio companion folder:")
+    print(destination / 'audio-companion')
+    print("4. Reload video pages that were already open.")
     print("Videos appear in Chrome's download panel and use Chrome's Downloads folder.")
     print("The normal default is:", config["download_dir"])
     if not args.no_open:

@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from . import __version__, store
 from .bootstrap import AGENT_LABEL, VERSION, atomic_json, locked, pointer, recover
-from .config import EXTENSION_ID, app_dir, private_dir, settings
+from .config import AUDIO_COMPANION_ID, EXTENSION_ID, app_dir, private_dir, settings
 
 REPOSITORY = "Abomination81/video-downloader"
 API = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
@@ -203,6 +203,13 @@ def validate_bundle(bundle, update):
     current = json.loads((app_dir() / "extension/manifest.json").read_text())
     if not set(manifest.get("permissions", [])) <= set(current.get("permissions", [])) or not set(manifest.get("host_permissions", [])) <= set(current.get("host_permissions", [])):
         raise UpdateError("This update needs new Chrome permissions. Install it manually from the project page.")
+    child = bundle / 'extension/audio-companion/manifest.json'
+    if child.is_file():
+        audio = json.loads(child.read_text())
+        digest = hashlib.sha256(base64.b64decode(audio['key'], validate=True)).hexdigest()[:32]
+        child_id = ''.join(chr(97 + int(c, 16)) for c in digest)
+        if child_id != AUDIO_COMPANION_ID or audio['version'] != update['version'] or set(audio.get('permissions', [])) != {'contextMenus', 'storage', 'alarms'} or any(audio.get(field) for field in ('host_permissions', 'optional_host_permissions', 'optional_permissions', 'content_scripts')) or audio.get('externally_connectable') != {'ids': [EXTENSION_ID]} or manifest.get('externally_connectable') != {'ids': [AUDIO_COMPANION_ID]}:
+            raise UpdateError('The audio companion identity or permissions do not match this installation')
     wheels = list((bundle / "helper-wheel").glob("*.whl"))
     if len(wheels) != 1 or wheels[0].name != f"video_downloader_helper-{update['version']}-py3-none-any.whl" or not (bundle / "update-requirements.txt").is_file():
         raise UpdateError("The update helper package is incomplete")

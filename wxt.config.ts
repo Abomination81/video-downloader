@@ -2,6 +2,7 @@ import { defineConfig } from 'wxt';
 import { readFileSync } from 'node:fs';
 
 const identity = JSON.parse(readFileSync('extension-identity.json', 'utf8')) as { key: string };
+const audio = JSON.parse(readFileSync('companion/audio/identity.json', 'utf8')) as { id: string };
 
 export default defineConfig({
   srcDir: 'extension',
@@ -10,7 +11,8 @@ export default defineConfig({
     name: 'Video Downloader by Abomination81',
     description: 'Clean MP4, MP3 and original-image downloads, restored copying and right-click, and clean links. Built by abomination81.',
     homepage_url: 'https://abomination81.com',
-    version: '0.6.0',
+    version: '0.7.0',
+    externally_connectable: { ids: [audio.id] },
     key: identity.key,
     minimum_chrome_version: '127',
     permissions: ['contextMenus', 'nativeMessaging', 'storage', 'webRequest', 'webNavigation', 'cookies', 'downloads', 'alarms', 'scripting', 'offscreen', 'clipboardWrite'],

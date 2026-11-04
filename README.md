@@ -21,9 +21,9 @@ Use **Video-Downloader.zip** from Releases for installation. GitHub's automatic 
 | Action | Result |
 | --- | --- |
 | **Download video** | Highest available resolution and frame rate in a compatible H.264/AAC MP4; native Chrome download entry |
-| **Choose video format…** | Inspect available source resolutions, frame rates, codecs and size estimates; choose a format for this download |
-| **Download audio as MP3** | Best available audio, up to 320 kbps by default; tags, artwork and chapters removed; native Chrome download entry |
-| **Save original image** | Largest exposed image source, original format and quality, identifying metadata removed |
+| **Choose format** (toolbar) | Inspect available source resolutions, frame rates, codecs and size estimates; choose a format for this download |
+| **Download audio** | Best available audio, up to 320 kbps by default; tags, artwork and chapters removed; native Chrome download entry |
+| **Download photo** | Largest exposed image source, original format and quality, identifying metadata removed |
 | Chrome's **Save image as** | Automatic cleanup of newly saved images, preserving your filename |
 | **Copy clean link** | Recognizable tracking fields removed; functional, signed and login links preserved |
 | Browse normally | Right-click, text selection and copying restored by default; settings can disable restoration |
@@ -41,25 +41,27 @@ Downloads continue after you navigate away or close the source tab. Everything r
 
 1. Unzip **Video-Downloader.zip**, then open **Install.command**. It installs the helper and any missing tools for your account. Internet access is required. If Homebrew is missing, setup installs it and macOS may ask for your password.
 2. The installer opens an extension folder and Chrome's extensions page. Turn on **Developer mode**, click **Load unpacked**, and select that extension folder.
-3. Reload any video pages that were already open.
+3. Load the **audio-companion** subfolder as a second extension to get the separate audio command.
+4. Reload any video pages that were already open.
 
-The installed extension folder is `~/Library/Application Support/Video Downloader/extension`. The original ZIP can be deleted after setup.
+The installed main extension folder is `~/Library/Application Support/Video Downloader/extension`; the audio companion is its `audio-companion` subfolder. They share one helper and download history. Both update together after their one-time Chrome setup. [Chrome groups multiple commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus), so the small companion keeps audio directly in the menu. The original ZIP can be deleted after setup.
 
 ## Install on Windows
 
-Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet to install missing FFmpeg, Deno, and ExifTool, and installs a private Python runtime automatically. Then enable Developer mode at `chrome://extensions`, click **Load unpacked**, and choose the extension folder opened by setup. Windows installation scripts are supplied; check `docs/VALIDATION.md` for platforms actually tested.
+Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet to install missing FFmpeg, Deno, and ExifTool, and installs a private Python runtime automatically. Then enable Developer mode at `chrome://extensions`, click **Load unpacked**, and choose the extension folder opened by setup. Load its **audio-companion** subfolder as a second extension. Windows installation scripts are supplied; check `docs/VALIDATION.md` for platforms actually tested.
 
 Chrome requires these manual steps for an unpacked extension. Setup does not change Chrome policies, bypass security controls, or require a Chrome Web Store account.
 
 ## Download
 
 - Play the video, then right-click and select **Download video**. This still defaults to the highest available compatible MP4.
-- Choose **Download audio as MP3** for audio only, or **Choose video format…** to inspect source formats. Both are also available in the toolbar popup. The picker can save compatible MP4, original-codec MP4, or MP3, with optional 128/192/256/320 kbps MP3 quality. Choices apply only to that download.
+- Choose **Download audio** for MP3 audio, or **Choose format** in the toolbar popup to inspect source formats. Both are available in the toolbar popup too. The picker can save compatible MP4, original-codec MP4, or MP3, with optional 128/192/256/320 kbps MP3 quality. Choices apply only to that download.
 - The picker resumes if you close and reopen the popup. Its source format choices expire after 15 minutes; use **Refresh formats** if needed. An explicit format that disappears fails with a refresh prompt instead of silently substituting another rendition.
 - **Restore right-click menus** is enabled by default, including on sites that disable the menu. You can disable it in Settings to use a site's custom context menu.
 - Transparent overlays, cross-origin frames, and closed shadow roots are included in discovery.
 - If the menu still cannot open, click the extension's toolbar button or press **Alt+Shift+V**. Pin the extension to make the button easy to reach.
 - If multiple videos match, choose the correct one from the list.
+- Video targets show **Download video** and **Download audio** as separate native entries. Audio targets show **Download audio**; image targets show **Download photo**. The audio companion is needed for the separate audio entry. **Choose format** and **Copy clean link** are in the toolbar popup.
 - Files appear in **Chrome's native download panel**, accessible from its down arrow and Downloads page. The entry appears after the file has passed its metadata checks. The extension shows progress while the helper downloads and prepares the file.
 - Downloads normally save directly in each person's own `Downloads` folder (`~/Downloads` on Mac, `%USERPROFILE%\Downloads` on Windows). A different location deliberately configured in Chrome is respected. The shared bundle contains no personal save location.
 - You can navigate to another video, change pages, or close the video tab and popup after starting. The source and scoped session are captured at selection time; a detached helper continues the work. The browser handoff is tracked independently of the tab.
@@ -84,8 +86,8 @@ The format picker lists the formats the first usable preferred source exposes. I
 ## Browsing and images
 
 - **Enable copying and text selection** is on by default. It restores selection CSS and common copy/selectstart/keyboard blockers. Left clicks and drags always reach the page so video seek bars and other controls keep working. Editors and marked interactive controls retain their selection behavior. Sites that cancel mouse presses themselves can still prevent mouse selection.
-- **Copy clean link** copies the clicked link, or the current page when there is no clicked link. It removes known tracking parameters such as `utm_*`, `fbclid` and `gclid`, while retaining timestamps, functional parameters and fragments. Signed, session and login links are left intact. The extension writes only the requested link; it does not read your clipboard.
-- **Save original image** appears when you right-click an image. It uses the largest source explicitly exposed by the page's `srcset`, matching `picture` source or original-image attributes. It does not guess hidden CDN URLs or invent a higher-resolution image. The verified image appears in Chrome's download panel and normal download folder. Small inline/data/blob images are supported without canvas conversion; for large inline images, use Chrome's ordinary **Save image as**.
+- **Copy clean link** is in the toolbar popup. After right-clicking a link, open the popup within 15 seconds to copy that link; otherwise it copies the current page. It removes known tracking parameters such as `utm_*`, `fbclid` and `gclid`, while retaining timestamps, functional parameters and fragments. Signed, session and login links are left intact. The extension writes only the requested link; it does not read your clipboard.
+- **Download photo** appears when you right-click an image. It uses the largest source explicitly exposed by the page's `srcset`, matching `picture` source or original-image attributes. It does not guess hidden CDN URLs or invent a higher-resolution image. The verified image appears in Chrome's download panel and normal download folder. Small inline/data/blob images are supported without canvas conversion; for large inline images, use Chrome's ordinary **Save image as**.
 - **Automatically clean saved images** is on by default. Chrome's **Save image as** and other newly completed image downloads are cleaned locally in place, preserving the chosen filename. It does not scan previously downloaded images. With Chrome's own command, cleanup starts after the download completes, so the original metadata can briefly exist on disk. Our command removes metadata before handing the file to Chrome. Open the extension to see cleanup progress or any failure.
 
 Images retain their original format and encoded picture data; they are never recompressed into JPEG. Cleanup handles JPEG, PNG/APNG, WebP, GIF, TIFF and AVIF, with additional HEIC/HEIF/JXL support when their structure can be verified. Animation frames, timing and loops remain intact. EXIF/GPS, author, comment, timestamps, XMP, thumbnails and source-URL file attributes are removed. Necessary orientation, color calibration, transparency and animation data remain. Color profile descriptions, device identity and creation dates are neutralized while preserving numerical calibration.
