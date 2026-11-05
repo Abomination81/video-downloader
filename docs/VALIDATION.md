@@ -8,6 +8,8 @@ YouTube played and sought forward. WatchLuna passed its automatic site check, lo
 
 Controlled pages in the same Chrome profile verified actual CookieYes rejection with a form preserved, surprise-window blocking, and Open once recovery. Existing isolated suites cover the ad engine, other consent providers, unsupported consent fallback, OCR, settings and message boundaries.
 
+Reddit's native scrub bar moved a 46-second clip to 23 seconds without resetting. Its 1080×1350 H.264 video download finished after closing the source tab. This clip's downloaded rendition contained no audio; it is not an audio-pairing test.
+
 A live YouTube MP3 attempt exposed a real false rejection: FFprobe reports the valid stereo Xing header's encoder marker as a stream tag. The regression failed before the fix. Output now explicitly normalizes that field to the fixed `Lavf` gapless marker and accepts only that exact technical value. Source encoder identity, ID3, APE, artwork, chapters and descriptive tags remain disallowed. Real surround conversion and stereo-copy checks cover 44.1/48 kHz and 128/320 kbps, source-identity removal, full decoding and equal decoded samples after MP3 copying. The same live YouTube source converted successfully after the fix.
 
 Technical basis: [FFmpeg MP3 demuxer](https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/mp3dec.c) uses a recognized marker to apply delay/padding and exposes its encoder tag when the header CRC validates; [MP3 muxer](https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/mp3enc.c) writes that header independently of ID3.
