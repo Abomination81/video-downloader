@@ -68,6 +68,6 @@ export default defineContentScript({
       if (sender.id === chrome.runtime.id && !sender.tab && message?.type === 'browsing-policy') update(message.value);
     };
     chrome.runtime.onMessage.addListener(listener);
-    ctx.onInvalidated(() => { stop(); chrome.runtime.onMessage.removeListener(listener); });
+    ctx.onInvalidated(() => { stop(); if (chrome.runtime?.id) chrome.runtime.onMessage.removeListener(listener); });
   },
 });

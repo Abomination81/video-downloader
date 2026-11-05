@@ -153,6 +153,6 @@ export default defineContentScript({
     };
     chrome.runtime.onMessage.addListener(listener);
     void request({ type: 'browsing-policy' }).then(update).catch(() => {});
-    ctx.onInvalidated(() => { abort.abort(); observer.disconnect(); clearTimeout(discoveryTimer); clearTimeout(hideTimer); clearTimeout(messageTimer); for (const restore of [...restorePiP.values()]) restore(); host.remove(); chrome.runtime.onMessage.removeListener(listener); });
+    ctx.onInvalidated(() => { abort.abort(); observer.disconnect(); clearTimeout(discoveryTimer); clearTimeout(hideTimer); clearTimeout(messageTimer); for (const restore of [...restorePiP.values()]) restore(); host.remove(); if (chrome.runtime?.id) chrome.runtime.onMessage.removeListener(listener); });
   },
 });

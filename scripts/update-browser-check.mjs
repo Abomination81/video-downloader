@@ -54,7 +54,7 @@ let context;
 try {
   context = await chromium.launchPersistentContext(profile, { channel: 'chromium', headless: true, ignoreDefaultArgs: ['--disable-extensions'], args: [`--load-extension=${extension}`], env: { ...process.env, VIDEO_DOWNLOADER_HOME: app } });
   const errors = [];
-  context.on('page', page => page.on('pageerror', error => errors.push(error.message)));
+  context.on('page', page => page.on('pageerror', error => errors.push(error.stack ?? error.message)));
   const setup = await context.newPage();
   await setup.goto('chrome://extensions/');
   const developerMode = setup.locator('#devMode');

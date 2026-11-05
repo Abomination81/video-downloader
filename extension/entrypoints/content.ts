@@ -8,6 +8,13 @@ export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'],
   allFrames: true, matchAboutBlank: true, matchOriginAsFallback: true, runAt: 'document_start',
   main(ctx) {
+    async function notify(message: Record<string, unknown>) {
+      // Chrome can invalidate an old content world before WXT's DOM cleanup
+      // arrives. Async/await catches synchronous API invalidation too.
+      try { if (ctx.isValid) await chrome.runtime.sendMessage(message); }
+      catch { /* A reloaded extension reconnects through its fresh content script. */ }
+    }
+
     const token = uuid();
     const frameTokens = new WeakMap<HTMLIFrameElement, string>();
     const ids = new WeakMap<Element, string>();
@@ -60,7 +67,7 @@ export default defineContentScript({
       const videos = all.filter((el): el is HTMLVideoElement => el instanceof HTMLVideoElement).slice(0, 100);
       if (videos.length && !announced) {
         announced = true;
-        void chrome.runtime.sendMessage({ type: 'media-present' }).catch(() => { /* Extension may have been reloaded; a page reload reconnects it. */ });
+        void notify({ type: 'media-present' });
       }
       const media = videos.map((video) => {
         if (!ids.has(video)) ids.set(video, uuid());
@@ -102,7 +109,7 @@ export default defineContentScript({
       if (restoreMenus) event.stopImmediatePropagation();
       point = { x: event.clientX, y: event.clientY, at: Date.now() };
       const data = snapshot();
-      void chrome.runtime.sendMessage({ type: 'context', snapshot: data, ...clickedLink(event) }).catch(() => { /* A stale content script has no privileged fallback. */ });
+      void notify({ type: 'context', snapshot: data, ...clickedLink(event) });
     }, { capture: true });
     ctx.addEventListener(window, 'pointerdown', (event) => {
       // Left-button events belong to the page: custom seek bars, sliders and
@@ -111,7 +118,7 @@ export default defineContentScript({
       if (restoreMenus) event.stopImmediatePropagation();
       point = { x: event.clientX, y: event.clientY, at: Date.now() };
       const data = snapshot();
-      void chrome.runtime.sendMessage({ type: 'context', snapshot: data, ...clickedLink(event) }).catch(() => { /* Page reload reconnects an invalidated content script. */ });
+      void notify({ type: 'context', snapshot: data, ...clickedLink(event) });
     }, { capture: true });
     ctx.addEventListener(window, 'mousedown', (event) => {
       if (event.button === 2 && restoreMenus) event.stopImmediatePropagation();
@@ -173,7 +180,7 @@ export default defineContentScript({
     };
     chrome.runtime.onMessage.addListener(onRuntimeMessage);
     ctx.onInvalidated(() => { if (chrome.runtime?.id) chrome.runtime.onMessage.removeListener(onRuntimeMessage); });
-    void chrome.storage.local.get('settings').then((result) => { const value = settingsSchema.parse({ ...defaults, ...(result.settings as object ?? {}) }); restoreMenus = value.restoreMenus; restoreCopy = value.restoreCopy; });
+    void chrome.storage.local.get('settings').then((result) => { const value = settingsSchema.parse({ ...defaults, ...(result.settings as object ?? {}) }); restoreMenus = value.restoreMenus; restoreCopy = value.restoreCopy; }).catch(() => { /* The next content instance receives the saved policy. */ });
     const onSettingsChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (changes, area) => {
       if (area === 'local' && changes.settings) {
         const parsed = settingsSchema.safeParse(changes.settings.newValue);
@@ -186,9 +193,9 @@ export default defineContentScript({
     ctx.addEventListener(document, 'play', () => { if (!announced) snapshot(); }, { capture: true });
     ctx.addEventListener(document, 'DOMContentLoaded', () => { announce(); snapshot(); }, { once: true });
     announce();
-    void chrome.runtime.sendMessage({ type: 'frame-ready' }).catch(() => { /* No privileges are available after an extension reload. */ });
+    void notify({ type: 'frame-ready' });
     // Start the page-window guard before document_idle/UI initialization.
-    void chrome.runtime.sendMessage({ type: 'browsing-policy' }).catch(() => {});
+    void notify({ type: 'browsing-policy' });
     ctx.setTimeout(announce, 250);
     ctx.setTimeout(announce, 1000);
   },

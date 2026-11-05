@@ -4,6 +4,8 @@
 
 - Combined video, MP3, photos, screenshots, full uBlock Origin Lite protection and browsing tools under one stable Chrome extension ID.
 - Unified context menu and toolbar, direct internal protection controls, serialized offscreen tasks and screenshot-aware update deferral.
+- Screenshot startup waits for the toolbar popup to close and focus to settle; completion restores the shared download badge.
+- Page-script teardown tolerates Chrome replacing the extension context during automatic updates.
 - Retired the overlapping basic filter engine and companion setup. One-time reinstall is required because Chrome permissions change; subsequent signed updates remain automatic.
 - Tightened shared message routing and documented the combined GPL distribution and shared permission boundary.
 
