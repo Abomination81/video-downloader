@@ -1,11 +1,13 @@
 import {protectionStatus,protectionSnapshot,setProtectionEnabled,setProtectionSite,migrateProtection} from './protection-companion';
 import {adPreferencesSchema} from './adblock-policy';
+import { siteExceptions, isExemptHost } from './site-exceptions';
 export class AdBlocking {
   private ready = this.initialize();
   private async initialize() {
     const saved = await chrome.storage.local.get('adBlockPreferences');
     const prefs = adPreferencesSchema.parse(saved.adBlockPreferences ?? {});
     await migrateProtection(prefs.pausedSites);
+    for (const host of siteExceptions) await setProtectionSite(host, true);
   }
   constructor() { void this.ready.catch(() => undefined); }
   async status(host?: string) {
@@ -15,7 +17,7 @@ export class AdBlocking {
     return protectionSnapshot(value);
   }
   async setEnabled(enabled: boolean) { await this.ready; return protectionSnapshot(await setProtectionEnabled(enabled)); }
-  async setSite(host: string, paused: boolean) { await this.ready; return protectionSnapshot(await setProtectionSite(host, paused)); }
+  async setSite(host: string, paused: boolean) { await this.ready; return protectionSnapshot(await setProtectionSite(host, paused || isExemptHost(host))); }
   async frame(sender: chrome.runtime.MessageSender) {
     // Remove CSS from the retired basic engine on pages kept open during update.
     if (sender.tab?.id !== undefined) await chrome.tabs.sendMessage(sender.tab.id, {type:'ad-policy',css:''}, sender.documentId ? {documentId:sender.documentId} : {frameId:sender.frameId ?? 0});

@@ -3,11 +3,13 @@ import { contains } from '../lib/detection';
 import { uuid } from '../lib/uuid';
 import { isEditing, isSelectionControl } from '../lib/copy-policy';
 import { imageSources } from '../lib/images';
+import { isExemptDocument } from '../lib/site-exceptions';
 
 export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'],
   allFrames: true, matchAboutBlank: true, matchOriginAsFallback: true, runAt: 'document_start',
   main(ctx) {
+    const exempt = isExemptDocument();
     async function notify(message: Record<string, unknown>) {
       // Chrome can invalidate an old content world before WXT's DOM cleanup
       // arrives. Async/await catches synchronous API invalidation too.
@@ -19,13 +21,14 @@ export default defineContentScript({
     const frameTokens = new WeakMap<HTMLIFrameElement, string>();
     const ids = new WeakMap<Element, string>();
     let point: { x: number; y: number; at: number } | undefined;
-    let restoreMenus = defaults.restoreMenus;
-    let restoreCopy = defaults.restoreCopy;
+    let restoreMenus = !exempt && defaults.restoreMenus;
+    let restoreCopy = !exempt && defaults.restoreCopy;
     let tabHasMedia = false;
     let announced = false;
     let adSheet:CSSStyleSheet|undefined;
     let adCSS='';
     function applyAdCSS(css:string) {
+      if (exempt) css = '';
       if(css===adCSS)return;
       adCSS=css;
       if(!css&&!adSheet)return;
@@ -176,15 +179,15 @@ export default defineContentScript({
         })().catch(() => respond({ ok: false }));
         return true;
       }
-      if (message?.type === 'menu-policy') { tabHasMedia = message.hasMedia === true; restoreMenus = message.restoreMenus !== false; restoreCopy = message.restoreCopy !== false; respond({ ok: true }); }
+      if (message?.type === 'menu-policy') { tabHasMedia = message.hasMedia === true; restoreMenus = !exempt && message.restoreMenus !== false; restoreCopy = !exempt && message.restoreCopy !== false; respond({ ok: true }); }
     };
     chrome.runtime.onMessage.addListener(onRuntimeMessage);
     ctx.onInvalidated(() => { if (chrome.runtime?.id) chrome.runtime.onMessage.removeListener(onRuntimeMessage); });
-    void chrome.storage.local.get('settings').then((result) => { const value = settingsSchema.parse({ ...defaults, ...(result.settings as object ?? {}) }); restoreMenus = value.restoreMenus; restoreCopy = value.restoreCopy; }).catch(() => { /* The next content instance receives the saved policy. */ });
+    void chrome.storage.local.get('settings').then((result) => { const value = settingsSchema.parse({ ...defaults, ...(result.settings as object ?? {}) }); restoreMenus = !exempt && value.restoreMenus; restoreCopy = !exempt && value.restoreCopy; }).catch(() => { /* The next content instance receives the saved policy. */ });
     const onSettingsChanged: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (changes, area) => {
       if (area === 'local' && changes.settings) {
         const parsed = settingsSchema.safeParse(changes.settings.newValue);
-        if (parsed.success) { restoreMenus = parsed.data.restoreMenus; restoreCopy = parsed.data.restoreCopy; }
+        if (parsed.success) { restoreMenus = !exempt && parsed.data.restoreMenus; restoreCopy = !exempt && parsed.data.restoreCopy; }
       }
     };
     chrome.storage.onChanged.addListener(onSettingsChanged);

@@ -1,5 +1,11 @@
 # Validation
 
+## 0.13.3 site compatibility — 2026-11-05
+
+The production build was tested in isolated Chromium with controlled HTTPS fixtures mapped to zillow.com, www.zillow.com, loopnet.com and www.loopnet.com. Listing mouse hover updates the map price; network requests pass through; ad/nag selectors remain visible. Cookie dialogs, site-controlled menus and text selection remain untouched, with no popup guard or hover controls installed in either the main document or its third-party embedded frame. Settings changes, protection off/on, direct engine mode requests and a browser restart preserve the exclusions. Non-exempt pages retain real network/cosmetic blocking and player ad-SDK replacement. This is a controlled compatibility regression, not a claim that the user’s live Zillow account was tested.
+
+Passed locally: production build/type checking, 58 TypeScript tests, full protection and browsing browser checks, real pointer scrubbing/native timeline interactions and update/reconnection checks preserving form state and preferences. No new Chrome permissions or extension identity changes.
+
 ## 0.13.2 toolkit naming — 2026-11-05
 
 Production Chrome build exposes **Abomination81 Toolkit** as the manifest name, toolbar title, popup and settings heading. Visual checks pass at 320, 360 and 380 px popup widths and 320, 390 and 1440 px guide widths. Public screenshots were refreshed from the built extension. The creator homepage card, README banner, screenshot preview and installer use the same name.

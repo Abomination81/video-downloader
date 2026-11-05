@@ -1,6 +1,7 @@
 import {z} from 'zod';
 import {AD_PERMISSION,adHost} from './adblock-policy';
 import {request,el,notice} from './ui';
+import {isExemptHost} from './site-exceptions';
 const statusSchema=z.object({enabled:z.boolean(),permission:z.boolean(),active:z.boolean(),paused:z.boolean(),pausedSites:z.array(z.string()),networkRules:z.number(),cosmeticRules:z.number(),updated:z.string().nullable(),error:z.string().nullable(),engine:z.enum(['basic','complete']).optional(),level:z.number().optional(),version:z.string().optional()});
 export function adblockControls(options:{compact?:boolean;tabId?:number;host?:string}={}) {
   const button=el<HTMLButtonElement>('#adblock-toggle'), detail=el('#adblock-detail');
@@ -12,8 +13,10 @@ export function adblockControls(options:{compact?:boolean;tabId?:number;host?:st
     button.setAttribute('aria-label',!value.permission?'Enable general ad blocking':value.enabled?'Turn off general ad blocking':'Turn on general ad blocking');
     button.dataset.ready=String(value.active);
     detail.textContent=value.error??(!value.permission?'Enable website filtering here.':value.active?(value.paused?'Paused on this site.':options.compact?(value.engine==='complete'?'Full video/site protection.':'Website ads and banners.'):`${value.networkRules.toLocaleString()} network filters · ${value.cosmeticRules.toLocaleString()} cosmetic filters. ${value.engine==='complete'?'uBlock Origin Lite':'EasyList'} runs locally.`):'General ad blocking is off.');
+    const exempt=isExemptHost(options.host);
+    if(exempt&&!value.error)detail.textContent='Whitelisted site. Ad filtering and page tools are off here.';
     const pause=document.querySelector<HTMLButtonElement>('#adblock-pause');
-    if(pause){pause.hidden=!value.active||!options.host;pause.textContent=value.paused?'Resume here':'Pause here';pause.title=options.host??'';}
+    if(pause){pause.hidden=exempt||!value.active||!options.host;pause.textContent=value.paused?'Resume here':'Pause here';pause.title=options.host??'';}
     const actions=document.querySelector<HTMLElement>('#adblock-actions');
     if(actions)actions.hidden=(!pause||pause.hidden)&&(document.querySelector<HTMLButtonElement>('#adblock-reload')?.hidden??true);
   };

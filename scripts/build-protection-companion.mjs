@@ -17,7 +17,15 @@ const background=await readFile(join(output,'js/background.js'),'utf8');
 const versionGetter='function getCurrentVersion() {\n    return runtime.getManifest().version;\n}';
 if(!background.includes(versionGetter))throw new Error('Review upstream engine-version getter');
 await writeFile(join(output,'js/background.js'),background.replace(versionGetter,`function getCurrentVersion() {\n    return ${JSON.stringify(provenance.version)};\n}`)+'\nexport { isFullyInitialized };\n');
-const mode=await readFile(join(output,'js/mode-manager.js'),'utf8');
+let mode=await readFile(join(output,'js/mode-manager.js'),'utf8');
+const exceptions=await json(join(root,'extension/site-exceptions.json'));
+// Apply compatibility exclusions to both fresh installs and saved/session modes.
+// The engine's normal none-mode handles subdomains and request exceptions.
+const none='none: new Set(details.none),';
+const writeModes='async function writeFilteringModeDetails(afterDetails) {';
+if(!mode.includes(none)||!mode.includes(writeModes))throw new Error('Review upstream site-exclusion integration');
+mode=mode.replace(none,`none: new Set([...(details.none ?? []), ...${JSON.stringify(exceptions)}]),`)
+ .replace(writeModes,writeModes+'\n    afterDetails = fixFilteringModeDetails(afterDetails);');
 const before="none: [],\n    basic: [],\n    optimal: [ 'all-urls' ],\n    complete: [],";
 if(!mode.includes(before))throw new Error('Review upstream default-mode change');
 await writeFile(join(output,'js/mode-manager.js'),mode.replace(before,"none: [ 'localhost', '127.0.0.1' ],\n    basic: [],\n    optimal: [],\n    complete: [ 'all-urls' ],"));

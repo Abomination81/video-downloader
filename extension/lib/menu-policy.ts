@@ -7,6 +7,7 @@ export function setNativeMenuPolicy(enabled: boolean) {
   const prototype = Event.prototype as Event & { [key: symbol]: { enabled: boolean } | undefined };
   const previous = prototype[key];
   if (previous) { previous.enabled = enabled; return; }
+  if (!enabled) return;
   const state = { enabled };
   const preventDefault = Object.getOwnPropertyDescriptor(Event.prototype, 'preventDefault')!;
   const returnValue = Object.getOwnPropertyDescriptor(Event.prototype, 'returnValue');

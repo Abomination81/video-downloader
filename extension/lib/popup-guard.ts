@@ -7,6 +7,7 @@ export function setPopupGuardPolicy(enabled: boolean, allowed: boolean) {
     scope.__abominationPopupGuard.allowed = allowed;
     return;
   }
+  if (!enabled) return;
   const original = window.open;
   let intent = { at: 0, explicit: false, href: '', media: false, used: false };
   const state: State = { enabled, allowed, stop: () => {} };

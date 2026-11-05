@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isExemptHost } from '../../lib/site-exceptions';
 import { automaticChoice } from '../../lib/detection';
 import { candidateSchema, formatsSchema, intentSchema, type Candidate, type DownloadIntent, type DownloadOptions, type FormatOption } from '../../lib/schema';
 import { el, loadJobs, node, notice, request } from '../../lib/ui';
@@ -165,6 +166,7 @@ async function init() {
     void request({ type: 'browsing-status', tabId }).then(value => {
       const state = z.object({ policy: browsingPolicySchema }).parse(value).policy;
       const pause = el<HTMLButtonElement>('#browsing-pause'); pause.disabled = false;
+      if (isExemptHost(host)) { pause.hidden = true; return; }
       pause.textContent = state.enabled ? 'Pause page tools' : 'Resume page tools';
       pause.onclick = async () => {
         pause.disabled = true;

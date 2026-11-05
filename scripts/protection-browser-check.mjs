@@ -17,11 +17,12 @@ const server=createServer({key:await readFile(join(temp,'key')),cert:await readF
  if(req.url.startsWith('/clip.mp4')){res.setHeader('Content-Type','video/mp4');res.end(clip);return;}
  if(req.url.includes('ima3.js')){sdkHits++;res.setHeader('Content-Type','text/javascript');res.end('window.originalAdSDK=true;');return;}
  if(req.url.endsWith('.js')){res.setHeader('Content-Type','text/javascript');res.end('window.adLoaded=true;');return;}
- res.setHeader('Content-Type','text/html');res.end('<!doctype html><title>Playback fixture</title><div id="AC_ad">Advertisement</div><p id="content">Ordinary content</p><aside id="SubscribePopUpBox">Join our newsletter</aside><video id="video" controls muted src="/clip.mp4"></video><input value="Editable text"><div id="ad-slot"></div>');
+ if(req.url.startsWith('/compat')){res.setHeader('Content-Type','text/html; charset=utf-8');res.end(`<!doctype html><title>Listing hover fixture</title><style>#listing{width:300px;height:120px}#selection{user-select:none}#map-price{padding:16px}.expanded{font-size:24px}</style><article id="listing">Hover this listing</article><div id="map-price">$600k</div><p id="selection">Page-controlled selection</p><div id="AC_ad">Page content</div><aside id="SubscribePopUpBox">Page widget</aside><video controls muted src="/clip.mp4"></video><div id="CybotCookiebotDialog"><button id="CybotCookiebotDialogBodyButtonDecline">Reject optional</button></div>${req.url==='/compat'?`<iframe src="https://maps.example:${port}/compat-frame"></iframe>`:''}<script>window.rejected=0;document.querySelector('#CybotCookiebotDialogBodyButtonDecline').onclick=()=>{window.rejected++;document.querySelector('#CybotCookiebotDialog').hidden=true};window.addEventListener('contextmenu',e=>e.preventDefault(),true);document.querySelector('#listing').addEventListener('mouseenter',()=>{const price=document.querySelector('#map-price');price.textContent='$600,000 · 3 beds';price.classList.add('expanded')});</script>`);return;}
+ res.setHeader('Content-Type','text/html; charset=utf-8');res.end('<!doctype html><title>Playback fixture</title><div id="AC_ad">Advertisement</div><p id="content">Ordinary content</p><aside id="SubscribePopUpBox">Join our newsletter</aside><video id="video" controls muted src="/clip.mp4"></video><input value="Editable text"><div id="ad-slot"></div>');
 });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const port=server.address().port;
 const url=(host,path)=>`https://${host}${host==='imasdk.googleapis.com'?'':':'+port}${path}`;
 const paths=extension;
-const args=[`--load-extension=${paths}`,`--disable-extensions-except=${paths}`,'--no-proxy-server','--autoplay-policy=no-user-gesture-required',`--host-resolver-rules=MAP reader.example 127.0.0.1, MAP paused.example 127.0.0.1, MAP ad.doubleclick.net 127.0.0.1, MAP imasdk.googleapis.com 127.0.0.1:${port}, MAP 10play.com.au 127.0.0.1`];
+const args=[`--load-extension=${paths}`,`--disable-extensions-except=${paths}`,'--no-proxy-server','--autoplay-policy=no-user-gesture-required',`--host-resolver-rules=MAP reader.example 127.0.0.1, MAP paused.example 127.0.0.1, MAP ad.doubleclick.net 127.0.0.1, MAP imasdk.googleapis.com 127.0.0.1:${port}, MAP 10play.com.au 127.0.0.1, MAP zillow.com 127.0.0.1, MAP www.zillow.com 127.0.0.1, MAP loopnet.com 127.0.0.1, MAP www.loopnet.com 127.0.0.1, MAP maps.example 127.0.0.1`];
 const pass=text=>console.log('PASS',text);
 async function launch(){context=await chromium.launchPersistentContext(join(temp,'profile'),{channel:'chromium',headless:true,ignoreHTTPSErrors:true,args});const ui=await context.newPage();await ui.goto(`chrome-extension://${main}/options.html`);const worker=context.serviceWorkers().find(w=>w.url()===`chrome-extension://${main}/background.js`);const protector=worker;const request=async data=>{const reply=await ui.evaluate(data=>chrome.runtime.sendMessage(data),data);assert.equal(reply.ok,true,JSON.stringify(reply));return reply.result;};return{ui,worker,protector,request};}
 try{
@@ -69,6 +70,27 @@ try{
  await request({type:'adblock-set',enabled:true});await request({type:'adblock-set',enabled:true});assert.equal((await request({type:'adblock-status',host:'reader.example'})).paused,true);assert.equal((await request({type:'adblock-status',host:'paused.example'})).paused,true);
  await request({type:'adblock-site',host:'reader.example',paused:false});await page.reload();await page.waitForFunction(()=>getComputedStyle(document.querySelector('#AC_ad')).display==='none');assert.equal(await fetched(),false);
  pass('Global off/on and site pause/resume preserve exclusions and restore native requests after reload');
+ for(const host of ['zillow.com','www.zillow.com','loopnet.com','www.loopnet.com']){
+  assert.equal((await request({type:'adblock-status',host})).paused,true);
+  await page.goto(url(host,'/compat'));await page.locator('iframe').waitFor();
+  const tabId=await worker.evaluate(async href=>(await chrome.tabs.query({})).find(tab=>tab.url===href).id,page.url());
+  assert.equal((await request({type:'browsing-status',tabId})).policy.enabled,false);
+  assert.equal(await fetched(),true);assert.equal(await page.locator('#AC_ad').isVisible(),true);assert.equal(await page.locator('#SubscribePopUpBox').isVisible(),true);
+  await page.locator('#listing').hover();assert.equal(await page.locator('#map-price').textContent(),'$600,000 · 3 beds');
+  for(const frame of [page.mainFrame(),...page.frames().filter(f=>f!==page.mainFrame())]){
+   await frame.locator('#selection').waitFor();
+   assert.deepEqual(await frame.evaluate(()=>({guard:!!window.__abominationPopupGuard,controls:!!document.querySelector('#abomination-browsing-tools'),selection:getComputedStyle(document.querySelector('#selection')).userSelect,rejected:window.rejected,menu:!document.querySelector('#listing').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true}))})),{guard:false,controls:false,selection:'none',rejected:0,menu:true});
+  }
+  const settings=await ui.evaluate(()=>chrome.storage.local.get('settings'));
+  await ui.evaluate(value=>chrome.storage.local.set({settings:{...value,restoreMenus:true,restoreCopy:true}}),settings.settings??{});
+  await request({type:'browsing-settings',settings:{videoControls:true,popupGuard:true,rejectCookies:true}});
+  assert.equal(await page.locator('#selection').evaluate(e=>getComputedStyle(e).userSelect),'none');
+ }
+ await external({type:'protection-site',host:'www.zillow.com',paused:false});assert.equal((await request({type:'adblock-status',host:'www.zillow.com'})).paused,true);
+ await request({type:'adblock-set',enabled:false});await request({type:'adblock-set',enabled:true});
+ for(const host of ['www.zillow.com','www.loopnet.com'])assert.equal((await request({type:'adblock-status',host})).paused,true);
+ pass('Zillow/LoopNet whitelist: native requests, visible content, listing-to-map hover, page menus/selection and untouched embedded frames; persists through settings and protection toggles');
+
  assert.equal((await ui.evaluate(full=>chrome.runtime.sendMessage(full,{type:'protection-enabled',enabled:false}),full)).ok,false);
  for(const data of [{type:'protection-enabled',enabled:false,url:'https://evil.test'},{type:'protection-site',host:'example.com/path',paused:true},{type:'protection-migrate',pausedSites:Array(201).fill('a.test')},{type:'download',url:'https://example.com'}])assert.equal(await external(data),null);
  assert.equal((await request({type:'adblock-status'})).active,true);
@@ -85,6 +107,7 @@ try{
  pass('Real custom-filter compilation and clipboard copying share one offscreen slot without races');
  await dashboard.close();
  await context.close();({ui,worker,protector,request}=await launch());assert.equal((await request({type:'adblock-status'})).level,3);assert.equal((await request({type:'adblock-status',host:'paused.example'})).paused,true);
+ for(const host of ['www.zillow.com','www.loopnet.com'])assert.equal((await request({type:'adblock-status',host})).paused,true);
  pass('Complete mode and site exceptions survive a real Chrome restart');
 }finally{await context?.close();await new Promise(resolve=>server.close(resolve));await rm(temp,{recursive:true,force:true});}
 async function assertEventually(fn){let error;for(let i=0;i<100;i++){try{await fn();return}catch(e){error=e;await new Promise(r=>setTimeout(r,100));}}throw error;}

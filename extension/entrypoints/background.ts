@@ -20,6 +20,7 @@ import { selectedImage } from '../lib/images';
 import { SavedImages } from '../lib/saved-images';
 import { Updates } from '../lib/updates';
 import { downloadOptionsSchema, type DownloadIntent, type DownloadOptions } from '../lib/schema';
+import { isExemptFrame } from '../lib/site-exceptions';
 
 
 
@@ -70,11 +71,12 @@ export default defineBackground(() => {
   }
   async function menuPolicy(tabId: number) {
     // A newly created overlay frame gets this again when it probes or reports media.
-    const frames = await chrome.webNavigation.getAllFrames({ tabId });
+    const [frames, tab] = await Promise.all([chrome.webNavigation.getAllFrames({ tabId }), chrome.tabs.get(tabId)]);
     await Promise.allSettled((frames ?? []).slice(0, 100).map(async (f) => {
       const key = `${tabId}:${f.frameId}:${f.documentId ?? ''}`;
       const apply = async () => {
         const value = await settings();
+        if (isExemptFrame(f.frameId, frames ?? [], tab.url)) { value.restoreMenus = false; value.restoreCopy = false; }
         const history = await copyCssHistory;
         const target = { tabId, ...(f.documentId ? { documentIds: [f.documentId] } : { frameIds: [f.frameId] }) };
         if (menuPolicies.get(key) !== value.restoreMenus) {

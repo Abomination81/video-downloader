@@ -2,11 +2,13 @@ import AutoConsent, { type RuleBundle } from '@duckduckgo/autoconsent';
 import rules from '@duckduckgo/autoconsent/rules/rules.json';
 import { browsingPolicySchema } from '../lib/browsing-policy';
 import { request } from '../lib/ui';
+import { isExemptDocument } from '../lib/site-exceptions';
 
 export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'], allFrames: true, matchOriginAsFallback: true,
   runAt: 'document_idle',
   main(ctx) {
+    if (isExemptDocument()) return;
     let engine: AutoConsent | undefined;
     let active = false;
     function stop() {

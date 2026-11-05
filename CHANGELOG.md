@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.3 — Zillow and LoopNet compatibility, 2026-11-05
+
+- Whitelist Zillow, LoopNet and their subdomains across ad filtering, cookie rejection, popup protection, hover video controls and right-click/copy overrides.
+- Preserve native listing-to-map hover behavior and leave embedded page interactions alone. Manual downloads, screenshots and metadata cleaning remain available.
+- Keep built-in exceptions through settings changes, protection toggles and browser restarts; show their status in the toolbar.
+- Existing unified installations receive the signed update automatically. Refresh open Zillow/LoopNet pages after activation to clear already-applied page filters.
+
 ## 0.13.2 — Abomination81 Toolkit, 2026-11-05
 
 - Rename the extension to **Abomination81 Toolkit** across Chrome's extension list, native menu group, toolbar, settings, screenshot preview, installer and public guide.

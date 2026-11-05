@@ -5,19 +5,22 @@ import { setPopupGuardPolicy } from './popup-guard';
 import { setProtectionAnnoyances } from './protection-companion';
 import { httpUrl } from './schema';
 import { within } from './probe';
+import { isExemptFrame } from './site-exceptions';
 
 export function initializeBrowsing() {
   const evaluations = new Map<string, { at: number; count: number; active: number }>();
   let pending = Promise.resolve();
   const serial = <T>(work: () => Promise<T>) => { const next = pending.then(work, work); pending = next.then(() => {}, () => {}); return next; };
   async function settings() { return browsingSchema.parse((await chrome.storage.local.get('browsing')).browsing ?? {}); }
-  async function policy(tabId: number) {
+  async function policy(tabId: number, frameId = 0) {
     const tab = await chrome.tabs.get(tabId), host = siteHost(tab.url), prefs = await settings();
+    const frames = frameId ? await chrome.webNavigation.getAllFrames({ tabId }) ?? [] : [];
+    const exempt = isExemptFrame(frameId, frames, tab.url);
     const values = z.record(z.string().max(253), speedSchema).catch({}).parse((await chrome.storage.local.get('videoSpeeds')).videoSpeeds);
-    return { host, enabled: !!host && !prefs.pausedSites.includes(host), rejectCookies: prefs.rejectCookies, popupGuard: prefs.popupGuard, videoControls: prefs.videoControls, allowPopups: prefs.popupSites.includes(host), speed: values[host] ?? null };
+    return { host, enabled: !!host && !exempt && !prefs.pausedSites.includes(host), rejectCookies: prefs.rejectCookies, popupGuard: prefs.popupGuard, videoControls: prefs.videoControls, allowPopups: exempt || prefs.popupSites.includes(host), speed: values[host] ?? null };
   }
   async function apply(sender: chrome.runtime.MessageSender) {
-    const value = await policy(sender.tab!.id!);
+    const value = await policy(sender.tab!.id!, sender.frameId);
     await chrome.scripting.executeScript({ target: { tabId: sender.tab!.id!, ...(sender.documentId ? { documentIds: [sender.documentId] } : { frameIds: [sender.frameId ?? 0] }) }, world: 'MAIN', func: setPopupGuardPolicy, args: [value.enabled && value.popupGuard, value.allowPopups], injectImmediately: true });
     return value;
   }
@@ -30,8 +33,13 @@ export function initializeBrowsing() {
     if (changes.browsing) void sync().catch(() => {});
     void chrome.tabs.query({}).then(tabs => Promise.allSettled(tabs.filter(t => t.id !== undefined && siteHost(t.url)).map(async tab => {
       const value = await policy(tab.id!);
-      await chrome.scripting.executeScript({ target: { tabId: tab.id!, allFrames: true }, world: 'MAIN', func: setPopupGuardPolicy, args: [value.enabled && value.popupGuard, value.allowPopups] });
-      await chrome.tabs.sendMessage(tab.id!, { type: 'browsing-policy', value });
+      const frames = await chrome.webNavigation.getAllFrames({ tabId: tab.id! }) ?? [];
+      await Promise.allSettled(frames.map(async frame => {
+        const exempt = isExemptFrame(frame.frameId, frames, tab.url);
+        const frameValue = { ...value, enabled: value.enabled && !exempt, allowPopups: value.allowPopups || exempt };
+        await chrome.scripting.executeScript({ target: { tabId: tab.id!, frameIds: [frame.frameId] }, world: 'MAIN', func: setPopupGuardPolicy, args: [frameValue.enabled && frameValue.popupGuard, frameValue.allowPopups] });
+        await chrome.tabs.sendMessage(tab.id!, { type: 'browsing-policy', value: frameValue }, { frameId: frame.frameId });
+      }));
     })));
   });
   chrome.runtime.onMessage.addListener((raw, sender, respond) => {
@@ -51,7 +59,7 @@ export function initializeBrowsing() {
       if (!message.success) return;
       const messageData = message.data;
       work = async () => {
-        const value = await policy(sender.tab!.id!);
+        const value = await policy(sender.tab!.id!, sender.frameId);
         if (messageData.type === 'browsing-policy') return apply(sender);
         if (messageData.type === 'browsing-consent-eval') {
           if (!value.enabled || !value.rejectCookies || !Object.hasOwn(evalSnippets, messageData.snippetId)) return false;

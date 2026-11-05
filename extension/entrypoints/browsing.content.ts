@@ -2,10 +2,12 @@ import { browsingPolicySchema, seekTime, type BrowsingPolicy } from '../lib/brow
 import { httpUrl } from '../lib/schema';
 import { isEditing } from '../lib/copy-policy';
 import { request } from '../lib/ui';
+import { isExemptDocument } from '../lib/site-exceptions';
 
 export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'], allFrames: true, matchOriginAsFallback: true, runAt: 'document_idle',
   main(ctx) {
+    if (isExemptDocument()) return;
     let policy: BrowsingPolicy | undefined;
     let current: HTMLVideoElement | undefined;
     const known = new Set<HTMLVideoElement>();
