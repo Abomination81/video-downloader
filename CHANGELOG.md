@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0 — Full video and website ad protection
+
+- Add a separately loaded Ad Protection component powered by the full uBlock Origin Lite 2026.1103.1743 engine in Complete mode: scriptlets, player ad-SDK replacements, popup filtering, extended cosmetic filters, regional lists and upstream troubleshooting tools.
+- Main-menu global/site controls delegate to the full engine; existing site pauses transfer once. The old EasyList/Pluto and Still YouTube engines stand down automatically to avoid overlapping player changes.
+- Include fixed component identity, narrow background-only controls, signed update activation, permission validation, GPL notices and offline source packaging.
+- Load `protection-companion` once from the stable installed extension folder, then reload open pages. Existing users keep the earlier basic protection until then. Future updates remain automatic. Coverage varies by site; ads embedded in content can remain.
+
+
 ## 0.10.0 — website ad blocking, 2026-11-04
 
 - Add opt-in website filtering to the main extension, with bundled EasyList data, native Chrome network rules and cosmetic selectors. Pack equivalent domain filters without dropping supported entries from this snapshot.

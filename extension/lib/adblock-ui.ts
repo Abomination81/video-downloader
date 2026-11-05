@@ -1,16 +1,17 @@
 import {z} from 'zod';
 import {AD_PERMISSION,adHost} from './adblock-policy';
 import {request,el,notice} from './ui';
-const statusSchema=z.object({enabled:z.boolean(),permission:z.boolean(),active:z.boolean(),paused:z.boolean(),pausedSites:z.array(z.string()),networkRules:z.number(),cosmeticRules:z.number(),updated:z.string().nullable(),error:z.string().nullable()});
+const statusSchema=z.object({enabled:z.boolean(),permission:z.boolean(),active:z.boolean(),paused:z.boolean(),pausedSites:z.array(z.string()),networkRules:z.number(),cosmeticRules:z.number(),updated:z.string().nullable(),error:z.string().nullable(),engine:z.enum(['basic','complete']).optional(),level:z.number().optional(),version:z.string().optional()});
 export function adblockControls(options:{compact?:boolean;tabId?:number;host?:string}={}) {
   const button=el<HTMLButtonElement>('#adblock-toggle'), detail=el('#adblock-detail');
   let state:z.infer<typeof statusSchema>|undefined;
   const render=(value:z.infer<typeof statusSchema>)=>{
     state=value;button.disabled=false;
+    const engine=document.querySelector<HTMLElement>('#protection-engine');if(engine)engine.textContent=value.engine==='complete'?`Full protection connected · uBlock Origin Lite${value.version!==chrome.runtime.getManifest().version?' · Update pending: close the Ad Protection popup/settings. If it stays pending, load its stable installed folder.':''}.`:'For complete video ad filtering, load protection-companion once from the installed extension folder.';
     button.textContent=options.compact?(!value.permission?'Enable':value.enabled?'On':'Off'):!value.permission?'Enable ad blocking':value.enabled?'Turn off ad blocking':'Turn on ad blocking';
     button.setAttribute('aria-label',!value.permission?'Enable general ad blocking':value.enabled?'Turn off general ad blocking':'Turn on general ad blocking');
     button.dataset.ready=String(value.active);
-    detail.textContent=value.error??(!value.permission?'Enable website filtering here.':value.active?(value.paused?'Paused on this site.':options.compact?'Website ads and banners.':`${value.networkRules.toLocaleString()} network filters · ${value.cosmeticRules.toLocaleString()} cosmetic filters. EasyList runs locally.`):'General ad blocking is off.');
+    detail.textContent=value.error??(!value.permission?'Enable website filtering here.':value.active?(value.paused?'Paused on this site.':options.compact?(value.engine==='complete'?'Full video/site protection.':'Website ads and banners.'):`${value.networkRules.toLocaleString()} network filters · ${value.cosmeticRules.toLocaleString()} cosmetic filters. ${value.engine==='complete'?'uBlock Origin Lite':'EasyList'} runs locally.`):'General ad blocking is off.');
     const pause=document.querySelector<HTMLButtonElement>('#adblock-pause');
     if(pause){pause.hidden=!value.active||!options.host;pause.textContent=value.paused?'Resume here':'Pause here';pause.title=options.host??'';}
     const actions=document.querySelector<HTMLElement>('#adblock-actions');

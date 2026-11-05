@@ -6,8 +6,8 @@ import {adblockControls} from '../../lib/adblock-ui';
 
 async function protection() {
   try {
-    const value = z.object({ installed: z.boolean(), enabled: z.boolean().optional(), version: z.string().optional() }).parse(await request({ type: 'youtube-protection-status' }));
-    el('#youtube-protection-status').textContent = !value.installed ? 'Companion not connected. Load it once using the folder below.' : `Protection ${value.enabled ? 'enabled' : 'paused'} · v${value.version}${value.version !== chrome.runtime.getManifest().version ? ' · Update pending; close the companion popup to finish.' : ''}`;
+    const value = z.object({ installed: z.boolean(), enabled: z.boolean().optional(), version: z.string().optional(), engine:z.string().optional() }).parse(await request({ type: 'youtube-protection-status' }));
+    el('#youtube-protection-status').textContent = value.engine==='complete'?`YouTube is covered by Full Ad Protection · ${value.enabled?'enabled':'paused'}. The older companion is paused automatically.`: !value.installed ? 'Companion not connected. Load it once using the folder below.' : `Protection ${value.enabled ? 'enabled' : 'paused'} · v${value.version}${value.version !== chrome.runtime.getManifest().version ? ' · Update pending; close the companion popup to finish.' : ''}`;
   } catch { el('#youtube-protection-status').textContent = 'Protection status unavailable. Check the companion’s toolbar popup.'; }
 }
 
@@ -21,12 +21,13 @@ async function screenshots() {
 async function check() {
   const button = el<HTMLButtonElement>('#check'); button.disabled = true;
   try {
-    const result = z.object({ ready: z.boolean(), version: z.string(), engine: z.string(), downloadDir: z.string(), audioCompanionDir: z.string().optional(), youtubeCompanionDir: z.string().optional(), screenshotCompanionDir: z.string().optional() }).parse(await request({ type: 'ping' }));
+    const result = z.object({ ready: z.boolean(), version: z.string(), engine: z.string(), downloadDir: z.string(), protectionCompanionDir:z.string().optional(), audioCompanionDir: z.string().optional(), youtubeCompanionDir: z.string().optional(), screenshotCompanionDir: z.string().optional() }).parse(await request({ type: 'ping' }));
     el('#connection').textContent = result.ready ? 'Ready when you are.' : 'Finish installing the helper.';
     el('#connection-detail').textContent = result.ready ? 'Downloads keep running when you leave the page. Finished files appear in Chrome’s download panel.' : 'Rerun the installer from your download bundle to install missing tools.';
     el('#versions').textContent = `Extension ${chrome.runtime.getManifest().version} · Helper ${result.version}`;
     if (result.screenshotCompanionDir) el('#screenshot-companion-folder').textContent = result.screenshotCompanionDir;
     if (result.youtubeCompanionDir) el('#youtube-companion-folder').textContent = result.youtubeCompanionDir;
+    if(result.protectionCompanionDir)el('#protection-companion-folder').textContent=result.protectionCompanionDir;
     if (result.audioCompanionDir) el('#audio-companion-folder').textContent = result.audioCompanionDir;
   } catch (error) { el('#connection').textContent = 'Install your local helper.'; el('#connection-detail').textContent = (error as Error).message; }
   finally { button.disabled = false; }

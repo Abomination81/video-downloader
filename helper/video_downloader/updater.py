@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from . import __version__, store
 from .bootstrap import AGENT_LABEL, VERSION, atomic_json, locked, pointer, recover
-from .config import SCREENSHOT_COMPANION_ID, YOUTUBE_COMPANION_ID, AUDIO_COMPANION_ID, EXTENSION_ID, app_dir, private_dir, settings
+from .config import PROTECTION_COMPANION_ID, SCREENSHOT_COMPANION_ID, YOUTUBE_COMPANION_ID, AUDIO_COMPANION_ID, EXTENSION_ID, app_dir, private_dir, settings
 
 REPOSITORY = "Abomination81/video-downloader"
 API = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
@@ -212,6 +212,7 @@ def validate_bundle(bundle, update):
             raise UpdateError('The audio companion identity or permissions do not match this installation')
     validate_youtube_companion(bundle, update)
     validate_screenshot_companion(bundle, update)
+    validate_protection_companion(bundle, update)
     wheels = list((bundle / "helper-wheel").glob("*.whl"))
     if len(wheels) != 1 or wheels[0].name != f"video_downloader_helper-{update['version']}-py3-none-any.whl" or not (bundle / "update-requirements.txt").is_file():
         raise UpdateError("The update helper package is incomplete")
@@ -272,6 +273,34 @@ def validate_screenshot_companion(bundle, update):
             raise ValueError('policy')
     except (ValueError, KeyError, TypeError, AttributeError, OSError) as error:
         raise UpdateError('The screenshot companion identity or privacy boundary does not match this installation') from error
+
+
+
+def validate_protection_companion(bundle, update):
+    path = bundle / 'extension/protection-companion/manifest.json'
+    if not path.is_file():
+        if (app_dir() / 'extension/protection-companion/manifest.json').is_file():
+            raise UpdateError('The ad protection companion is missing from this update')
+        return
+    try:
+        value = json.loads(path.read_text())
+        digest = hashlib.sha256(base64.b64decode(value['key'], validate=True)).hexdigest()[:32]
+        child_id = ''.join(chr(97 + int(c, 16)) for c in digest)
+        if (child_id != PROTECTION_COMPANION_ID or value['version'] != update['version']
+                or value.get('manifest_version') != 3
+                or set(value.get('permissions', [])) != {'activeTab', 'alarms', 'declarativeNetRequest', 'offscreen', 'scripting', 'storage', 'unlimitedStorage', 'userScripts'}
+                or value.get('host_permissions') != ['<all_urls>']
+                or value.get('externally_connectable') != {'ids': [EXTENSION_ID]}
+                or value.get('background') != {'service_worker': 'bundle-bridge.js', 'type': 'module'}
+                or any(value.get(field) for field in ('optional_permissions', 'optional_host_permissions', 'content_scripts', 'content_security_policy', 'update_url', 'sandbox', 'oauth2', 'devtools_page', 'chrome_url_overrides'))):
+            raise ValueError('policy')
+        # Packaged SDK substitutes are required, but background/control scripts
+        # must never become web-accessible. No remote scripts are accepted.
+        resources = value.get('web_accessible_resources', [])
+        if not resources or any(not entry.get('use_dynamic_url') or entry.get('matches') != ['<all_urls>'] or not entry.get('resources') or any((not resource.lstrip('/').startswith('web_accessible_resources/') and resource not in {'/strictblock.html', '/zapper-ui.html', '/picker-ui.html', '/unpicker-ui.html'}) or '..' in resource or '*' in resource for resource in entry['resources']) for entry in resources):
+            raise ValueError('resource boundary')
+    except (ValueError, KeyError, TypeError, AttributeError, OSError) as error:
+        raise UpdateError('The ad protection companion identity or privacy boundary does not match this installation') from error
 
 
 def prepare_runtime(bundle, update):

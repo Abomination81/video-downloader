@@ -1,3 +1,4 @@
+import {protectionStatus} from '../lib/protection-companion';
 import { z } from 'zod';
 import { automaticChoice, discover, isVideoPage, mediaKind, type Capture } from '../lib/detection';
 import { candidateSchema, cookieSchema, defaults, settingsSchema, snapshotSchema, type Candidate, type Snapshot } from '../lib/schema';
@@ -388,7 +389,7 @@ export default defineBackground(() => {
       if(request.type==='adblock-set')return ads.setEnabled(request.enabled);
       if(request.type==='adblock-site')return ads.setSite(request.host,request.paused);
       if (request.type === 'screenshot-companion-status') return screenshotCompanionStatus();
-      if (request.type === 'youtube-protection-status') return youtubeCompanionStatus();
+      if (request.type === 'youtube-protection-status') {const full=await protectionStatus();return full?{installed:true,enabled:full.enabled,version:full.version,engine:'complete'}:youtubeCompanionStatus();}
       if (request.type === 'find') return { candidates: await find(request.tabId) };
       if (request.type === 'start') return start(request.candidate, request.requestId, request.options?.assetType ?? 'video', undefined, request.options);
       if (request.type === 'inspect') return inspect(request.candidate, request.requestId);

@@ -22,6 +22,10 @@
     if (sender.id !== MAIN_ID || sender.tab || sender.url !== `chrome-extension://${MAIN_ID}/background.js`) return false;
     if (!message || typeof message !== 'object' || Array.isArray(message)) return false;
     const keys = Object.keys(message).sort().join(',');
+    if (keys === 'type' && message.type === 'youtube-companion-supersede') {
+      serialize(async()=>{if((await chrome.storage.local.get('enabled')).enabled!==false){await applyState(false);await chrome.storage.local.set({enabled:false});}return {paused:true};}).then(reply,()=>reply(null));
+      return true;
+    }
     if (keys === 'type' && message.type === 'youtube-companion-status') {
       chrome.storage.local.get('enabled').then(value => reply({ version: chrome.runtime.getManifest().version, engineVersion: '0.1.2', enabled: value.enabled !== false })).catch(() => reply(null));
       return true;

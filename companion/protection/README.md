@@ -1,0 +1,11 @@
+# Ad Protection by Abomination81
+
+A renamed distribution of **uBlock Origin Lite**, by Raymond Hill, pinned to release 2026.1103.1743. Modified by Abomination81 on 2026-11-04. This distribution and its integration files are GPL-3.0-or-later. Upstream attribution and licenses remain included. The downloader, helper and other independently running components keep their own licenses.
+
+Default filtering is Complete, including upstream network rules, scriptlets, resource replacements, extended cosmetic rules and popup filtering. Loopback sites are excluded. The upstream dashboard retains per-site modes, regional lists, custom filters and troubleshooting. Optional user-script features may require Chrome's Allow user scripts control; bundled default protections work without enabling that switch. No universal ad-removal claim is made.
+
+`upstream/chromium` is the unmodified upstream release tree; `upstream/uBlock` contains the corresponding upstream source at the recorded commit. `provenance.json` verifies every included file. Our builder changes only branding/identity, the initial filtering mode, and adds a narrow parent status/control/update interface. It exports the engine's initialization promise; the filtering algorithms remain upstream code. All parent requests require the downloader's actual background sender, bounded hostnames, exact keys and recognized commands. No caller-supplied script, URL or filter code is accepted through that interface.
+
+From the repository or included `protection-companion-source` directory, run `node scripts/build-protection-companion.mjs` with Node 22+ to reproduce the packaged companion offline. No npm dependencies are needed for this packaging step. The full upstream build instructions and licenses are included under `upstream/`. Filter/engine refreshes arrive in signed downloader releases; do not edit pinned files without updating and reviewing provenance.
+
+Load `protection-companion` once in Chrome. Its toolbar provides the full engine's controls. The downloader's main menu can pause/resume general protection and pause a site. Reload already-open pages after changing engines. Disable any separately installed third-party ad blockers to avoid conflicting filtering.

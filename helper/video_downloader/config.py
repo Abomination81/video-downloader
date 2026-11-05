@@ -6,6 +6,7 @@ from pathlib import Path
 
 HOST_NAME = "com.video_downloader.helper"
 EXTENSION_ID = "bhglpjejpddnmfgkaakboniplnoemoak"
+PROTECTION_COMPANION_ID = "llggjnfepkjjmkocgbbinlheiikheocd"
 SCREENSHOT_COMPANION_ID = "eilmbbmdgiccchbfkbmejpdnbnhddabi"
 YOUTUBE_COMPANION_ID = "hpbfmepggeinhmoamadigfdfgohagacf"
 AUDIO_COMPANION_ID = "pfbibbaockflnnpdicbkgcnicplpmiif"

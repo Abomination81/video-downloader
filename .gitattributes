@@ -1,0 +1,3 @@
+
+# Preserve verified upstream bytes, including original whitespace.
+companion/protection/upstream/** linguist-vendored -whitespace

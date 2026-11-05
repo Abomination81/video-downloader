@@ -1,5 +1,16 @@
 # Validation
 
+## 0.11.0 full Ad Protection — 2026-11-04
+
+- TypeScript/build and 51 extension unit tests pass. The existing 167 helper cases pass; the expanded updater suite passes 88 cases, including 10 new companion boundary/removal cases.
+- Production full-engine browser test uses actual HTTPS requests, not intercepted Playwright routes. Complete mode starts with six default lists (19,102 network rules and 26,771 cosmetic entries reported by upstream metadata). Main EasyList/Pluto registrations and old Still YouTube protection stand down. Existing per-site pauses migrate once.
+- Real ad requests are redirected/blocked and ad elements hidden. A generated harmless clip plays, seeks, and remains alongside working text fields. A matching Google IMA SDK request receives the packaged substitute, dispatches content-resume events and starts content without waiting for an ad.
+- Main global off/on and per-site pause/resume work after reload, retain exclusions and survive a real browser restart. Parent UI/invalid messages are rejected by the background-only bridge. A version replacement defers while companion settings are open, then activates with saved modes intact in an isolated developer-mode Chrome profile.
+- Existing basic-filter/Pluto Shaka playback checks, YouTube companion boundary/paired-update tests, real pointer/native seek-bar interactions, main automatic activation, and MP4/MP3 format/download tests pass. No user Chrome permissions or extension settings were changed by these test profiles.
+- The installer expands to approximately 91 MB, within the older updater's 128 MiB bound. The included source reproduces all full-companion files byte for byte offline; bundle identity/permission validation passes. The full engine and its corresponding source retain GPL-3.0-or-later notices.
+- Live forced-preroll example: no-blocker/basic/full isolated sessions played program content, but the reported five-second ad was not served. That specific preroll is **not a verified fix**. Live ad inventory, anti-block changes and stitched/protected ads limit coverage. This is not an all-sites guarantee; Windows installation remains unverified.
+
+
 ## 0.10.0 website ad blocking — 2026-11-04
 
 Passed: type checking, production build, 51 TypeScript tests, all 167 helper tests, download/image/copy integration, format-picker/MP3 integration, player interaction checks, companion menu and update checks, nine YouTube scenarios and seven screenshot scenarios. The new real-Chrome ad suite covers production startup before optional permission, native request blocking and exceptions using a real HTTPS fixture server, CSP-safe cosmetics, site pause/resume, the actual toolbar reload control, the global-off UI, content-script rejection, YouTube isolation, persistent browser restart and disabling existing filters when packaged filter data is damaged.

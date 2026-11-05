@@ -98,7 +98,7 @@ def handle(raw):
             except FileNotFoundError:
                 deps[name] = False
         import yt_dlp.version
-        return {"version": __version__, "engine": yt_dlp.version.__version__, "dependencies": deps, "ready": all(deps.values()), "downloadDir": str(output_dir()), "audioCompanionDir": str(app_dir() / 'extension/audio-companion'), "youtubeCompanionDir": str(app_dir() / 'extension/youtube-companion'), "screenshotCompanionDir": str(app_dir() / 'extension/screenshot-companion')}
+        return {"version": __version__, "engine": yt_dlp.version.__version__, "dependencies": deps, "ready": all(deps.values()), "downloadDir": str(output_dir()), "protectionCompanionDir": str(app_dir() / 'extension/protection-companion'), "audioCompanionDir": str(app_dir() / 'extension/audio-companion'), "youtubeCompanionDir": str(app_dir() / 'extension/youtube-companion'), "screenshotCompanionDir": str(app_dir() / 'extension/screenshot-companion')}
     if request.type in ("start", "clean-image", "inspect"):
         with locked(app_dir()):
             recover(app_dir())

@@ -25,8 +25,7 @@ Use **Video-Downloader.zip** from Releases for installation. GitHub's automatic 
 | **Download audio** | Best available audio, up to 320 kbps by default; tags, artwork and chapters removed; native Chrome download entry |
 | **Download photo** | Largest exposed image source, original format and quality, identifying metadata removed |
 | **Save full-page screenshot** | A full-page PNG, or one ZIP of PNG parts for large pages; separate screenshot companion |
-| YouTube ad blocking | Local filtering for videos, Shorts and embedded players; separate YouTube companion |
-| Website ad blocking | Bundled EasyList network and cosmetic filters, per-site pause, and a narrow Pluto on-demand adapter; enable once in the toolbar or Settings |
+| Video and website ad protection | Full uBlock Origin Lite engine in Complete mode: network filters, player scriptlets, ad-SDK replacements, popup and cosmetic rules; load Ad Protection once |
 | Chrome's **Save image as** | Automatic cleanup of newly saved images, preserving your filename |
 | **Copy clean link** | Recognizable tracking fields removed; functional, signed and login links preserved |
 | Browse normally | Right-click, text selection and copying restored by default; settings can disable restoration |
@@ -45,27 +44,31 @@ Downloads continue after you navigate away or close the source tab. Everything r
 1. Unzip **Video-Downloader.zip**, then open **Install.command**. It installs the helper and any missing tools for your account. Internet access is required. If Homebrew is missing, setup installs it and macOS may ask for your password.
 2. The installer opens an extension folder and Chrome's extensions page. Turn on **Developer mode**, click **Load unpacked**, and select that extension folder.
 3. Load the **audio-companion** subfolder as a second extension to get the separate audio command.
-4. Load the **youtube-companion** subfolder for YouTube Protection. Disable standalone Still first if installed.
+4. Load the **protection-companion** subfolder for Full Ad Protection. It includes YouTube; the older bundled YouTube companion pauses automatically. Disable other standalone ad blockers to avoid conflicts.
 5. Load the **screenshot-companion** subfolder for full-page screenshots. Disable standalone Still Screenshot if installed.
 6. Reload any video pages that were already open.
 
-The installed main extension folder is `~/Library/Application Support/Video Downloader/extension`; its companions are the `audio-companion`, `youtube-companion` and `screenshot-companion` subfolders. The main and audio extensions share one helper and download history. YouTube protection and screenshots keep separate, limited permissions. All four update together after their one-time Chrome setup. [Chrome groups multiple commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus), so companions keep the commands directly in the menu. The original ZIP can be deleted after setup.
+The installed main extension folder is `~/Library/Application Support/Video Downloader/extension`; its companions are the `audio-companion`, `protection-companion` and `screenshot-companion` subfolders. The older `youtube-companion` remains included for existing installs. The main and audio extensions share one helper and download history. Ad Protection and screenshots have separate permissions. All loaded bundle components update together after their one-time Chrome setup. [Chrome groups multiple commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus), so companions keep the commands directly in the menu. The original ZIP can be deleted after setup.
 
 ## Install on Windows
 
-Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet to install missing FFmpeg, Deno, and ExifTool, and installs a private Python runtime automatically. Then enable Developer mode at `chrome://extensions`, click **Load unpacked**, and choose the extension folder opened by setup. Load its **audio-companion** subfolder as a second extension , **youtube-companion** for YouTube Protection, and **screenshot-companion** for full-page screenshots. Disable standalone Still if installed, then reload YouTube. Windows installation scripts are supplied; check `docs/VALIDATION.md` for platforms actually tested.
+Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet to install missing FFmpeg, Deno, and ExifTool, and installs a private Python runtime automatically. Then enable Developer mode at `chrome://extensions`, click **Load unpacked**, and choose the extension folder opened by setup. Load its **audio-companion** subfolder as a second extension , **protection-companion** for Full Ad Protection, and **screenshot-companion** for full-page screenshots. Disable other standalone ad blockers, then reload open video pages. Windows installation scripts are supplied; check `docs/VALIDATION.md` for platforms actually tested.
 
 Chrome requires these manual steps for an unpacked extension. Setup does not change Chrome policies, bypass security controls, or require a Chrome Web Store account.
 
-## Website ad blocking (0.10.0)
+## Full Ad Protection (0.11.0)
 
-Open the main toolbar popup or Settings and click **Enable ad blocking**, then approve Chrome's filtering permission. This is optional and requires no extra extension. Reload open pages after enabling it. Existing download permissions and automatic updates stay unchanged; updates cannot silently approve the new optional permission for you.
+Load **protection-companion** once from the installed extension folder. No terminal is needed. It ships the full [uBlock Origin Lite](https://github.com/uBlockOrigin/uBOL-home) engine, pinned to **2026.1103.1743**, with **Complete** filtering enabled by default. Its website access enables network filtering, player scriptlets, ad-SDK replacements, extended cosmetic rules, and popup filtering. Default lists include uBlock filters, EasyList, EasyPrivacy, Peter Lowe, and malware lists. Regional lists and troubleshooting controls remain available in its own toolbar dashboard.
 
-EasyList network and cosmetic filters run locally using Chrome's native request-filtering API and bundled CSS. **Pause here** restores a site's requests and appearance; **Reload page** applies changes to its player. The global switch in Settings disables general filtering. YouTube continues to use its separate companion. Filter data updates arrive in signed releases, with no browsing telemetry or remotely downloaded executable code.
+The main downloader menu controls global on/off and **Pause here**. Reload a page after changing protection. Existing site pauses transfer on first connection. The older basic EasyList/Pluto filter and bundled Still YouTube engine stand down automatically when Full Ad Protection connects. New installs do not need to load the old YouTube companion. Until the new companion is loaded, the existing basic mode and YouTube companion continue to work.
 
-Pluto includes pause-ad hiding and a narrow on-demand adapter for known session metadata and DASH ad periods. Unknown or live stream formats remain unchanged. Ads stitched into HLS/content, first-party ads and anti-blocking changes can still get through. This is not a promise of ad-free playback on every service. Protected playback over DisplayLink is a separate display limitation.
+Once loaded, its files and engine/filter refreshes arrive through signed bundle updates; it activates after its settings and popup close. Chrome requires this one-time load for the new component and cannot silently grant a new extension website access. Use the stable installed folder, not an extracted ZIP or the project's dist folder. Settings displays the exact folder on your computer.
 
-EasyList data retains its CC BY-SA 3.0 license and attribution; see [bundle licenses](BUNDLE-LICENSES.md) and [filter provenance](filters/README.md).
+Filtering runs locally. There is no developer-operated browsing telemetry or download account. Optional custom-list subscriptions contact the sources you choose. Custom user-script features may also require Chrome's **Allow user scripts** switch; bundled default scriptlets do not require it. Loopback sites are excluded by default so local apps and the download handoff work normally.
+
+Coverage depends on the site and maintained rules. Client-side prerolls, many countdowns and popup ads are covered where rules identify their ad system; ads baked into the content or protected server-side streams may remain. A clip playing on screen does not guarantee every ad can be removed without breaking playback. DisplayLink protected-video black screens remain a separate display limitation. See [validation](docs/VALIDATION.md) for tested behavior rather than a universal-coverage promise.
+
+The renamed uBlock Origin Lite distribution and integration are GPL-3.0-or-later. Its pinned source, corresponding engine source, notices and offline packaging script ship in every installer under `protection-companion-source/`. The independent downloader remains MIT licensed. See [bundle licenses](BUNDLE-LICENSES.md).
 
 ## Download
 
@@ -161,9 +164,9 @@ No cloud service or permanent local server is required. SQLite stores job state,
 
 Research decisions and primary sources are in `docs/RESEARCH.md`. Dependency licenses remain their respective licenses; this repository's original source is MIT licensed.
 
-## YouTube protection (0.8.0)
+## Legacy YouTube protection (0.8.0)
 
-The installer now includes **YouTube Protection by Abomination81**, powered by Still 0.1.2. Run the installer, then Load unpacked the `youtube-companion` folder inside the installed extension folder. Disable standalone Still before enabling the companion and reload YouTube. Settings shows the companion folder and status. Pin its toolbar button to pause/enable protection.
+Existing installs retain **YouTube Protection by Abomination81**, powered by Still 0.1.2. Full Ad Protection supersedes it in 0.11.0; new installations should load `protection-companion`. The old component remains available from `youtube-companion` for YouTube-only use. Disable standalone Still before enabling the companion and reload YouTube. Settings shows the companion folder and status. Pin its toolbar button to pause/enable protection.
 
 It filters YouTube desktop videos, Shorts and embeds using bundled local code. It has only YouTube host permissions and cannot access downloader cookies, history, jobs or the helper. It has no telemetry or remote filters. Your protection preference stays local and survives bundle updates. Existing YouTube tabs need reloading after protection changes or updates. YouTube changes and ads stitched into content can limit filtering.
 

@@ -30,6 +30,11 @@ def main():
     for name in ("package.json", "extension-identity.json"):
         shutil.copy2(ROOT / name, bundle / "youtube-companion-source" / name)
     shutil.copy2(ROOT / "BUNDLE-LICENSES.md", bundle / "BUNDLE-LICENSES.md")
+    shutil.copytree(ROOT / "companion/protection", bundle / "protection-companion-source/companion/protection")
+    (bundle / "protection-companion-source/scripts").mkdir()
+    shutil.copy2(ROOT / "scripts/build-protection-companion.mjs", bundle / "protection-companion-source/scripts/build-protection-companion.mjs")
+    for name in ("package.json", "extension-identity.json"):
+        shutil.copy2(ROOT / name, bundle / "protection-companion-source" / name)
     shutil.copytree(ROOT / "filters", bundle / "adblock-source/filters")
     (bundle / "adblock-source/scripts/lib").mkdir(parents=True)
     shutil.copy2(ROOT / "scripts/lib/compile-ad-filters.mjs", bundle / "adblock-source/scripts/lib/compile-ad-filters.mjs")
@@ -45,7 +50,7 @@ def main():
     for name in ("package.json", "extension-identity.json"):
         shutil.copy2(ROOT / name, bundle / "screenshot-companion-source" / name)
     # Companion builders share the checked-in artwork and remain reproducible offline.
-    for directory in ("youtube-companion-source", "screenshot-companion-source"):
+    for directory in ("youtube-companion-source", "screenshot-companion-source", "protection-companion-source"):
         public = bundle / directory / "extension/public"
         (public / "brand").mkdir(parents=True)
         shutil.copy2(ROOT / "extension/public/brand/mark.svg", public / "brand/mark.svg")

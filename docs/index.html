@@ -9,7 +9,7 @@
   <link rel="canonical" href="https://abomination81.com/video-downloader/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Video Downloader by Abomination81">
-  <meta property="og:description" content="Video, MP3, original images, full-page screenshots, YouTube ad blocking and better browsing.">
+  <meta property="og:description" content="Video, MP3, original images, full-page screenshots, video ad protection and better browsing.">
   <meta property="og:url" content="https://abomination81.com/video-downloader/">
   <meta property="og:image" content="https://abomination81.com/assets/og/card-a078560e.jpg">
   <meta name="twitter:card" content="summary_large_image">
@@ -45,8 +45,7 @@
           <div><dt>Choose format or MP3</dt><dd>Inspect available source formats, or right-click Download audio. Up to 320 kbps, with tags and artwork removed.</dd></div>
           <div><dt>Download photo</dt><dd>The largest exposed source, with original format, rotation and animation retained. Identifying metadata removed.</dd></div>
           <div><dt>Save full-page screenshot</dt><dd>Capture a complete page as PNG, or ZIP for large pages. Uses a separate companion.</dd></div>
-          <div><dt>YouTube ad blocking</dt><dd>Local filtering for videos, Shorts and embeds. Uses a separate companion.</dd></div>
-          <div><dt>Website ad blocking</dt><dd>Enable bundled EasyList filtering once in Settings. Pause it per site; known Pluto on-demand ads have a separate adapter.</dd></div>
+          <div><dt>Video and website ad protection</dt><dd>Full uBlock Origin Lite in Complete mode. Filters ad requests, supported player ad systems, popups and banners. Pause it per site.</dd></div>
           <div><dt>Leave the page</dt><dd>Background jobs keep running. Finished files appear in Chrome’s download panel and normal download folder.</dd></div>
         </dl>
       </section>
@@ -61,12 +60,12 @@
           <li>Run <strong>Install.command</strong> (Mac) or <strong>Install-Windows.cmd</strong> (Windows).</li>
           <li>At <code>chrome://extensions</code>, enable <strong>Developer mode</strong> and <strong>Load unpacked</strong>. Select setup’s extension folder.</li>
           <li>Use <strong>Load unpacked</strong> again to load the <strong>audio-companion</strong> subfolder. This keeps audio as a separate right-click entry.</li>
-          <li>Load <strong>youtube-companion</strong> and <strong>screenshot-companion</strong> for ad blocking and screenshots. Disable their standalone Still copies if installed.</li>
+          <li>Load <strong>protection-companion</strong> and <strong>screenshot-companion</strong> for ad blocking and screenshots. The older bundled YouTube protector pauses automatically. Disable other standalone ad blockers.</li>
           <li>Refresh webpages, then right-click and choose <strong>Download video</strong>.</li>
         </ol>
         <details class="setup-note"><summary>Requirements: Chrome 127+. Mac tested; Windows installation unverified.</summary><p>Internet required. Mac setup may install Homebrew and ask for your password. Windows requires WinGet. Use the installer ZIP, not GitHub’s automatic source archives.</p></details>
         <details class="setup-note"><summary>Already installed? Enable automatic updates once.</summary><p>For 0.4.x or initial 0.5.0 copies, run the latest installer, reload the extension at chrome://extensions, and refresh open pages. Future helper and extension updates install silently after downloads finish. Keep Developer mode enabled. Settings has update status, a manual check and an opt-out.</p></details>
-        <details class="setup-note"><summary>Enable website ad blocking</summary><p>Click Enable ad blocking in the main toolbar or Settings, approve Chrome’s optional filtering permission, and reload open pages. Pause here disables filtering on a site. YouTube uses its companion. Live, unrecognized or stitched ads may remain; playback coverage varies by service.</p></details>
+        <details class="setup-note"><summary>Already installed? Add full video ad protection once</summary><p>After the signed update, Load unpacked the protection-companion folder inside your stable installed extension folder. Reload open pages. Complete mode is enabled by default, with global and per-site controls in the main menu. Future updates are automatic. The older engines stand down when it connects. Live, unrecognized or stitched ads may remain; coverage varies by service.</p></details>
       </section>
       <section class="section coverage" aria-labelledby="coverage">
         <h2 id="coverage">Know what you’re downloading.</h2>

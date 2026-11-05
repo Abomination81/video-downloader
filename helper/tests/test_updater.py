@@ -422,3 +422,48 @@ def test_update_cannot_drop_an_installed_screenshot_companion(screenshot_bundle,
     shutil.rmtree(child)
     with pytest.raises(updater.UpdateError, match='screenshot companion is missing'):
         updater.validate_bundle(new, update)
+
+
+@pytest.fixture
+def protection_bundle(tmp_path, signed, installed):
+    _, identity, manifest = installed
+    update, _ = signed
+    new = bundle(tmp_path, identity, manifest)
+    root = Path(__file__).resolve().parents[2]
+    source = root / 'companion/protection'
+    child = new / 'extension/protection-companion'
+    child.mkdir()
+    value = json.loads((source / 'upstream/chromium/manifest.json').read_text())
+    value.update(key=json.loads((source / 'identity.json').read_text())['key'], version=update['version'], externally_connectable={'ids': [updater.EXTENSION_ID]}, background={'service_worker': 'bundle-bridge.js', 'type': 'module'})
+    (child / 'manifest.json').write_text(json.dumps(value))
+    return new, update, child, value
+
+
+def test_protection_companion_retains_filtering_permissions(protection_bundle):
+    new, update, _, _ = protection_bundle
+    assert updater.validate_bundle(new, update).suffix == '.whl'
+
+
+@pytest.mark.parametrize('change', [
+    {'permissions': ['cookies', 'nativeMessaging']},
+    {'optional_permissions': ['downloads']},
+    {'externally_connectable': {'ids': ['*']}},
+    {'web_accessible_resources': [{'resources': ['/bundle-bridge.js'], 'matches': ['<all_urls>'], 'use_dynamic_url': True}]},
+    {'update_url': 'https://evil.test/update'},
+    {'background': {'service_worker': 'other.js', 'type': 'module'}},
+    {'key': 'invalid'}, {'version': '99.0.0'},
+])
+def test_protection_companion_rejects_changed_boundary(protection_bundle, change):
+    new, update, child, value = protection_bundle
+    value.update(change); (child / 'manifest.json').write_text(json.dumps(value))
+    with pytest.raises(updater.UpdateError, match='ad protection companion'):
+        updater.validate_bundle(new, update)
+
+
+def test_update_cannot_drop_installed_protection(protection_bundle, installed):
+    new, update, child, _ = protection_bundle
+    app, _, _ = installed
+    shutil.copytree(child, app / 'extension/protection-companion')
+    shutil.rmtree(child)
+    with pytest.raises(updater.UpdateError, match='ad protection companion is missing'):
+        updater.validate_bundle(new, update)

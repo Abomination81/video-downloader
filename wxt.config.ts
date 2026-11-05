@@ -11,7 +11,7 @@ export default defineConfig({
     name: 'Video Downloader by Abomination81',
     description: 'Video, MP3, original images, screenshots, ad blocking, metadata removal and browsing tools. Built by abomination81.',
     homepage_url: 'https://abomination81.com',
-    version: '0.10.0',
+    version: '0.11.0',
     externally_connectable: { ids: [audio.id] },
     key: identity.key,
     minimum_chrome_version: '127',

@@ -1,4 +1,6 @@
 import {z} from 'zod';
+import {protectionStatus,protectionSnapshot,setProtectionEnabled,setProtectionSite,syncProtection,migrateProtection} from './protection-companion';
+import {YOUTUBE_COMPANION_ID} from './youtube-companion';
 import {AD_PERMISSION,adPreferencesSchema,cosmeticSchema,cosmeticCSS,pausedSite,siteMatches,type AdPreferences,type Cosmetics} from './adblock-policy';
 
 const manifestSchema=z.object({rulesSha256:z.string().regex(/^[a-f0-9]{64}$/),networkRules:z.number().int().min(1).max(27000),cosmeticRules:z.number().int().max(100000),lastModified:z.string().nullable(),source:z.string()});
@@ -23,6 +25,7 @@ export class AdBlocking {
   private queue:Promise<unknown>=Promise.resolve();
   private error:string|undefined;
   private active=false;
+  private delegated=false;
   private info=packaged('manifest.json').then(value=>manifestSchema.parse(value));
   private cosmetics:Promise<Cosmetics>|undefined;
   private rules:Promise<chrome.declarativeNetRequest.Rule[]>|undefined;
@@ -31,6 +34,8 @@ export class AdBlocking {
     void this.info.catch(()=>undefined); // Snapshot/apply surface unavailable packaged data.
     chrome.permissions.onAdded.addListener(value=>{if(value.permissions?.includes(AD_PERMISSION))void this.reconcile(true);});
     chrome.permissions.onRemoved.addListener(value=>{if(value.permissions?.includes(AD_PERMISSION))void this.reconcile();});
+    chrome.alarms.onAlarm.addListener(event=>{if(event.name==='protection-companion'){void syncProtection();void this.reconcile();}});
+    void chrome.alarms.create('protection-companion',{periodInMinutes:1});
     void this.reconcile();
   }
   private serial<T>(run:()=>Promise<T>):Promise<T> {
@@ -44,14 +49,16 @@ export class AdBlocking {
     const [prefs,permission,info]=await Promise.all([this.preferences(),this.granted(),this.info.catch(()=>({networkRules:0,cosmeticRules:0,lastModified:null}))]);
     return {enabled:prefs.enabled,permission,active:this.active&&permission&&prefs.enabled,paused:host?pausedSite(host,prefs):false,pausedSites:prefs.pausedSites,networkRules:this.acceptedRules??info.networkRules,cosmeticRules:info.cosmeticRules,updated:info.lastModified,error:this.error??null};
   }
-  async status(host?:string){await this.queue;return this.snapshot(host);}
+  async status(host?:string){const full=await protectionStatus(host);if(full){if(!this.delegated)await this.reconcile();return protectionSnapshot(await protectionStatus(host)??full);}await this.queue;return {...await this.snapshot(host),engine:'basic'};}
   async setEnabled(enabled:boolean) {
+    if(await protectionStatus()){const value=await setProtectionEnabled(enabled);await this.reconcile();return protectionSnapshot(value);}
     return this.serial(async()=>{
       const prefs=await this.preferences();await chrome.storage.local.set({adBlockPreferences:{...prefs,enabled}});
       await this.apply(enabled);return this.snapshot();
     });
   }
   async setSite(host:string,paused:boolean) {
+    if(await protectionStatus())return protectionSnapshot(await setProtectionSite(host,paused));
     return this.serial(async()=>{
       const prefs=await this.preferences();
       const sites=prefs.pausedSites.filter(site=>!siteMatches(host,site));
@@ -63,7 +70,15 @@ export class AdBlocking {
   private reconcile(force=false){return this.serial(()=>this.apply(force));}
   private async apply(force=false) {
     try {
-      const [prefs,permission]=await Promise.all([this.preferences(),this.granted()]);
+      const [saved,permission,full]=await Promise.all([this.preferences(),this.granted(),protectionStatus()]);
+      const prefs=full?{...saved,enabled:false}:saved;
+      if(full){
+        if(!this.delegated){await migrateProtection(saved.pausedSites);await chrome.storage.local.set({adBlockPreferences:prefs});}
+        this.delegated=true;
+        // The mature engine now owns YouTube too. This command only pauses the
+        // old companion; it cannot pass scripts, browsing data or helper jobs.
+        void chrome.runtime.sendMessage(YOUTUBE_COMPANION_ID,{type:'youtube-companion-supersede'}).catch(()=>undefined);
+      }else this.delegated=false;
       this.active=false;this.error=undefined;
       if(permission) {
         const info=prefs.enabled?await this.info:undefined;

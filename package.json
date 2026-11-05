@@ -1,11 +1,11 @@
 {
   "name": "video-downloader",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wxt",
-    "build": "wxt build && node scripts/build-companion.mjs && node scripts/build-youtube-companion.mjs && node scripts/build-screenshot-companion.mjs && node scripts/build-adblock.mjs",
+    "build": "wxt build && node scripts/build-companion.mjs && node scripts/build-youtube-companion.mjs && node scripts/build-screenshot-companion.mjs && node scripts/build-adblock.mjs && node scripts/build-protection-companion.mjs",
     "typecheck": "wxt prepare && tsc --noEmit",
     "test": "vitest run",
     "test:helper": "uv run --project helper --extra dev pytest helper/tests -q",
@@ -17,7 +17,8 @@
     "test:menus": "node scripts/companion-browser-check.mjs",
     "test:youtube": "node scripts/youtube-companion-check.mjs",
     "test:screenshot": "node scripts/screenshot-companion-check.mjs",
-    "test:ads": "node scripts/adblock-browser-check.mjs && node scripts/pluto-browser-check.mjs"
+    "test:ads": "node scripts/adblock-browser-check.mjs && node scripts/pluto-browser-check.mjs",
+    "test:protection": "node scripts/protection-browser-check.mjs"
   },
   "dependencies": {
     "zod": "^4.0.0"
