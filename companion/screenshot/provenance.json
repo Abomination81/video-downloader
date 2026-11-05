@@ -1,0 +1,20 @@
+{
+  "engine": "Still full-page screenshot",
+  "version": "1.1.0",
+  "sourceCommit": "ee1874b2d6079688b5f157b2a0b2538c708efdb1",
+  "files": {
+    "manifest.json": "13304d78f74f40e6bfc0c42de910994ded04fcdad39d4742a9285c20f052e85e",
+    "background.js": "0e9dfeeaa2da9c8ac4c1c4facddac70184b637ce9dddc83c09de281f604cf0d8",
+    "core.js": "0c4b1877f2186e402abdb22adf3bfd4048efc437565c2a01bcc005c623ad1316",
+    "page.js": "f8f205b40ecdec374ddc09f5efcbe29723c75bb07543ec556758c56e6244a90b",
+    "preview.html": "d3cc6bcfaae8a0107887b50ad32522aa3504d522b3f5b12090daee3af7d0f6b1",
+    "preview.js": "884c6206a290891442c87c7606cc6e6275d338beca840eef5ee52e426bbfe967",
+    "preview.css": "9b44e43d5f970a1dc2ad2da0cf4ec1e85189a31578ceb853a785c5c753ef9fea",
+    "tokens.css": "05d6e7840fe1b932850410729725607c8bfa36b141ad18a663759ac25dc6cb11",
+    "zip.js": "f3ab27c39557132d40ffe5ca14333d5a183d47301c801d098bb4017268afd1d7",
+    "icons/16.png": "3e1c831675ae714bf2f566d9c3895b7f907f06e7d78ad1cd3b0a35d3be6d6c5e",
+    "icons/32.png": "a33f0d999b78bed532ec1be6b888882ca942948897abd45554788e3a90aba1eb",
+    "icons/48.png": "14e5887d1aec2da82f48d7d0995405f24ba303c2d3c1d5dbde403888c703b7e3",
+    "icons/128.png": "40cc389dc7a006596f716da3564d753098fda973745a165045b3d57489a735ed"
+  }
+}

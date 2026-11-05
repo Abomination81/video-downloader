@@ -1,0 +1,14 @@
+{
+  "version": "0.8.0",
+  "tests": [
+    "All three extensions coexist; parent reads only protection status; child has no native, cookie or download APIs and cannot call parent",
+    "Foreign extension, parent tab and malformed parent commands cannot toggle or query through the external boundary",
+    "YouTube bootstrap ads, Shorts ad entries and network ads are filtered while downloader discovery works",
+    "Actual parent content-script sender rejected; companion CSP blocks external fetch",
+    "Mid-roll fixture skip restores user mute/speed with the downloader running",
+    "Own pause control disables filtering on reload; downloader remains usable",
+    "Unrelated websites retain data, ad elements and requests",
+    "Open companion UI defers version activation and parent schedules a persistent retry",
+    "Real paired version upgrade activates automatically and preserves paused scripts/rules"
+  ]
+}

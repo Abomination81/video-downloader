@@ -17,3 +17,15 @@ On Mac, a per-user launchd agent performs update preparation independently of Ch
 Do not put cookies, credentials, signed media URLs, personal media or unredacted browser logs in public issues. Use GitHub's private vulnerability reporting if available. Otherwise contact [@Abomination81 on X](https://x.com/Abomination81) to arrange a private reporting route before sharing sensitive details.
 
 For an ordinary compatibility issue, include the extension/helper version, operating system, public site name, and the displayed error. Share only media you are comfortable making public. Windows installation is not yet certified; tested coverage is recorded in [VALIDATION.md](docs/VALIDATION.md).
+
+## YouTube companion boundary
+
+YouTube Protection runs as a separate extension with only scripting, local storage and declarative request blocking on the two YouTube origins. No cookies, native messaging, downloads, tabs, remote code or remote filters permission is granted. Only the pinned downloader worker may request version/on-off status or activation of a matching locally installed version. The companion has no access to downloader commands. Web pages and content scripts cannot toggle it. The signed updater rejects permission, identity, CSP and DNR scope expansions; updates do not grant new sites. These checks do not make a compromised signed publisher harmless: review signed release changes and protect the existing release key.
+
+## Screenshot companion
+
+Full Page Screenshot by Abomination81 has only `activeTab`, `scripting`, and `contextMenus`, with no host permissions or background content scripts. Its click-triggered Still engine retains isolated-world capture, source/document/focus guards, bounded image allocations, independent restoration and authenticated preview ports. Screenshot bytes stay in its own extension origin, never the parent or native helper. Automatic saving uses a local Blob link, without the downloads API. The downloader's existing optional completed-image cleaner may independently process a newly saved PNG, as it does other completed image downloads; this grants no new access and its existing preference remains unchanged.
+
+The only integration messages are version status and matching local bundle activation. The receiver pins the parent's extension ID and exact background-worker URL, rejects tab/content-script senders and surplus keys, and exposes no capture, pixels, tab ID, source URL, filename, or browsing status command. A fixed packaged-manifest fetch requires `connect-src 'self'`; all remote connections remain blocked. Active captures and any preview defer reload, with retries owned by the parent. No new permissions are added to the main downloader.
+
+The signed updater independently enforces the screenshot companion identity, exact permission set, CSP, module-worker entry, no incognito, no host/content-script/web-accessible grants, and the allowlisted parent sender. It rejects missing companions in updates to installations that already include one. The independently permissioned companion is not protection against a compromised OS, browser, or holder of the trusted release-signing key.

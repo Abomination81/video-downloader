@@ -1,5 +1,29 @@
 # Validation
 
+## 0.9.2 tool design — 2026-11-04
+
+Replaced the installed tool's ghoul/eye artwork with an original SVG download mark and checked-in PNG sizes. The main popup, settings, audio, YouTube and screenshot screens share green/black colors, system typography and visible @abomination81 links. The main popup retains download/format/history controls and lists every included tool with companion availability. A disposable profile with all companions and an isolated real helper rendered a 380 × 600 popup; its footer ends at 587 pixels with no horizontal overflow. Screenshots were visually inspected. Native context-menu labels remain unbranded; the screenshot command is Save full-page screenshot. Chrome controls native menu styling and its extension icon.
+
+Passed: production build/type checking, 43 TypeScript tests, all 166 helper tests (including 83 installer/updater checks), the full media/image/copying browser integration, format-picker/MP3 integration, nine YouTube companion scenarios and seven screenshot companion scenarios. The version fixture now advances from the actual helper version so update tests continue to test upgrades after release bumps. The update checks also cover automatic audio-companion activation and refusing to reload a mismatched unpacked folder. Existing source identities, permissions and pinned upstream engine files are preserved. Publication checks and the signed-release upgrade are recorded separately.
+
+## 0.9.1 right-click restoration — 2026-11-04
+
+Reproduced the reported class of failure in the real Chrome update harness: an existing page's earlier window-capture `contextmenu` handler still canceled the native menu after the extension reconnected. The new enabled-state check failed before the fix and passed afterward. A local MAIN-world policy now ignores `preventDefault()` and legacy `returnValue = false` only for context menus while restoration is enabled. It uses no page messages or extension APIs. Installation reconnects already-open tabs as well as updates.
+
+Passed: type checking, production build, 42 TypeScript tests, update/reconnection regression including both restoration states and legacy cancellation, and real player click/drag checks in ordinary, shadow-root and cross-origin-frame players plus Chrome's native timeline. Normal mouse event cancellation remains unchanged. Live user Chrome inspection was interrupted; the supplied screenshot establishes the YouTube custom-menu symptom, while the controlled browser fixture establishes the reproduced cause and fix. This is a local build, not a published release.
+
+## 0.9.0 screenshot companion — 2026-11-04
+
+Locally integrated Full Page Screenshot by Abomination81, using the pinned Still 1.1.0 engine. Screenshot access stays in a separate extension with only `activeTab`, `scripting` and `contextMenus`. Main downloader permissions are unchanged. Its version-only connection rejects foreign extensions, parent tabs/content scripts, malformed commands and capture requests. The companion cannot access the native helper or parent download jobs, and its CSP blocks external HTTP requests.
+
+Passed: TypeScript checking and production build; 42 TypeScript tests; 166 Python tests; all 55 screenshot browser/edge scenarios (23 at 1×, 23 at 2×, nine edge cases); seven combined screenshot integration scenarios; nine YouTube integration scenarios; video/copying/selection interaction checks; automatic update activation; authenticated native audio/menu checks. Captures retain complete rows, fixed/sticky elements, lazy loading, cancellation and document restoration. Combined tests verify repeated captures without navigation, automatic PNG download, temporary-preview closure, capture/preview update deferral and eventual version activation. The isolated screenshot harness uses native window dimensions: forced viewport emulation had reported 700 pixels while Chrome captured 613 after closing a tab. The update harness now allows worker startup beyond Chrome's 30-second alarm boundary.
+
+The packaged archive passes the actual update-policy validator and ZIP integrity checks. Its included screenshot source rebuilds offline with all 16 output files byte-identical. No test capture bridge ships. The macOS packaged installer upgraded the local helper to 0.9.0; native ping reports ready and native registration still permits only the main extension. Installed extension files match the build.
+
+In normal Chrome, the main downloader and screenshot companion are loaded from the stable Application Support directory. Settings shows **Extension 0.9.0 · Helper 0.9.0** and screenshot **Ready · v0.9.0**. The screenshot companion is enabled/pinned with file access off; standalone Still Screenshot is disabled to avoid duplicate commands. The actual root right-click menu showed **Take full page screenshot** beside **Download video**. One click saved a 2100 × 4100 PNG to Downloads while keeping the source selected; all 4100 rows were verified, including one header/footer and restored sticky placement. Its temporary preview closed. The separately installed standalone YouTube protection was left intact; the optional audio/YouTube bundle companions are tested in disposable profiles but were not enabled by this screenshot task.
+
+Machine-readable evidence is in `docs/validation/0.9.0/`. Remaining capture limits are documented in `companion/screenshot/README.md`. Windows installation was not exercised. This is a local build; no release was pushed, signed or published.
+
 Verified on 2026-10-30 on macOS arm64. Browser/site support claims are limited to the scenarios exercised; these checks do not certify every live website.
 
 ## Passed
@@ -141,3 +165,22 @@ The actual native Chrome menus were inspected on macOS using accessibility snaps
 The two-extension browser check uses real native messaging, the actual companion sender and real media processing. It rejects a third extension and invalid RPC operations, downloads audio from video and an authenticated audio-only source requiring its cookie and Referer, and verifies clean MP3 output and exactly one Chrome download entry. It navigates/closes source tabs immediately during handoff, and repeated request IDs reuse the same job. The toolbar clean-link action uses the last right-clicked link. A simulated atomic folder/runtime version change verifies actual automatic reload of both extensions and reconnection of the companion, with Developer mode enabled in the isolated profile. No user Chrome profile is changed by those checks.
 
 Helper checks also validate the companion's pinned identity, shared version and minimal permissions during signed updates. Existing MP4/MP3 format, metadata, image, seek-bar, clipboard and update-activation checks remain in the verification suite. The companion is packaged inside the main extension folder, so existing 0.6.0 updaters deliver both sets of files atomically. Chrome still requires loading the companion folder once; subsequent updates use the existing signed updater.
+
+## 0.8.0 YouTube companion — 2026-11-04
+
+Tested locally on macOS arm64 with Chrome for Testing 156.0.8078.4. The main downloader, audio companion and YouTube companion are separate extensions. The main permission list is unchanged. The YouTube companion keeps Still 0.1.2's three permissions and two YouTube hosts; the ad/player engine files are byte-identical to the recorded upstream source.
+
+Passed:
+
+- TypeScript type checking, production build and 35 TypeScript tests.
+- Full helper suite: 148 passing tests, including 22 new YouTube update-policy cases and per-user installer/native-host isolation.
+- Nine real integrated-browser scenarios: three extensions coexist; only the pinned parent worker can request status; hostile extension/tab/content-script senders and surplus commands are rejected; the companion cannot call parent download jobs; CSP blocks outbound requests; YouTube bootstrap/Shorts/network filtering and downloader discovery coexist; fixture mid-roll skip restores mute/speed; pause works without disabling downloads; unrelated sites remain unchanged; open companion UI defers upgrades; the parent's persistent retry activates the matching new version and preserves paused rules/scripts.
+- Still's installed-extension checks against the built companion: 22 browser checks and 23 player scenarios, including malformed responses, nocookie embeds, forged page commands, unsafe skip controls, muted-state ownership, source churn, retries and player replacement.
+- Continuous five-minute fixture soak: 200 ad cycles over 300.73 seconds. This was a synthetic session, not live YouTube.
+- Downloader browser, interaction, update, format-picker and audio-menu suites pass. Includes native authenticated video/audio downloads, closed source tabs, worker recovery, clipboard actions, image cleanup, MP3 metadata verification, seeking and preserved form/page state across upgrades. The audio-menu suite runs with the YouTube companion loaded too.
+- The actual 0.8.0 archive passes identity, permission, CSP and DNR scope validation against the previously installed 0.7.0 permissions. Companion source in the ZIP rebuilds offline with Node, matching every packaged byte. ZIP integrity and absence of private signing keys/configuration artifacts checked.
+- Packaged installer applied to the existing local macOS installation. All three manifests are 0.8.0; framed ping from the installed native host reports helper 0.8.0 and tools ready. Native registration allows only the main downloader identity.
+
+Machine-readable fixture evidence is in `docs/validation/0.8.0/`. Browser screenshots were inspected for the new companion popup and settings section.
+
+Remaining limits: the new companion still requires one-time manual Load unpacked in the normal Chrome profile; disable standalone Still to avoid double filtering. Reload existing YouTube pages after protection changes or updates. This integration does not add new live-ad efficacy evidence: prior Still testing observed real pre-roll and Shorts filtering, while a controlled, actually served mid-roll comparison remains incomplete. Windows scripts are included but Windows installation was not exercised. Local packages are prepared; no release was pushed, signed or published by this integration task.

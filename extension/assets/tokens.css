@@ -3,7 +3,7 @@
   src: url('/fonts/anton-latin.woff2') format('woff2');
 }
 
-/* Abomination81 · the same palette and display face as abomination81.com. */
+/* Abomination81 · green and black, with native system typography. */
 :root {
   color-scheme: dark;
   --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px; --space-3xl: 96px;
@@ -12,13 +12,13 @@
   --dur-micro: 120ms;
   --color-paper: #000000; --color-paper-2: #050b06; --color-paper-3: #08110a;
   --color-ink: #f4f7f4; --color-ink-2: #d4dfd6; --color-muted: #b8c3ba;
-  --color-rule: #235c2b;
+  --color-rule: #26352b;
   --color-accent: #7dff64; --color-accent-deep: #39ff14; --color-accent-soft: #123918; --color-accent-ink: #000000;
   --color-focus: #39ff14; --color-error: #ffb4a9; --color-success: #39ff14;
-  --font-display: 'Anton', Impact, 'Arial Narrow', sans-serif;
-  --font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-  --font-outlier: 'IBM Plex Mono', ui-monospace, monospace;
-  --radius-card: 2px; --radius-input: 2px;
-  --tracking-display: 0.01em; --display-weight: 400;
+  --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-outlier: ui-monospace, SFMono-Regular, Consolas, monospace;
+  --radius-card: 12px; --radius-input: 7px;
+  --tracking-display: -0.025em; --display-weight: 650;
   --container: 720px; --gutter: 24px;
 }

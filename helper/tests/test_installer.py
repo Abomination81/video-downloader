@@ -26,7 +26,11 @@ def test_shared_bundle_uses_each_accounts_downloads(tmp_path, monkeypatch, accou
     identity = json.loads((root / "extension-identity.json").read_text())
     (bundle / "extension-identity.json").write_text(json.dumps(identity))
     (bundle / "extension/manifest.json").write_text(json.dumps({"key": identity["key"]}))
-    wheel = bundle / "helper-wheel/video_downloader_helper-0.7.0-py3-none-any.whl"
+    (bundle / "extension/youtube-companion").mkdir()
+    (bundle / "extension/youtube-companion/manifest.json").write_text('{"name":"YouTube companion fixture"}')
+    (bundle / "extension/screenshot-companion").mkdir()
+    (bundle / "extension/screenshot-companion/manifest.json").write_text('{"name":"Screenshot companion fixture"}')
+    wheel = bundle / "helper-wheel/video_downloader_helper-0.9.2-py3-none-any.whl"
     wheel.parent.mkdir()
     wheel.touch()
     constraints = bundle / "runtime-requirements.txt"
@@ -58,6 +62,10 @@ def test_shared_bundle_uses_each_accounts_downloads(tmp_path, monkeypatch, accou
         assert data["ProgramArguments"][-1] == "--updater"
         assert data["EnvironmentVariables"]["VIDEO_DOWNLOADER_HOME"] == str(app)
     assert (app / "extension/manifest.json").exists()
+    assert (app / "extension/youtube-companion/manifest.json").read_bytes() == (bundle / "extension/youtube-companion/manifest.json").read_bytes()
+    assert (app / "extension/screenshot-companion/manifest.json").read_bytes() == (bundle / "extension/screenshot-companion/manifest.json").read_bytes()
+    registration = json.loads((home / "registration/com.video_downloader.helper.json").read_text())
+    assert registration['allowed_origins'] == [f"chrome-extension://{identity['id']}/"]
     install_call = next(args for args in calls if "pip" in args)
     assert install_call[-1] == wheel.as_uri()  # Paths containing spaces stay one requirement.
     assert install_call[install_call.index("--constraint") + 1] == constraints.as_uri()

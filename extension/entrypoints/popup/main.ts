@@ -149,11 +149,14 @@ el<HTMLButtonElement>('#copy-clean-link').onclick = async () => {
   const button = el<HTMLButtonElement>('#copy-clean-link'); button.disabled = true;
   try {
     if (tabId === undefined) throw new Error('Open a website first.');
-    await request({ type: 'copy-context-link', tabId }); button.textContent = 'Link copied';
+    await request({ type: 'copy-context-link', tabId }); button.querySelector('span')!.textContent = 'Link copied'; button.setAttribute('aria-label', 'Link copied');
   } catch (error) { notice((error as Error).message); }
   finally { button.disabled = false; }
 };
 async function init() {
+  void featureStatus();
+  const platform = await chrome.runtime.getPlatformInfo();
+  el('#download-shortcut').textContent = platform.os === 'mac' ? '⌥⇧V' : 'Alt+Shift+V';
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }); tabId = tab?.id;
   const state = await chrome.storage.session.get(['lastError', 'choices', 'formatPicker']);
   if (state.lastError && typeof (state.lastError as { message?: unknown }).message === 'string') notice((state.lastError as { message: string }).message);
@@ -168,9 +171,21 @@ async function init() {
   }
   try {
     const status = z.object({ ready: z.boolean() }).parse(await request({ type: 'ping' }));
-    el('#helper-status').textContent = status.ready ? 'Ready. You can leave the page after starting.' : 'Run the installer to finish setup.';
+    el('#helper-status').textContent = status.ready ? 'Ready · Downloads continue after you leave.' : 'Run the installer to finish setup.';
+    el('#helper-status').dataset.ready = String(status.ready);
     for (const id of ['download', 'choose-format', 'download-mp3']) el<HTMLButtonElement>(`#${id}`).disabled = !status.ready;
   } catch (error) { el('#helper-status').textContent = (error as Error).message; for (const id of ['download', 'choose-format', 'download-mp3']) el<HTMLButtonElement>(`#${id}`).disabled = true; }
   await refresh();
+}
+async function featureStatus() {
+  for (const [type, selector] of [['screenshot-companion-status', '#screenshot-availability'], ['youtube-protection-status', '#youtube-availability']] as const) {
+    try {
+      const value = z.object({ installed: z.boolean(), enabled: z.boolean().optional() }).parse(await request({ type }));
+      const state = el(selector);
+      state.textContent = !value.installed ? 'Setup' : value.enabled === false ? 'Paused' : '';
+      state.title = !value.installed ? 'Load this companion once in Settings.' : value.enabled === false ? 'Protection is paused in the YouTube companion.' : 'Companion connected.';
+      state.dataset.ready = String(value.installed && value.enabled !== false);
+    } catch { el(selector).textContent = 'Check Settings'; }
+  }
 }
 void init().catch((error) => notice((error as Error).message));

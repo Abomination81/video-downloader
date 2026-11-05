@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.9.2 — local design update, 2026-11-04
+
+- Replace the ghoul/eye artwork with an original green download mark across the tool, toolbar and companion icons.
+- Retain the main downloader menu with system typography, cleaner green/black styling, a complete feature overview, companion availability and prominent @abomination81 links.
+- Use short native right-click labels, including Save full-page screenshot. Chrome retains control of native menu appearance and extension identification.
+- Match the audio, YouTube and screenshot screens to the same branding; include shared artwork in offline companion source builds.
+- Avoid repeated activation attempts when Chrome is loaded from an old unpacked folder; explain the one-time installed-folder setup in Settings.
+
+## 0.9.1 — local fix, 2026-11-04
+
+- Restore Chrome's native right-click menu after reconnecting to pages whose earlier handlers cancel it, including YouTube's custom player menu.
+- Apply restoration to tabs already open during initial installation as well as updates, without refreshing their pages.
+- Preserve the restoration toggle, ordinary event cancellation, video seeking and scrubbing; give the menu priority before collecting media details.
+
+## 0.9.0 — local integration, 2026-11-04
+
+- Bundle Full Page Screenshot by Abomination81 as a separate companion, retaining Still's one-click right-click PNG/ZIP download and optional toolbar preview.
+- Add installation/status in Settings, a stable companion identity, version-only local coordination, and capture-aware update deferral.
+- Validate companion identity, CSP and minimal permissions during signed updates; include pinned source and offline build instructions.
+- Preserve the audio and YouTube companions and the main downloader permission list.
+
+## 0.8.0
+
+- Bundle YouTube Protection by Abomination81 as an optional, separately installed YouTube-only companion powered by Still 0.1.2.
+- Show its local status and install folder in Settings. Its own toolbar popup controls pause; downloader privileges are unchanged.
+- Coordinate version activation through the signed bundle updater, preserve pause state, and reject companion identity, permission, network-policy and rule-scope changes.
+- Include GPL source, build instructions and notices in installer bundles. Disable standalone Still before enabling the companion.
+- Existing YouTube tabs need a reload after changes. Controlled live mid-roll verification remains pending; deterministic mid-roll fixtures are covered.
+
 ## 0.7.0 — 2026-11-04
 
 - Replace the branded context-menu tree with direct commands. Video targets show **Download video** and **Download audio**; audio targets show **Download audio**; image targets show **Download photo**.

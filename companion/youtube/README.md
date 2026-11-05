@@ -1,0 +1,13 @@
+# YouTube companion source
+
+YouTube Protection by Abomination81 packages Still 0.1.2 as a separate Chrome extension. The bundled Still engine remains a tested candidate: real pre-roll and Shorts observations exist, but a controlled, actually served mid-roll comparison remains incomplete. No universal or permanent ad-blocking guarantee is made.
+
+`upstream/` is the unmodified Still extension source, including its GPL-3.0-or-later license and third-party notices. `provenance.json` records every file's SHA-256. The builder verifies these before copying. Distribution changes dated 2026-11-04 are in `bundle-sync.js` and `../../scripts/build-youtube-companion.mjs`: stable public identity, branding, parent bundle version and a minimal local update/status interface. These integration files are GPL-3.0-or-later. No private signing key is included or required for unpacked installation.
+
+The installer ZIP includes complete preferred source under `youtube-companion-source/`. From that directory, run `node scripts/build-youtube-companion.mjs` with Node 22 or newer. No dependencies or network access are needed. The result is `.output/chrome-mv3/youtube-companion`. This uses the included package version and main extension's public identity. In the repository, `npm run build` builds all three extensions.
+
+The companion retains only `declarativeNetRequest`, `scripting` and `storage`, scoped to www.youtube.com and www.youtube-nocookie.com. Embed injection is restricted to `/embed/`. It cannot read downloader cookies, jobs, history or files, and cannot connect to the native helper. No telemetry, remote filters or downloaded code are added. Its only persistent user value is its own on/off preference.
+
+Only the pinned downloader background worker may request status (version, Still engine version, enabled flag) or ask it to activate matching files already installed in its own folder. The companion cannot command the downloader. Web pages, content scripts and other extensions cannot use the interface. Update checks read a fixed local manifest, never a supplied URL. Reload waits while its popup or extension tab is open; retries are throttled and the parent retries pending activation every 30 seconds. Pause state survives updates. Like the original Still, changing protection or upgrading requires reloading existing YouTube pages to use the new page scripts.
+
+Load the `youtube-companion` folder once via Chrome's Load unpacked. Disable standalone Still first to avoid double filtering. Future files arrive through the downloader's signed bundle updater. The first activation in Chrome remains manual, without requesting extension-management permissions. Downloader permission grants and settings are separate and unchanged.

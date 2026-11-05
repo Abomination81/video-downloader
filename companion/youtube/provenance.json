@@ -1,0 +1,23 @@
+{
+  "engine": "Still",
+  "version": "0.1.2",
+  "license": "GPL-3.0-or-later",
+  "files": {
+    "LICENSE": "e73d33841f942fa73aa5a63d4a6399cc39a29564db1dbca0915485842fcb236d",
+    "THIRD_PARTY_NOTICES.md": "b90253d3e72146242bcd9739189ae4ec3a601f849bba689ab83eaa161f6e7167",
+    "_metadata/generated_indexed_rulesets/_ruleset1": "378bc3cd1a29f36fe300c5ff5a3e412d955b24e62ff5e99502b1c176ba95f55a",
+    "ads.css": "5617d20e2c0354ea1c489c05687340517c2ff2ab44e4232bc65ed7490d29ac9e",
+    "background.js": "d1195d3b3b678429374ce3325616df9669b33725aed81b85583572048e0981d9",
+    "icons/128.png": "b3e378b77059ddf79a8d81db1fcbcd6cf642c5a9557124e1454cc31fbddf0dbe",
+    "icons/16.png": "7b67fb17a3fbfd709ea701ed4b063296bf5af46ff5da55eea4a8efd4c06a7650",
+    "icons/32.png": "be60b42724519e58b91c46ce2cfe309a66ef191183a3b4d1c8874f8d1ea1f83b",
+    "icons/48.png": "3d938f0fd80b524193f490e029ccfdcda4c2730c321a47ab5c937abd1c53763c",
+    "main.js": "153e25509e29afeae3172e67b7545922d30ef741e1b283e94870b79865b0c53a",
+    "manifest.json": "80867f28a79f97312754e4dfc8d8c5723cc0be004ad29706db0f871f4b099d88",
+    "player.js": "0ed2bc11834ba64bf797bbe9ac050252a4a073f28f4e769c8b93c71ba95470d6",
+    "popup.css": "ee17f12c58d0c3679d4e2fb2e7bb9e02970a04d41394d2b18d92b1234300147f",
+    "popup.html": "84be1503b5663088c37a2593ea6c55e25a076bf6cb7d4f83859654c9cba0e201",
+    "popup.js": "1f2207fd9ca4611426947bf361554cf3aebfc48be34a8baa26ca1cd2594f9788",
+    "rules.json": "342d45b20d74bd722c59a15fd58c94f3e2ada216da7c0a306e3f04f7c8ae5268"
+  }
+}

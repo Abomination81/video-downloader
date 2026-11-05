@@ -126,13 +126,14 @@ try {
     await page.evaluate(() => document.fonts.ready);
     const brand = await page.evaluate(() => ({
       background: getComputedStyle(document.body).backgroundColor,
-      green: getComputedStyle(document.querySelector('h1')).color,
-      fontLoaded: document.fonts.check('24px Anton'),
-      artLoaded: document.querySelector('.intro-art').naturalWidth > 0,
+      green: getComputedStyle(document.querySelector('.btn')).backgroundColor,
+      nativeFont: getComputedStyle(document.querySelector('h1')).fontFamily.includes('-apple-system'),
+      markLoaded: document.querySelector('.app-mark').naturalWidth > 0,
+      oldArtwork: !!document.querySelector('.intro-art, img[src*="ghoul"]'),
       overflowing: document.documentElement.scrollWidth > innerWidth,
       clippedText: [...document.querySelectorAll('.intro p')].some((p) => p.scrollWidth > p.clientWidth + 1),
     }));
-    assert.deepEqual(brand, { background: 'rgb(0, 0, 0)', green: 'rgb(57, 255, 20)', fontLoaded: true, artLoaded: true, overflowing: false, clippedText: false });
+    assert.deepEqual(brand, { background: 'rgb(0, 0, 0)', green: 'rgb(57, 255, 20)', nativeFont: true, markLoaded: true, oldArtwork: false, overflowing: false, clippedText: false });
     assert.equal(await page.locator('.brand-footer').getByRole('link', { name: 'Built by abomination81' }).getAttribute('href'), 'https://abomination81.com');
     assert.equal(await page.locator('.brand-socials a').first().getAttribute('href'), 'https://x.com/Abomination81');
   };
@@ -421,7 +422,7 @@ try {
   await popup.getByRole('button', { name: 'Clear history', exact: true }).click();
   await popup.locator('#jobs .empty').waitFor();
   await popup.screenshot({ path: join(output, 'downloads-empty.png'), fullPage: true });
-  console.log('PASS branding: local ghoul and Anton font, exact black/green palette, creator links, narrow settings and popup');
+  console.log('PASS branding: original local download mark, native system fonts, black/green palette, creator links, narrow settings and popup');
   assert.deepEqual(failures, [], 'Browser page errors');
   await writeFile(join(output, 'browser-results.json'), JSON.stringify({ cases: cases.map((c) => c.name), nativeDownload: { state: job.state, width: 320, height: 180, metadataVerified: true, chromeEntries: chromeItems.length, pageNavigation: true, popupClosed: true, transientFragmentRetried: true }, workerRestart: { state: authJob.state, chromeEntries: authItems.length, sessionAndRefererVerified: true }, copyTools: true, images: { original: imageJob.state, inline: inlineJob.state, ordinaryChromeSave: savedJob.state, metadataVerified: true, highestExposedSource: true }, pageErrors: failures }, null, 2));
 } finally {

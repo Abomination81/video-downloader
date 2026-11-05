@@ -1,0 +1,100 @@
+{
+  "time": "2026-11-04T22:34:42.959Z",
+  "browser": "Chrome/156.0.8078.4",
+  "version": "0.8.0",
+  "scope": "Installed extension with synthetic HTTP, real media elements and native user controls",
+  "results": [
+    {
+      "name": "consecutive-ads",
+      "pass": true
+    },
+    {
+      "name": "mute-choice",
+      "pass": true
+    },
+    {
+      "name": "current-volume-control-coalesced-mute-choice",
+      "pass": true
+    },
+    {
+      "name": "current-volume-synthetic-click-does-not-claim-mute",
+      "pass": true
+    },
+    {
+      "name": "skip-retry",
+      "pass": true
+    },
+    {
+      "name": "stale-content-source",
+      "pass": true
+    },
+    {
+      "name": "classified-next-ad",
+      "pass": true
+    },
+    {
+      "name": "unmute-choice",
+      "pass": true
+    },
+    {
+      "name": "keyboard-mute",
+      "pass": true
+    },
+    {
+      "name": "volume-only-restores-mute",
+      "pass": true
+    },
+    {
+      "name": "mute-choice-crosses-ad-source",
+      "pass": true
+    },
+    {
+      "name": "synthetic-click-does-not-claim-mute",
+      "pass": true
+    },
+    {
+      "name": "retry-budget-and-replaced-button",
+      "pass": true
+    },
+    {
+      "name": "form-added-before-retry",
+      "pass": true
+    },
+    {
+      "name": "disabled-before-retry",
+      "pass": true
+    },
+    {
+      "name": "detached-before-retry",
+      "pass": true
+    },
+    {
+      "name": "source-change-in-click-handler",
+      "pass": true
+    },
+    {
+      "name": "retry-budget-resets-for-later-break",
+      "pass": true
+    },
+    {
+      "name": "mute-choice-on-pagehide",
+      "pass": true
+    },
+    {
+      "name": "source-churn-cannot-reset-break-budget",
+      "pass": true
+    },
+    {
+      "name": "lookalike-media-host-is-never-sought",
+      "pass": true
+    },
+    {
+      "name": "rate-choice-is-not-overwritten",
+      "pass": true
+    },
+    {
+      "name": "replaced-player-restores-old-media-and-attaches-once",
+      "pass": true
+    }
+  ]
+}

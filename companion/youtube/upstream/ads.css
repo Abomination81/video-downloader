@@ -1,0 +1,13 @@
+/* Only explicit advertising renderers. Do not hide dialogs, errors, consent, or regular videos. */
+ytd-ad-slot-renderer,
+ytd-display-ad-renderer,
+ytd-promoted-sparkles-web-renderer,
+ytd-promoted-video-renderer,
+ytd-in-feed-ad-layout-renderer,
+ytd-banner-promo-renderer,
+ytd-player-legacy-desktop-watch-ads-renderer,
+#player-ads,
+#masthead-ad,
+.ytp-ad-overlay-container {
+  display: none !important;
+}

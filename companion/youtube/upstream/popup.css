@@ -1,0 +1,7 @@
+:root {color-scheme: dark; font: 13px/1.55 system-ui, sans-serif; background: #131b20; color: #f1f4ee;}
+* {box-sizing: border-box;} body {width: 340px; margin: 0; padding: 24px;} header {display:flex; gap:14px; align-items:center; margin-bottom:24px;}
+.mark {display:grid; place-items:center; width:46px; height:46px; border:1px solid #91bea0; border-radius:12px; color:#b4e2b0; font-size:25px;}
+h1 {font-size:26px; letter-spacing:-1px; margin:0; font-weight:650;} header p {margin:0; font-size:11px; color:#aebcbf;}
+#status {font-size:17px; margin:0 0 12px;} button {width:100%; padding:12px; border:0; border-radius:8px; background:#c5e9ad; color:#162016; font:600 13px system-ui; cursor:pointer;}
+button:hover {background:#ddf3cf;} button:disabled {opacity:.55; cursor:wait;} button:focus-visible {outline:3px solid #fff; outline-offset:3px;}
+#notice {font-size:11px; color:#c2cdbf;} dl {border-top:1px solid #344039; border-bottom:1px solid #344039; padding:12px 0; margin:20px 0;} dl div {display:flex; justify-content:space-between; margin:6px 0; gap:8px;} dt {color:#aab9b8;} dd {margin:0; font-size:11px;} .detail {font-size:11px; color:#b2bebc;} footer {margin-top:20px; font-size:10px; color:#92a29c;}

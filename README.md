@@ -6,7 +6,7 @@
 
 **Built by [Abomination81](https://abomination81.com)** · [X @Abomination81](https://x.com/Abomination81) · [GitHub](https://github.com/Abomination81)
 
-![Video Downloader by Abomination81. Keep the video. Highest source quality, identifying metadata removed.](docs/assets/video-downloader-hero.svg)
+![Video Downloader by Abomination81. Video, audio, images, screenshots and browsing tools.](docs/assets/video-downloader-hero.svg)
 
 **Right-click. Download video. Get a clean, compatible MP4.** A Chrome extension and silent local helper find the highest-resolution source, save H.264 video and AAC audio by default, and remove identifying metadata. Compatible tracks are copied; other tracks are converted when needed.
 
@@ -24,6 +24,8 @@ Use **Video-Downloader.zip** from Releases for installation. GitHub's automatic 
 | **Choose format** (toolbar) | Inspect available source resolutions, frame rates, codecs and size estimates; choose a format for this download |
 | **Download audio** | Best available audio, up to 320 kbps by default; tags, artwork and chapters removed; native Chrome download entry |
 | **Download photo** | Largest exposed image source, original format and quality, identifying metadata removed |
+| **Save full-page screenshot** | A full-page PNG, or one ZIP of PNG parts for large pages; separate screenshot companion |
+| YouTube ad blocking | Local filtering for videos, Shorts and embedded players; separate YouTube companion |
 | Chrome's **Save image as** | Automatic cleanup of newly saved images, preserving your filename |
 | **Copy clean link** | Recognizable tracking fields removed; functional, signed and login links preserved |
 | Browse normally | Right-click, text selection and copying restored by default; settings can disable restoration |
@@ -33,7 +35,7 @@ Downloads continue after you navigate away or close the source tab. Everything r
 <details>
 <summary>See the extension</summary>
 
-<img src="docs/assets/downloads.png" width="380" alt="The real black and neon green extension showing completed image and video downloads, metadata removal status, and Show file controls.">
+<img src="docs/assets/downloads.png" width="380" alt="The green and black downloader with video, audio, images, screenshots, ad blocking and browsing tools.">
 
 </details>
 
@@ -42,13 +44,15 @@ Downloads continue after you navigate away or close the source tab. Everything r
 1. Unzip **Video-Downloader.zip**, then open **Install.command**. It installs the helper and any missing tools for your account. Internet access is required. If Homebrew is missing, setup installs it and macOS may ask for your password.
 2. The installer opens an extension folder and Chrome's extensions page. Turn on **Developer mode**, click **Load unpacked**, and select that extension folder.
 3. Load the **audio-companion** subfolder as a second extension to get the separate audio command.
-4. Reload any video pages that were already open.
+4. Load the **youtube-companion** subfolder for YouTube Protection. Disable standalone Still first if installed.
+5. Load the **screenshot-companion** subfolder for full-page screenshots. Disable standalone Still Screenshot if installed.
+6. Reload any video pages that were already open.
 
-The installed main extension folder is `~/Library/Application Support/Video Downloader/extension`; the audio companion is its `audio-companion` subfolder. They share one helper and download history. Both update together after their one-time Chrome setup. [Chrome groups multiple commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus), so the small companion keeps audio directly in the menu. The original ZIP can be deleted after setup.
+The installed main extension folder is `~/Library/Application Support/Video Downloader/extension`; its companions are the `audio-companion`, `youtube-companion` and `screenshot-companion` subfolders. The main and audio extensions share one helper and download history. YouTube protection and screenshots keep separate, limited permissions. All four update together after their one-time Chrome setup. [Chrome groups multiple commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus), so companions keep the commands directly in the menu. The original ZIP can be deleted after setup.
 
 ## Install on Windows
 
-Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet to install missing FFmpeg, Deno, and ExifTool, and installs a private Python runtime automatically. Then enable Developer mode at `chrome://extensions`, click **Load unpacked**, and choose the extension folder opened by setup. Load its **audio-companion** subfolder as a second extension. Windows installation scripts are supplied; check `docs/VALIDATION.md` for platforms actually tested.
+Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet to install missing FFmpeg, Deno, and ExifTool, and installs a private Python runtime automatically. Then enable Developer mode at `chrome://extensions`, click **Load unpacked**, and choose the extension folder opened by setup. Load its **audio-companion** subfolder as a second extension , **youtube-companion** for YouTube Protection, and **screenshot-companion** for full-page screenshots. Disable standalone Still if installed, then reload YouTube. Windows installation scripts are supplied; check `docs/VALIDATION.md` for platforms actually tested.
 
 Chrome requires these manual steps for an unpacked extension. Setup does not change Chrome policies, bypass security controls, or require a Chrome Web Store account.
 
@@ -145,3 +149,17 @@ npm run package
 No cloud service or permanent local server is required. SQLite stores job state, native messaging carries control messages, and a short-lived loopback endpoint transfers only already-clean files to Chrome. Independent workers continue if a popup or tab closes. Pending handoffs and image-cleanup work survive extension worker suspension through persisted IDs and alarms. Interrupted source jobs are marked as such; site credentials are not persisted for retries after a crash.
 
 Research decisions and primary sources are in `docs/RESEARCH.md`. Dependency licenses remain their respective licenses; this repository's original source is MIT licensed.
+
+## YouTube protection (0.8.0)
+
+The installer now includes **YouTube Protection by Abomination81**, powered by Still 0.1.2. Run the installer, then Load unpacked the `youtube-companion` folder inside the installed extension folder. Disable standalone Still before enabling the companion and reload YouTube. Settings shows the companion folder and status. Pin its toolbar button to pause/enable protection.
+
+It filters YouTube desktop videos, Shorts and embeds using bundled local code. It has only YouTube host permissions and cannot access downloader cookies, history, jobs or the helper. It has no telemetry or remote filters. Your protection preference stays local and survives bundle updates. Existing YouTube tabs need reloading after protection changes or updates. YouTube changes and ads stitched into content can limit filtering.
+
+This companion is GPL-3.0-or-later; see [bundle licenses](BUNDLE-LICENSES.md); offline source/build notes are included under `youtube-companion-source/companion/youtube/README.md` in the installer ZIP. It is installed separately to preserve permissions and licensing. Friends load it once; subsequent signed bundle updates coordinate its version automatically.
+
+## Full page screenshots (0.9.0)
+
+The installer includes **Full Page Screenshot by Abomination81**, powered by Still 1.1.0. Load `screenshot-companion` once from inside the installed extension folder and disable standalone Still Screenshot. Right-click a webpage → **Save full-page screenshot** to save directly to Downloads. Keep the page and Chrome window active until it finishes. Large captures arrive as one ZIP containing PNG parts; the toolbar retains an optional preview.
+
+It keeps its own three permissions (`activeTab`, `scripting`, `contextMenus`), with no all-sites, cookie, native-helper, download-history or persistent screenshot access. Abomination Settings shows its version and installation folder. The local connection shares version information only; it cannot start captures or transfer screenshot pixels. Updates travel in the existing signed bundle and wait until captures and previews close. Chrome's save-location preferences still apply. [Companion design, source and limits](companion/screenshot/README.md).

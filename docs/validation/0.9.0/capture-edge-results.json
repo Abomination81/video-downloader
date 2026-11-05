@@ -1,0 +1,15 @@
+{
+  "browser": "156.0.8078.4",
+  "date": "2026-11-04T22:53:15.612Z",
+  "results": [
+    "125% browser zoom has native output dimensions and continuous pixels",
+    "large capture splits into complete independently downloadable PNGs",
+    "continuously growing page terminates with no partial export",
+    "second toolbar click cancels",
+    "closing preview during capture restores source",
+    "reload cannot recover screenshot memory",
+    "protected Chrome pages fail clearly",
+    "worker termination erases preview and independent lease restores source",
+    "fresh capture recovers after worker termination"
+  ]
+}

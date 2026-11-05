@@ -1,14 +1,9 @@
-# Abomination81 branding
+# Abomination81 tool branding
 
-The extension's popup, settings, toolbar icons, installer output and README use the Abomination81 identity. Public references were checked on 2026-10-30:
+The downloader and its audio, YouTube and screenshot companions use black, neon green `#39ff14`, and native system fonts. The toolbar and menu icons use a simple download symbol; the earlier ghoul and eye artwork is removed from the installed tool.
 
-- Website: https://abomination81.com
-- GitHub: https://github.com/Abomination81
-- X: https://x.com/Abomination81
-- Website source: https://github.com/Abomination81/Abomination81.github.io
+The editable mark is `extension/public/brand/mark.svg`. Its checked-in PNG sizes are rebuilt with `node scripts/render-tool-icons.mjs`. The mark is original SVG source in this repository, not a remote image. All tool screens link to https://x.com/Abomination81 with the visible handle **@abomination81** and carry **Built by abomination81**.
 
-The shared palette uses the website's exact values: black `#000000`, dark green `#08110a`, neon green `#39ff14`, hover green `#7dff64`, text `#f4f7f4`, muted text `#b8c3ba`, and borders `#235c2b`. Headings use the same Anton display font. Every extension screen carries “Built by abomination81” and creator links.
+Right-click commands use Chrome's native contextMenus API with short, unbranded labels. Chrome and the operating system control their font, spacing, placement and extension icon; the tool does not draw an imitation context menu. Separate companions preserve direct menu entries.
 
-The original ghoul avatar and icon images come from the owner's website assets. They are bundled in `extension/public`, together with the self-hosted Anton font and its SIL Open Font License. The extension makes no requests to the creator's site, GitHub, font services or X to load its appearance; creator links open only when clicked.
-
-The stable extension key and native host identifier are preserved across the branding update, so existing helper registrations and download history continue to work.
+Assets are bundled locally. Appearance makes no requests to websites, font services or X. Creator links open only when clicked. Companion source/build instructions include the shared assets so they rebuild offline. Stable extension identities and native-host registration remain unchanged.

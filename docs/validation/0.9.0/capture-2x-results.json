@@ -1,0 +1,101 @@
+{
+  "browser": "156.0.8078.4",
+  "scale": 2,
+  "date": "2026-11-04T22:52:40.196Z",
+  "results": [
+    {
+      "name": "full-page PNG, every row, source restoration, hostile main-world isolation",
+      "passed": true,
+      "width": 2000,
+      "height": 6200
+    },
+    {
+      "name": "fit and actual size",
+      "passed": true
+    },
+    {
+      "name": "CSP blocks exfiltration fetch",
+      "passed": true
+    },
+    {
+      "name": "CSP blocks service-worker exfiltration",
+      "passed": true
+    },
+    {
+      "name": "forged content-script preview connection rejected",
+      "passed": true
+    },
+    {
+      "name": "horizontal and vertical stitching, partial final tiles",
+      "passed": true
+    },
+    {
+      "name": "fixed header/footer appear once, sticky restoration",
+      "passed": true
+    },
+    {
+      "name": "lazy image below initial viewport",
+      "passed": true
+    },
+    {
+      "name": "capture on CSP-constrained source page",
+      "passed": true
+    },
+    {
+      "name": "nested scroll limitation disclosed",
+      "passed": true
+    },
+    {
+      "name": "nonzero original scroll restored",
+      "passed": true
+    },
+    {
+      "name": "Escape cancels and erases partial capture",
+      "passed": true
+    },
+    {
+      "name": "tab-switch cancellation discards pixels and restores source",
+      "passed": true
+    },
+    {
+      "name": "same-origin navigation cancellation does not mutate replacement document",
+      "passed": true
+    },
+    {
+      "name": "oversize page fails closed with cleanup",
+      "passed": true
+    },
+    {
+      "name": "DOM complexity cap and cleanup",
+      "passed": true
+    },
+    {
+      "name": "copied preview URL cannot retrieve screenshot or start capture",
+      "passed": true
+    },
+    {
+      "name": "discard closes private preview",
+      "passed": true
+    },
+    {
+      "name": "context-menu handler automatically downloads complete PNG without changing source focus",
+      "passed": true
+    },
+    {
+      "name": "automatic download erases and closes its temporary preview",
+      "passed": true
+    },
+    {
+      "name": "large automatic capture downloads one valid ZIP containing all PNG parts",
+      "passed": true
+    },
+    {
+      "name": "cancelled automatic capture never downloads partial pixels",
+      "passed": true
+    },
+    {
+      "name": "no extension HTTP traffic or uncaught page errors",
+      "passed": true
+    }
+  ]
+}

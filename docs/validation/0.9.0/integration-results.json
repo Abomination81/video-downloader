@@ -1,0 +1,12 @@
+{
+  "version": "0.9.0",
+  "tests": [
+    "Four companions coexist; screenshot has no cookie, native, download-history or storage APIs and cannot call parent jobs",
+    "Foreign extensions, parent UI, capture requests and surplus fields cannot cross the version-only boundary",
+    "Parent content scripts rejected; screenshot CSP blocks outbound HTTP",
+    "Real toolbar invocation captures a complete page with downloader content scripts active",
+    "Context-menu handler downloads directly, keeps source selected and closes temporary preview",
+    "Update request during capture preserves all pixels; open preview defers reload with parent retry scheduled",
+    "Installed matching version activates automatically after preview closes"
+  ]
+}

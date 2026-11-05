@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { syncScreenshotCompanion } from './screenshot-companion';
+import { syncYouTubeCompanion } from './youtube-companion';
 import { defaults, settingsSchema } from './schema';
 import { HelperError, native } from './native';
 
@@ -26,14 +28,12 @@ export class Updates {
     const settings = settingsSchema.parse({ ...defaults, ...(saved.settings as object ?? {}) });
     const chromeVersion = Math.max(127, Number(/(?:Chrome|Chromium)\/(\d+)/.exec(navigator.userAgent)?.[1] ?? 127));
     const value = updateSchema.parse(await native('updates', { enabled: settings.autoUpdates, force, chromeVersion }));
-    await this.accept(value);
-    return value;
+    return this.accept(value);
   }
 
   async status() {
     const value = updateSchema.parse(await native('update-status'));
-    await this.accept(value);
-    return value;
+    return this.accept(value);
   }
 
   private async accept(value: z.infer<typeof updateSchema>) {
@@ -42,23 +42,30 @@ export class Updates {
     const period = polling ? 0.5 : 60;
     const current = await chrome.alarms.get(alarm);
     if (current?.periodInMinutes !== period) await chrome.alarms.create(alarm, { delayInMinutes: period, periodInMinutes: period });
-    if (value.installedVersion === chrome.runtime.getManifest().version || value.state === 'applying' || this.isBusy()) return;
+    if (value.installedVersion === chrome.runtime.getManifest().version || value.state === 'applying' || this.isBusy()) return value;
+    const disk = z.object({ version: z.string() }).parse(await (await fetch(chrome.runtime.getURL('manifest.json'), { cache: 'no-store' })).json());
+    if (disk.version !== value.installedVersion) {
+      const manual = { ...value, state: 'manual', message: 'Chrome is using an older extension folder. Load the installed extension folder once to activate automatic updates. Settings shows the installed companion folders.' };
+      await chrome.storage.local.set({ updateStatus: manual });
+      return manual;
+    }
     const pages = await chrome.tabs.query({});
-    if (pages.some(tab => tab.url?.startsWith(chrome.runtime.getURL('')))) return;
+    if (pages.some(tab => tab.url?.startsWith(chrome.runtime.getURL('')))) return value;
     const views = await chrome.runtime.getContexts({ contextTypes: ['POPUP' as chrome.runtime.ContextType, 'SIDE_PANEL' as chrome.runtime.ContextType] });
-    if (views.length) return;
+    if (views.length) return value;
     // The helper only commits while its download/cleanup queues are idle.
     // Recheck here so a newly started job also keeps its Chrome handoff alive.
     const jobs = z.object({ jobs: z.array(z.object({ state: z.string() })) }).parse(await native('jobs'));
-    if (jobs.jobs.some(job => ['queued', 'resolving', 'downloading', 'converting', 'cleaning', 'verifying', 'ready', 'finalizing'].includes(job.state))) return;
-    if (this.isBusy()) return;
+    if (jobs.jobs.some(job => ['queued', 'resolving', 'downloading', 'converting', 'cleaning', 'verifying', 'ready', 'finalizing'].includes(job.state))) return value;
+    if (this.isBusy()) return value;
     chrome.runtime.reload();
+    return value;
   }
 
   private async tick() {
     if (this.running) return;
     this.running = true;
-    try { await this.check(); }
+    try { await syncYouTubeCompanion(); await syncScreenshotCompanion(); await this.check(); }
     catch (error) {
       // Updating is auxiliary. Keep downloads usable and show the failure in
       // Settings; the persistent alarm retries without an error badge/pop-up.

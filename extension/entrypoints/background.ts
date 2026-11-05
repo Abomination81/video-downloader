@@ -6,6 +6,7 @@ import { ChromeDownloads } from '../lib/downloads';
 import { jobSchema } from '../lib/schema';
 import { recoverSnapshots, within } from '../lib/probe';
 import { COPY_CSS } from '../lib/copy-policy';
+import { setNativeMenuPolicy } from '../lib/menu-policy';
 import { cleanLink } from '../lib/clean-link';
 import { copyLink } from '../lib/clipboard';
 import { httpUrl } from '../lib/schema';
@@ -15,7 +16,13 @@ import { Updates } from '../lib/updates';
 import { downloadOptionsSchema, type DownloadIntent, type DownloadOptions } from '../lib/schema';
 import { AUDIO_COMPANION_ID, companionRequestSchema, companionSender } from '../lib/companion';
 
+import { initializeYouTubeCompanion, syncYouTubeCompanion, youtubeCompanionStatus } from '../lib/youtube-companion';
+
+import { initializeScreenshotCompanion, syncScreenshotCompanion, screenshotCompanionStatus } from '../lib/screenshot-companion';
+
 export default defineBackground(() => {
+  initializeScreenshotCompanion();
+  initializeYouTubeCompanion();
   const captures = new Map<number, Capture[]>();
   const contexts = new Map<number, Snapshot>();
   type Selection = { at: number; pageUrl: string; promise: Promise<Candidate[]> };
@@ -33,6 +40,7 @@ export default defineBackground(() => {
   const imageHeaders = new Map<string, Record<string, string>>();
   const audioHeaders = new Map<string, Record<string, string>>();
   const copyStyles = new Map<string, boolean>();
+  const menuPolicies = new Map<string, boolean>();
   const copyTasks = new Map<string, Promise<unknown>>();
   const copyCssHistory = chrome.storage.local.get('copyCssHistory').then(async saved => {
     const previous = Array.isArray(saved.copyCssHistory) ? saved.copyCssHistory.filter((css): css is string => typeof css === 'string' && css.length <= 16384).slice(-63) : [];
@@ -64,8 +72,12 @@ export default defineBackground(() => {
       const apply = async () => {
         const value = await settings();
         const history = await copyCssHistory;
+        const target = { tabId, ...(f.documentId ? { documentIds: [f.documentId] } : { frameIds: [f.frameId] }) };
+        if (menuPolicies.get(key) !== value.restoreMenus) {
+          await chrome.scripting.executeScript({ target, world: 'MAIN', func: setNativeMenuPolicy, args: [value.restoreMenus], injectImmediately: true });
+          menuPolicies.set(key, value.restoreMenus);
+        }
         if (copyStyles.get(key) !== value.restoreCopy) {
-          const target = { tabId, ...(f.documentId ? { documentIds: [f.documentId] } : { frameIds: [f.frameId] }) };
           // USER styles can survive an extension reload. Remove prior rules
           // before inserting once; serialize frame work to prevent duplicates.
           for (const css of history) await chrome.scripting.removeCSS({ target, css, origin: 'USER' });
@@ -101,20 +113,20 @@ export default defineBackground(() => {
     finally { activeActions--; }
   }
   const updates = new Updates(() => activeActions > 0);
-  chrome.runtime.onInstalled.addListener((event) => {
+  chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.removeAll(() => {
       // PAGE applies only when no more-specific target applies. These two
       // entries are mutually exclusive, so Chrome never creates a parent tree.
       chrome.contextMenus.create({ id: 'download-video', title: 'Download video', contexts: ['page', 'video'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
       chrome.contextMenus.create({ id: 'save-original-image', title: 'Download photo', contexts: ['image'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
     });
+    void syncYouTubeCompanion();
+    void syncScreenshotCompanion();
     void chrome.runtime.sendMessage(AUDIO_COMPANION_ID, { type: 'audio-companion-sync' }).catch(() => undefined);
-    if (event.reason === 'update') {
-      // Reconnect existing documents without reloading their pages or forms.
-      // The content script disposes its prior event listeners through WXT.
-      const files = chrome.runtime.getManifest().content_scripts?.flatMap(script => script.js ?? []) ?? [];
-      if (files.length) void chrome.tabs.query({}).then(tabs => Promise.allSettled(tabs.filter(tab => tab.id !== undefined && /^https?:/.test(tab.url ?? '')).map(tab => chrome.scripting.executeScript({ target: { tabId: tab.id!, allFrames: true }, files, injectImmediately: true }))));
-    }
+    // Connect pages already open during first installation as well as updates.
+    // WXT disposes any prior copy without reloading pages or losing forms.
+    const files = chrome.runtime.getManifest().content_scripts?.flatMap(script => script.js ?? []) ?? [];
+    if (files.length) void chrome.tabs.query({}).then(tabs => Promise.allSettled(tabs.filter(tab => tab.id !== undefined && /^https?:/.test(tab.url ?? '')).map(tab => chrome.scripting.executeScript({ target: { tabId: tab.id!, allFrames: true }, files, injectImmediately: true }))));
   });
   chrome.webRequest.onBeforeSendHeaders.addListener((details) => {
     if (details.tabId < 0) return;
@@ -152,6 +164,7 @@ export default defineBackground(() => {
   chrome.webRequest.onCompleted.addListener(forgetRequest, { urls: ['http://*/*', 'https://*/*'] });
   chrome.webRequest.onErrorOccurred.addListener(forgetRequest, { urls: ['http://*/*', 'https://*/*'] });
   chrome.webNavigation.onCommitted.addListener((details) => {
+    for (const key of menuPolicies.keys()) if (key.startsWith(`${details.tabId}:`) && (details.frameId === 0 || key.startsWith(`${details.tabId}:${details.frameId}:`))) menuPolicies.delete(key);
     for (const key of copyStyles.keys()) if (key.startsWith(`${details.tabId}:`) && (details.frameId === 0 || key.startsWith(`${details.tabId}:${details.frameId}:`))) copyStyles.delete(key);
     if (details.frameId === 0) { rememberSelection(details.tabId); captures.delete(details.tabId); contexts.delete(details.tabId); selections.delete(details.tabId); mediaTabs.delete(details.tabId); saveCaptures(); }
     else captures.set(details.tabId, (captures.get(details.tabId) ?? []).filter((c) => c.frameId !== details.frameId));
@@ -160,6 +173,7 @@ export default defineBackground(() => {
     rememberSelection(tabId);
     captures.delete(tabId); contexts.delete(tabId); selections.delete(tabId); mediaTabs.delete(tabId);
     for (const key of copyStyles.keys()) if (key.startsWith(`${tabId}:`)) copyStyles.delete(key);
+    for (const key of menuPolicies.keys()) if (key.startsWith(`${tabId}:`)) menuPolicies.delete(key);
     saveCaptures();
   });
 
@@ -356,13 +370,15 @@ export default defineBackground(() => {
       z.object({ type: z.literal('copy-link'), url: httpUrl }).strict(),
       z.object({ type: z.literal('copy-context-link'), tabId: z.number().int().nonnegative() }).strict(),
       z.object({ type: z.literal('save-image'), tabId: z.number().int().nonnegative(), frameId: z.number().int().nonnegative().default(0), srcUrl: z.string().max(16384).optional() }).strict(),
-      z.object({ type: z.enum(['ping', 'jobs', 'clear']) }).strict(),
+      z.object({ type: z.enum(['ping', 'jobs', 'clear', 'youtube-protection-status', 'screenshot-companion-status']) }).strict(),
       z.object({ type: z.enum(['check-updates', 'update-status']) }).strict(),
       z.object({ type: z.enum(['cancel', 'reveal', 'retry-save']), jobId: z.string().regex(/^[0-9a-f]{32}$/) }).strict(),
     ]).safeParse(raw);
     if (!parsed.success) { respond({ ok: false, error: { code: 'invalid_request', message: 'Reload the extension and try again.' } }); return; }
     const request = parsed.data;
     void action(async () => {
+      if (request.type === 'screenshot-companion-status') return screenshotCompanionStatus();
+      if (request.type === 'youtube-protection-status') return youtubeCompanionStatus();
       if (request.type === 'find') return { candidates: await find(request.tabId) };
       if (request.type === 'start') return start(request.candidate, request.requestId, request.options?.assetType ?? 'video', undefined, request.options);
       if (request.type === 'inspect') return inspect(request.candidate, request.requestId);

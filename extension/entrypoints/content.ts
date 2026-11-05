@@ -87,19 +87,19 @@ export default defineContentScript({
       return anchor && httpUrl.safeParse(anchor.href).success ? { linkUrl: anchor.href } : {};
     }
     ctx.addEventListener(window, 'contextmenu', (event) => {
+      if (restoreMenus) event.stopImmediatePropagation();
       point = { x: event.clientX, y: event.clientY, at: Date.now() };
       const data = snapshot();
       void chrome.runtime.sendMessage({ type: 'context', snapshot: data, ...clickedLink(event) }).catch(() => { /* A stale content script has no privileged fallback. */ });
-      if (restoreMenus) event.stopImmediatePropagation();
     }, { capture: true });
     ctx.addEventListener(window, 'pointerdown', (event) => {
       // Left-button events belong to the page: custom seek bars, sliders and
       // drag controls often use plain divs without roles or tabindex.
       if (event.button !== 2) return;
+      if (restoreMenus) event.stopImmediatePropagation();
       point = { x: event.clientX, y: event.clientY, at: Date.now() };
       const data = snapshot();
       void chrome.runtime.sendMessage({ type: 'context', snapshot: data, ...clickedLink(event) }).catch(() => { /* Page reload reconnects an invalidated content script. */ });
-      if (restoreMenus) event.stopImmediatePropagation();
     }, { capture: true });
     ctx.addEventListener(window, 'mousedown', (event) => {
       if (event.button === 2 && restoreMenus) event.stopImmediatePropagation();

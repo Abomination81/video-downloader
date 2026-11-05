@@ -21,7 +21,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 from . import __version__, store
 from .bootstrap import AGENT_LABEL, VERSION, atomic_json, locked, pointer, recover
-from .config import AUDIO_COMPANION_ID, EXTENSION_ID, app_dir, private_dir, settings
+from .config import SCREENSHOT_COMPANION_ID, YOUTUBE_COMPANION_ID, AUDIO_COMPANION_ID, EXTENSION_ID, app_dir, private_dir, settings
 
 REPOSITORY = "Abomination81/video-downloader"
 API = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
@@ -210,10 +210,68 @@ def validate_bundle(bundle, update):
         child_id = ''.join(chr(97 + int(c, 16)) for c in digest)
         if child_id != AUDIO_COMPANION_ID or audio['version'] != update['version'] or set(audio.get('permissions', [])) != {'contextMenus', 'storage', 'alarms'} or any(audio.get(field) for field in ('host_permissions', 'optional_host_permissions', 'optional_permissions', 'content_scripts')) or audio.get('externally_connectable') != {'ids': [EXTENSION_ID]} or manifest.get('externally_connectable') != {'ids': [AUDIO_COMPANION_ID]}:
             raise UpdateError('The audio companion identity or permissions do not match this installation')
+    validate_youtube_companion(bundle, update)
+    validate_screenshot_companion(bundle, update)
     wheels = list((bundle / "helper-wheel").glob("*.whl"))
     if len(wheels) != 1 or wheels[0].name != f"video_downloader_helper-{update['version']}-py3-none-any.whl" or not (bundle / "update-requirements.txt").is_file():
         raise UpdateError("The update helper package is incomplete")
     return wheels[0]
+
+
+def validate_youtube_companion(bundle, update):
+    child = bundle / 'extension/youtube-companion'
+    path = child / 'manifest.json'
+    if not path.is_file():
+        if (app_dir() / 'extension/youtube-companion/manifest.json').is_file():
+            raise UpdateError('The YouTube companion is missing from this update')
+        return  # Older installations and bundles did not include this optional companion.
+    try:
+        value = json.loads(path.read_text())
+        digest = hashlib.sha256(base64.b64decode(value['key'], validate=True)).hexdigest()[:32]
+        child_id = ''.join(chr(97 + int(c, 16)) for c in digest)
+        expected_csp = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+        if (child_id != YOUTUBE_COMPANION_ID or value['version'] != update['version']
+                or value.get('manifest_version') != 3
+                or set(value.get('permissions', [])) != {'declarativeNetRequest', 'scripting', 'storage'}
+                or set(value.get('host_permissions', [])) != {'https://www.youtube.com/*', 'https://www.youtube-nocookie.com/*'}
+                or value.get('externally_connectable') != {'ids': [EXTENSION_ID]}
+                or value.get('content_security_policy') != {'extension_pages': expected_csp}
+                or value.get('background') != {'service_worker': 'background.js'}
+                or any(value.get(field) for field in ('optional_permissions', 'optional_host_permissions', 'content_scripts', 'web_accessible_resources', 'update_url', 'sandbox', 'oauth2', 'devtools_page', 'chrome_url_overrides'))
+                or value.get('declarative_net_request') != {'rule_resources': [{'id': 'youtube_ads', 'enabled': True, 'path': 'rules.json'}]}):
+            raise ValueError('policy')
+        rules = json.loads((child / 'rules.json').read_text())
+        if not isinstance(rules, list) or not 1 <= len(rules) <= 100:
+            raise ValueError('rules')
+        for rule in rules:
+            domains = rule['condition'].get('initiatorDomains', [])
+            if rule['action'] != {'type': 'block'} or not domains or not set(domains) <= {'www.youtube.com', 'www.youtube-nocookie.com'}:
+                raise ValueError('rule scope')
+    except (ValueError, KeyError, TypeError, AttributeError, OSError) as error:
+        raise UpdateError('The YouTube companion identity or privacy boundary does not match this installation') from error
+
+
+def validate_screenshot_companion(bundle, update):
+    path = bundle / 'extension/screenshot-companion/manifest.json'
+    if not path.is_file():
+        if (app_dir() / 'extension/screenshot-companion/manifest.json').is_file():
+            raise UpdateError('The screenshot companion is missing from this update')
+        return
+    try:
+        value = json.loads(path.read_text())
+        digest = hashlib.sha256(base64.b64decode(value['key'], validate=True)).hexdigest()[:32]
+        child_id = ''.join(chr(97 + int(c, 16)) for c in digest)
+        expected_csp = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'"
+        if (child_id != SCREENSHOT_COMPANION_ID or value['version'] != update['version']
+                or value.get('manifest_version') != 3 or value.get('incognito') != 'not_allowed'
+                or set(value.get('permissions', [])) != {'activeTab', 'scripting', 'contextMenus'}
+                or value.get('externally_connectable') != {'ids': [EXTENSION_ID]}
+                or value.get('content_security_policy') != {'extension_pages': expected_csp}
+                or value.get('background') != {'service_worker': 'background.js', 'type': 'module'}
+                or any(value.get(field) for field in ('host_permissions', 'optional_permissions', 'optional_host_permissions', 'content_scripts', 'web_accessible_resources', 'update_url', 'sandbox', 'oauth2', 'devtools_page', 'chrome_url_overrides'))):
+            raise ValueError('policy')
+    except (ValueError, KeyError, TypeError, AttributeError, OSError) as error:
+        raise UpdateError('The screenshot companion identity or privacy boundary does not match this installation') from error
 
 
 def prepare_runtime(bundle, update):

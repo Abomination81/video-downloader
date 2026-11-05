@@ -1,0 +1,21 @@
+{
+  "version": "0.9.0",
+  "date": "2026-11-04",
+  "typescriptTests": 42,
+  "pythonTests": 166,
+  "captureBrowserCases": 55,
+  "combinedScreenshotCases": 7,
+  "youtubeIntegrationCases": 9,
+  "interactionCases": 5,
+  "updateActivation": "passed",
+  "audioCompanionNativeAndUpdateChecks": "passed",
+  "typecheck": "passed",
+  "productionBuild": "passed",
+  "offlineScreenshotRebuild": "16 files byte-identical",
+  "installedHelper": "0.9.0 ready",
+  "installedMain": "0.9.0 at stable Application Support path",
+  "installedScreenshot": "0.9.0 (Still 1.1.0), enabled and pinned, file access off",
+  "standaloneScreenshot": "disabled",
+  "nativeCapture": "2100x4100 PNG, all 4100 rows verified",
+  "published": false
+}

@@ -1,11 +1,11 @@
 {
   "name": "video-downloader",
-  "version": "0.7.0",
+  "version": "0.9.2",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wxt",
-    "build": "wxt build && node scripts/build-companion.mjs",
+    "build": "wxt build && node scripts/build-companion.mjs && node scripts/build-youtube-companion.mjs && node scripts/build-screenshot-companion.mjs",
     "typecheck": "wxt prepare && tsc --noEmit",
     "test": "vitest run",
     "test:helper": "uv run --project helper --extra dev pytest helper/tests -q",
@@ -14,7 +14,9 @@
     "test:updates": "node scripts/update-browser-check.mjs",
     "package": "npm run build && uv run --python 3.13 scripts/package.py",
     "test:formats": "node scripts/formats-browser-check.mjs",
-    "test:menus": "node scripts/companion-browser-check.mjs"
+    "test:menus": "node scripts/companion-browser-check.mjs",
+    "test:youtube": "node scripts/youtube-companion-check.mjs",
+    "test:screenshot": "node scripts/screenshot-companion-check.mjs"
   },
   "dependencies": {
     "zod": "^4.0.0"

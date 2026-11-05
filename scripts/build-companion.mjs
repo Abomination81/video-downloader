@@ -9,6 +9,8 @@ const identity = JSON.parse(await readFile(join(source, 'identity.json'), 'utf8'
 const main = JSON.parse(await readFile(join(root, 'extension-identity.json'), 'utf8'));
 const version = JSON.parse(await readFile(join(root, 'package.json'), 'utf8')).version;
 await mkdir(join(output, 'fonts'), { recursive: true });
+await mkdir(join(output, 'brand'), { recursive: true });
+await copyFile(join(root, 'extension/public/brand/mark.svg'), join(output, 'brand/mark.svg'));
 await build({ entryPoints: { background: join(source, 'background.ts'), popup: join(source, 'popup.ts') }, outdir: output, bundle: true, minify: true, format: 'esm', platform: 'browser', target: 'chrome127' });
 for (const name of ['popup.html', 'popup.css']) await copyFile(join(source, name), join(output, name));
 for (const name of ['icon-16.png', 'icon-48.png']) await copyFile(join(root, 'extension/public', name), join(output, name));

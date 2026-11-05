@@ -1,0 +1,14 @@
+/* Hallmark · v2.0.0 · theme: Coral · scope: app · local system fonts */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 · weakest: V, familiar app controls keep attention on the image */
+:root {
+  color-scheme: light;
+  --paper: #f1eeea;
+  --surface: #fcfaf7;
+  --ink: #2a2421;
+  --ink-hover: #433b36;
+  --muted: #6c625a;
+  --rule: #cfc7bf;
+  --accent: #b94f36;
+  --focus: #a33b25;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}

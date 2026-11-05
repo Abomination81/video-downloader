@@ -87,7 +87,9 @@ try {
   await settingsPage.close();
   await worker.evaluate(() => chrome.alarms.create('silent-updates', { when: Date.now() + 100 }));
   console.log('CHECK committed update and scheduled Chrome alarm');
-  const deadline = Date.now() + 30000;
+  // Chrome may deliver an unpacked extension alarm at the 30-second minimum;
+  // leave room for its worker replacement instead of expiring at that boundary.
+  const deadline = Date.now() + 60000;
   let activated = false;
   while (Date.now() < deadline) {
     for (const candidate of context.serviceWorkers()) {
@@ -124,9 +126,25 @@ try {
   const saved = await worker.evaluate(() => chrome.storage.local.get('settings'));
   assert.equal(saved.settings.compatibleVideo, false);
   assert.equal(saved.settings.cleanImages, false);
+  assert.equal(await page.locator('#text').evaluate(node => {
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    node.dispatchEvent(event); return event.defaultPrevented;
+  }), false, 'An existing page handler suppressed the native menu after extension activation');
+  assert.deepEqual(await page.evaluate(() => {
+    const menu = new MouseEvent('contextmenu', { cancelable: true });
+    menu.returnValue = false;
+    const seek = new MouseEvent('mousedown', { cancelable: true });
+    seek.preventDefault();
+    const click = new MouseEvent('click', { cancelable: true });
+    click.returnValue = false;
+    return [menu.defaultPrevented, seek.defaultPrevented, click.defaultPrevented];
+  }), [false, true, true], 'Native-menu restoration changed ordinary player events or allowed legacy cancellation');
+  await page.locator('#seek').click({ position: { x: 450, y: 20 } });
+  assert.ok(await page.locator('video').evaluate(video => video.currentTime > video.duration * 0.6));
   await worker.evaluate(async () => { const value = (await chrome.storage.local.get('settings')).settings; await chrome.storage.local.set({ settings: { ...value, restoreCopy: false, restoreMenus: false } }); });
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#text')).userSelect === 'none');
   await page.waitForFunction(() => { const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true }); document.querySelector('#text').dispatchEvent(event); return event.defaultPrevented; });
+  assert.equal(await page.evaluate(() => { const event = new MouseEvent('contextmenu', { cancelable: true }); event.returnValue = false; return event.defaultPrevented; }), true, 'Turning restoration off did not restore legacy site-menu behavior');
   await page.locator('#seek').click({ position: { x: 450, y: 20 } });
   assert.ok(await page.locator('video').evaluate(video => video.currentTime > video.duration * 0.6));
   assert.deepEqual(errors, []);

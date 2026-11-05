@@ -18,12 +18,14 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from video_downloader import __version__, bootstrap, native, store, updater
 
+NEXT_VERSION = ".".join([*__version__.split(".")[:2], str(int(__version__.split(".")[2]) + 1)])
+
 
 @pytest.fixture
 def signed():
     key = Ed25519PrivateKey.generate()
     public = key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
-    value = {"schema": 1, "repository": updater.REPOSITORY, "version": "0.7.1", "sha256": "a" * 64, "size": 123, "commit": "b" * 40, "minimumChrome": 127, "bootstrap": 1}
+    value = {"schema": 1, "repository": updater.REPOSITORY, "version": NEXT_VERSION, "sha256": "a" * 64, "size": 123, "commit": "b" * 40, "minimumChrome": 127, "bootstrap": 1}
     def sign(value):
         raw = json.dumps(value, sort_keys=True).encode()
         return raw, base64.b64encode(key.sign(raw)), public
@@ -86,7 +88,7 @@ def installed(tmp_path, monkeypatch):
     return app, identity, manifest
 
 
-def bundle(tmp_path, identity, manifest, version="0.7.1"):
+def bundle(tmp_path, identity, manifest, version=NEXT_VERSION):
     root = tmp_path / "new bundle"
     (root / "extension").mkdir(parents=True)
     (root / "extension/manifest.json").write_text(json.dumps({**manifest, "version": version}))
@@ -109,7 +111,7 @@ def test_update_waits_for_jobs_and_preserves_settings(installed, tmp_path, signe
     assert bootstrap.pointer(app) is None
     store.update(job, state="done")
     assert updater.commit(new, update) is True
-    assert bootstrap.pointer(app) == {"version": "0.7.1"}
+    assert bootstrap.pointer(app) == {"version": NEXT_VERSION}
     assert (app / "config.json").read_bytes() == original_config
     assert (app / "extension.previous/old.txt").exists()
     assert updater.status()["state"] == "ready"
@@ -142,7 +144,7 @@ def test_bootstrap_recovers_interrupted_commit(installed):
     app, _, _ = installed
     (app / "extension").rename(app / "extension.previous")
     (app / "extension").mkdir()
-    bootstrap.atomic_json(app / "active-runtime.json", {"version": "0.7.1"})
+    bootstrap.atomic_json(app / "active-runtime.json", {"version": NEXT_VERSION})
     bootstrap.atomic_json(app / "update-journal.json", {"pointer": None})
     with bootstrap.locked(app): bootstrap.recover(app)
     assert (app / "extension/old.txt").exists()
@@ -224,11 +226,11 @@ def test_update_requests_cannot_supply_commands_or_urls():
 
 def test_bootstrap_switches_to_selected_runtime(installed):
     app, _, _ = installed
-    runtime = app / "runtimes/0.7.1/.venv/bin"
+    runtime = app / f"runtimes/{NEXT_VERSION}/.venv/bin"
     runtime.mkdir(parents=True)
     python = runtime / "python"
     python.symlink_to(sys.executable)
-    bootstrap.atomic_json(app / "active-runtime.json", {"version": "0.7.1"})
+    bootstrap.atomic_json(app / "active-runtime.json", {"version": NEXT_VERSION})
     assert bootstrap.runtime_python(app) == python
     with bootstrap.locked(app):
         with pytest.raises(TimeoutError):
@@ -247,11 +249,11 @@ def test_signed_update_installs_real_runtime_and_switches_native_host(installed,
     shutil.copy2(root / "helper/video_downloader/bootstrap.py", app / "bootstrap.py")
     package = tmp_path / "helper source"
     shutil.copytree(root / "helper/video_downloader", package / "video_downloader", ignore=shutil.ignore_patterns("__pycache__"))
-    project = (root / "helper/pyproject.toml").read_text().replace(f'version = "{__version__}"', 'version = "0.7.1"')
+    project = (root / "helper/pyproject.toml").read_text().replace(f'version = "{__version__}"', f'version = "{NEXT_VERSION}"')
     (package / "pyproject.toml").write_text(project)
-    (package / "video_downloader/__init__.py").write_text('__version__ = "0.7.1"\n')
+    (package / "video_downloader/__init__.py").write_text(f'__version__ = "{NEXT_VERSION}"\n')
     new = bundle(tmp_path, identity, manifest)
-    wheel = new / "helper-wheel/video_downloader_helper-0.7.1-py3-none-any.whl"
+    wheel = new / f"helper-wheel/video_downloader_helper-{NEXT_VERSION}-py3-none-any.whl"
     wheel.unlink()
     subprocess.run([uv, "build", "--wheel", "--out-dir", str(wheel.parent), str(package)], check=True, capture_output=True, timeout=120)
     requirements = subprocess.check_output([uv, "export", "--project", str(root / "helper"), "--no-dev", "--no-emit-project", "--no-header"], text=True)
@@ -263,19 +265,19 @@ def test_signed_update_installs_real_runtime_and_switches_native_host(installed,
     payload = data.getvalue()
     update.update(size=len(payload), sha256=hashlib.sha256(payload).hexdigest())
     raw, signature, public = sign(update)
-    base = f"https://github.com/{updater.REPOSITORY}/releases/download/v0.7.1/"
-    remote = {updater.API: json.dumps({"tag_name": "v0.7.1", "assets": [{"name": name, "browser_download_url": base + name} for name in ["update.json", "update.json.sig", "Video-Downloader.zip"]]}).encode(), base + "update.json": raw, base + "update.json.sig": signature, base + "Video-Downloader.zip": payload}
+    base = f"https://github.com/{updater.REPOSITORY}/releases/download/v{NEXT_VERSION}/"
+    remote = {updater.API: json.dumps({"tag_name": f"v{NEXT_VERSION}", "assets": [{"name": name, "browser_download_url": base + name} for name in ["update.json", "update.json.sig", "Video-Downloader.zip"]]}).encode(), base + "update.json": raw, base + "update.json.sig": signature, base + "Video-Downloader.zip": payload}
     original_verify = updater.verify_manifest
     monkeypatch.setattr(updater, "verify_manifest", lambda raw, sig: original_verify(raw, sig, public))
     monkeypatch.setattr(updater, "fetch", lambda url, limit: remote[url])
     updater.run(127)
     assert updater.status()["state"] == "ready"
-    assert bootstrap.pointer(app)["version"] == "0.7.1"
+    assert bootstrap.pointer(app)["version"] == NEXT_VERSION
     request, output = io.BytesIO(), io.BytesIO()
     native.write_message(request, {"id": "ping", "type": "ping"})
     result = subprocess.run([sys.executable, str(app / "bootstrap.py"), f"chrome-extension://{updater.EXTENSION_ID}/"], input=request.getvalue(), capture_output=True, timeout=30, check=True)
     response = native.read_message(io.BytesIO(result.stdout))
-    assert response["ok"] and response["result"]["version"] == "0.7.1"
+    assert response["ok"] and response["result"]["version"] == NEXT_VERSION
     assert response["result"]["downloadDir"] == config["download_dir"]
     assert json.loads((app / "config.json").read_text()) == config
 
@@ -298,3 +300,116 @@ def test_audio_companion_update_identity_permissions_and_shared_version(installe
         with pytest.raises(updater.UpdateError, match='audio companion'): updater.validate_bundle(new, update)
     else:
         assert updater.validate_bundle(new, update).name.endswith('.whl')
+
+
+@pytest.fixture
+def youtube_bundle(tmp_path, installed, signed):
+    _, identity, manifest = installed
+    update, _ = signed
+    new = bundle(tmp_path, identity, manifest)
+    root = Path(__file__).resolve().parents[2]
+    # Build this manifest from source to keep pytest independent of npm build.
+    source = root / 'companion/youtube'
+    child = new / 'extension/youtube-companion'
+    shutil.copytree(source / 'upstream', child)
+    value = json.loads((child / 'manifest.json').read_text())
+    value.update(key=json.loads((source / 'identity.json').read_text())['key'], version=update['version'], externally_connectable={'ids': [updater.EXTENSION_ID]})
+    value['content_security_policy']['extension_pages'] = value['content_security_policy']['extension_pages'].replace("connect-src 'none'", "connect-src 'self'")
+    (child / 'manifest.json').write_text(json.dumps(value))
+    return new, update, child, value
+
+
+def test_youtube_companion_keeps_its_narrow_boundary(youtube_bundle):
+    new, update, _, _ = youtube_bundle
+    assert updater.validate_bundle(new, update).suffix == '.whl'
+
+
+@pytest.mark.parametrize('change', [
+    {'permissions': ['declarativeNetRequest', 'scripting', 'storage', 'cookies']},
+    {'permissions': ['declarativeNetRequest', 'scripting', 'storage', 'nativeMessaging']},
+    {'host_permissions': ['https://*/*']},
+    {'optional_permissions': ['tabs']},
+    {'optional_host_permissions': ['<all_urls>']},
+    {'externally_connectable': {'ids': ['*']}},
+    {'externally_connectable': {'ids': [updater.EXTENSION_ID], 'matches': ['https://www.youtube.com/*']}},
+    {'content_security_policy': {'extension_pages': "script-src 'self'; connect-src https://evil.test"}},
+    {'web_accessible_resources': [{'resources': ['*.js'], 'matches': ['<all_urls>']}]},
+    {'update_url': 'https://evil.test/update'},
+    {'content_scripts': [{'matches': ['<all_urls>'], 'js': ['main.js']}]},
+    {'background': {'service_worker': 'unreviewed.js'}},
+    {'key': 'invalid-key'}, {'version': '0.0.1'},
+])
+def test_youtube_companion_rejects_privilege_and_identity_changes(youtube_bundle, change):
+    new, update, child, value = youtube_bundle
+    (child / 'manifest.json').write_text(json.dumps({**value, **change}))
+    with pytest.raises(updater.UpdateError, match='privacy boundary'):
+        updater.validate_bundle(new, update)
+
+
+@pytest.mark.parametrize('rules', [[], None, [{'action': {'type': 'redirect'}, 'condition': {'initiatorDomains': ['www.youtube.com']}}], [{'action': {'type': 'block'}, 'condition': {}}], [{'action': {'type': 'block'}, 'condition': {'initiatorDomains': ['evil.test']}}], [{'action': {'type': 'block'}, 'condition': []}]])
+def test_youtube_rules_cannot_redirect_or_expand_to_other_sites(youtube_bundle, rules):
+    new, update, child, _ = youtube_bundle
+    (child / 'rules.json').write_text(json.dumps(rules))
+    with pytest.raises(updater.UpdateError, match='privacy boundary'):
+        updater.validate_bundle(new, update)
+
+
+def test_update_cannot_silently_drop_existing_youtube_companion(youtube_bundle, installed):
+    new, update, child, _ = youtube_bundle
+    app, _, _ = installed
+    shutil.copytree(child, app / 'extension/youtube-companion')
+    shutil.rmtree(child)
+    with pytest.raises(updater.UpdateError, match='missing'):
+        updater.validate_bundle(new, update)
+
+
+@pytest.fixture
+def screenshot_bundle(tmp_path, installed, signed):
+    _, identity, manifest = installed
+    update, _ = signed
+    new = bundle(tmp_path, identity, manifest)
+    root = Path(__file__).resolve().parents[2]
+    source = root / 'companion/screenshot'
+    child = new / 'extension/screenshot-companion'
+    shutil.copytree(source / 'upstream', child)
+    value = json.loads((child / 'manifest.json').read_text())
+    value.update(key=json.loads((source / 'identity.json').read_text())['key'], version=update['version'], externally_connectable={'ids': [updater.EXTENSION_ID]})
+    value['content_security_policy']['extension_pages'] = value['content_security_policy']['extension_pages'].replace("connect-src 'none'", "connect-src 'self'")
+    (child / 'manifest.json').write_text(json.dumps(value))
+    return new, update, child, value
+
+
+def test_screenshot_companion_keeps_its_click_only_boundary(screenshot_bundle):
+    new, update, _, _ = screenshot_bundle
+    assert updater.validate_bundle(new, update).suffix == '.whl'
+
+
+@pytest.mark.parametrize('change', [
+    {'permissions': ['activeTab', 'scripting', 'contextMenus', 'cookies']},
+    {'permissions': ['activeTab', 'scripting', 'contextMenus', 'downloads']},
+    {'permissions': ['activeTab', 'scripting', 'contextMenus', 'nativeMessaging']},
+    {'host_permissions': ['https://*/*']}, {'optional_permissions': ['tabs']},
+    {'optional_host_permissions': ['<all_urls>']},
+    {'externally_connectable': {'ids': ['*']}},
+    {'externally_connectable': {'ids': [updater.EXTENSION_ID], 'matches': ['https://*/*']}},
+    {'content_security_policy': {'extension_pages': "script-src 'self'; connect-src https://evil.test"}},
+    {'web_accessible_resources': [{'resources': ['*.js'], 'matches': ['<all_urls>']}]},
+    {'update_url': 'https://evil.test/update'},
+    {'content_scripts': [{'matches': ['<all_urls>'], 'js': ['page.js']}]},
+    {'background': {'service_worker': 'other.js', 'type': 'module'}},
+    {'incognito': 'spanning'}, {'key': 'invalid'}, {'version': '99.0.0'},
+])
+def test_screenshot_companion_rejects_privilege_and_identity_changes(screenshot_bundle, change):
+    new, update, child, value = screenshot_bundle
+    value.update(change); (child / 'manifest.json').write_text(json.dumps(value))
+    with pytest.raises(updater.UpdateError, match='screenshot companion'):
+        updater.validate_bundle(new, update)
+
+
+def test_update_cannot_drop_an_installed_screenshot_companion(screenshot_bundle, installed):
+    new, update, child, _ = screenshot_bundle
+    app, _, _ = installed
+    shutil.copytree(child, app / 'extension/screenshot-companion')
+    shutil.rmtree(child)
+    with pytest.raises(updater.UpdateError, match='screenshot companion is missing'):
+        updater.validate_bundle(new, update)

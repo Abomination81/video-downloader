@@ -1,0 +1,94 @@
+{
+  "time": "2026-11-04T22:34:07.334Z",
+  "results": [
+    {
+      "name": "real extension runs at document_start before player bootstrap",
+      "pass": true
+    },
+    {
+      "name": "ad cards hidden, ordinary content, consent and errors visible",
+      "pass": true
+    },
+    {
+      "name": "fetch json and text remove ads without losing content or Response identity",
+      "pass": true
+    },
+    {
+      "name": "XHR text and json remove ads, preserve native responseText error",
+      "pass": true
+    },
+    {
+      "name": "Shorts ad entries removed only on reel endpoint",
+      "pass": true
+    },
+    {
+      "name": "actual browser DNR blocks ad endpoint and leaves content endpoint usable",
+      "pass": true
+    },
+    {
+      "name": "all seven network rules block, while media and lookalike domains stay usable",
+      "pass": true
+    },
+    {
+      "name": "ad fallback clicks only skip control and restores mute/speed",
+      "pass": true
+    },
+    {
+      "name": "forged page commands do not change extension state",
+      "pass": true
+    },
+    {
+      "name": "reused skip button works for the next ad too",
+      "pass": true
+    },
+    {
+      "name": "ambiguous short media is never accelerated or sought",
+      "pass": true
+    },
+    {
+      "name": "pagehide releases state and pageshow resumes fallback",
+      "pass": true
+    },
+    {
+      "name": "malformed JSON, non-player endpoint and spoofed hosts stay unchanged",
+      "pass": true
+    },
+    {
+      "name": "unsafe skip buttons cannot submit a form or follow a link",
+      "pass": true
+    },
+    {
+      "name": "skip lookalike associated with an external form is never clicked or submitted",
+      "pass": true
+    },
+    {
+      "name": "skip handler cannot redirect a later candidate into a form submission",
+      "pass": true
+    },
+    {
+      "name": "popup CSP blocks outbound requests and inline executable code",
+      "pass": true
+    },
+    {
+      "name": "popup pause disables rules and scripts after reload",
+      "pass": true
+    },
+    {
+      "name": "popup resume restores protection after reload",
+      "pass": true
+    },
+    {
+      "name": "unrelated website untouched, even for YouTube ad URLs",
+      "pass": true
+    },
+    {
+      "name": "YouTube nocookie embed gets early injection inside an unrelated parent",
+      "pass": true
+    },
+    {
+      "name": "no page exceptions in fixture run",
+      "pass": true
+    }
+  ],
+  "errors": []
+}
