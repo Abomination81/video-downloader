@@ -54,6 +54,8 @@ Downloads continue after you navigate away or close the source tab. Everything r
 
 The installed folder is `~/Library/Application Support/Video Downloader/extension`. Select this parent folder once. Do not load subfolders. The silent helper handles media conversion and metadata removal; it has no separate Chrome extension.
 
+**Already using the unified Video Downloader?** Its name changes to **Abomination81 Toolkit** automatically with v0.13.2. Keep the same installed folder and settings.
+
 **Upgrading from 0.12 or earlier:** run the new installer once, load the parent folder above, and remove or disable the old Audio, Ad Protection, YouTube Protection and Screenshot companion extensions. This consolidation changes Chrome permissions, so older updaters correctly require manual setup. Future signed updates install automatically. Existing download files and main-extension preferences remain.
 
 [Chrome groups multiple matching commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus). Video, audio, photo, screenshot and clean-link commands therefore appear under one Abomination81 Toolkit menu.
