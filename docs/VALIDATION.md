@@ -6,6 +6,8 @@ Production Chrome build exposes **Abomination81 Toolkit** as the manifest name, 
 
 Type checking, 56 extension tests, six installer tests and the unified browser suite pass. The latter verifies one menu owner, protection startup, screenshot/offscreen coordination, real capture and safe navigation cancellation. Package validation preserves the existing extension identity, permissions and update archive layout for automatic upgrades.
 
+The release's automatic-update test reproduced an old video-control scan calling a revoked `chrome.dom` API before its cleanup event arrived. The scanner now checks context validity and retires on invalidation while rethrowing unrelated errors. The real Chrome update test passes with exactly one replacement toolbar, the old toolbar detached, preserved form/preferences/page state, working seeking and no uncaught page errors.
+
 ## 0.13.1 installed Chrome verification — 2026-11-05
 
 The unified extension was activated in the normal Chrome profile. Its native menus offered video/audio/photo downloads and full-page screenshots under one extension. A full-page PNG and original photo appeared in Chrome's download panel. A tagged H.264/AAC test clip finished in Downloads after immediate navigation away. Chrome's ordinary image-save flow removed author/comment/GPS fields while preserving a 1200×720 JPEG, rotation and color profile.

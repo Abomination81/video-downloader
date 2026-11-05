@@ -5,6 +5,7 @@
 - Rename the extension to **Abomination81 Toolkit** across Chrome's extension list, native menu group, toolbar, settings, screenshot preview, installer and public guide.
 - Describe the full suite: ad protection, media downloads, screenshots, cookie rejection, popup controls, video controls, copying and local image text recognition.
 - Keep the existing extension identity, installation location and signed update route so current unified installations update without reinstalling or losing preferences.
+- Stop an old video-control scan when Chrome invalidates its extension context during an automatic update; retain the page, form content and working replacement controls.
 
 ## 0.13.1 — 2026-11-05
 

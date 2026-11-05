@@ -72,6 +72,8 @@ try {
   const probe = () => worker.evaluate(tabId => chrome.tabs.sendMessage(tabId, { type: 'probe' }), tabId);
   const before = await probe();
   assert.ok(before.media[0]);
+  await page.locator('#abomination-browsing-tools').waitFor({ state: 'attached' });
+  const oldBrowsingTools = await page.locator('#abomination-browsing-tools').elementHandle();
   console.log('CHECK initial content script connected');
   await worker.evaluate(() => chrome.storage.local.set({ settings: { restoreMenus: true, restoreCopy: true, cleanImages: false, useCookies: false, compatibleVideo: false, autoUpdates: true } }));
   await page.locator('video').evaluate(video => new Promise(resolve => video.readyState >= 4 ? resolve() : video.addEventListener('canplaythrough', resolve, { once: true })));
@@ -120,6 +122,8 @@ try {
   }
   assert.ok(after?.media[0]);
   assert.notEqual(after.media[0].id, before.media[0].id, 'The page kept its old content script');
+  await page.waitForFunction(() => document.querySelectorAll('#abomination-browsing-tools').length === 1);
+  assert.equal(await oldBrowsingTools.evaluate(node => node.isConnected), false, 'The old browsing controls survived the update');
   assert.equal(documentLoads, 1, 'The update reloaded the website');
   assert.equal(await page.locator('#draft').inputValue(), 'Unsent form content');
   assert.equal(await page.evaluate(() => window.pageState), 'original');

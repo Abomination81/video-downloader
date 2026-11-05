@@ -82,8 +82,16 @@ export default defineContentScript({
       return found.slice(0, 100);
     }
     function discover() {
-      if (!policy?.enabled || !policy.videoControls) return;
-      for (const video of videos()) {
+      if (ctx.isInvalid || !policy?.enabled || !policy.videoControls) return;
+      let found: HTMLVideoElement[];
+      try { found = videos(); }
+      catch (error) {
+        // Chrome can revoke DOM extension APIs before WXT receives the new
+        // script's cleanup event. Retire this scanner; keep other errors visible.
+        if (ctx.isInvalid) return;
+        throw error;
+      }
+      for (const video of found) {
         if (!known.has(video)) {
           known.add(video);
           video.addEventListener('ratechange', () => { if (current === video) speed.value = String(video.playbackRate); }, { signal: abort.signal });
