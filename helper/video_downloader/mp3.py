@@ -11,6 +11,12 @@ OriginalMedia Emphasis Duration VBRFrames VBRBytes VBRScale VBRQuality
 EncoderDelay EncoderPadding
 """.split())
 
+# FFmpeg only honors the Xing delay/padding fields with a recognized marker.
+# Write a fixed, versionless muxer marker, never the source encoder identity.
+# Stereo files with a valid Xing CRC expose this as a stream tag in ffprobe;
+# other layouts may not. Removing the header changes gapless decoded audio.
+GAPLESS_MARKER = 'Lavf'
+
 
 def frames(path, cancelled=lambda: False):
     """Require an entire MPEG Layer III frame stream, without ID3/APE/junk."""
@@ -49,14 +55,14 @@ def clean(source: Path, target: Path, bitrate=320, cancelled=lambda: False, stat
     else:
         rate = int(audio.get("sample_rate") or 48000)
         command += ["-c:a", "libmp3lame", "-b:a", f"{bitrate}k", "-compression_level", "0", "-ac", str(min(2, int(audio.get("channels") or 2))), "-ar", str(rate if rate in (32000, 44100, 48000) else 48000)]
-    command += ["-fflags", "+bitexact", "-flags:a", "+bitexact", "-id3v2_version", "0", "-write_id3v1", "0", "-write_xing", "1", "-metadata", "encoder=", str(target)]
+    command += ["-fflags", "+bitexact", "-flags:a", "+bitexact", "-id3v2_version", "0", "-write_id3v1", "0", "-write_xing", "1", "-metadata", "encoder=", "-metadata:s:a:0", f"encoder={GAPLESS_MARKER}", str(target)]
     try: run(command, cancelled)
     except MediaError as error: raise MediaError(error.code, "The audio could not be saved as a clean MP3. No incomplete file was saved.") from error
     state("verifying")
     frames(target, cancelled)
     after = probe(target, cancelled)
     streams = after.get("streams", [])
-    if len(streams) != 1 or streams[0].get("codec_name") != "mp3" or after.get("chapters") or after.get("format", {}).get("tags") or streams[0].get("tags"):
+    if len(streams) != 1 or streams[0].get("codec_name") != "mp3" or after.get("chapters") or after.get("format", {}).get("tags") or streams[0].get("tags", {}) not in ({}, {"encoder": GAPLESS_MARKER}):
         raise MediaError("unverified_metadata", "The MP3's tracks or metadata could not be verified.")
     tags = json.loads(run([binary("exiftool"), "-j", "-G1", str(target)], cancelled, 120))[0]
     for key in tags:

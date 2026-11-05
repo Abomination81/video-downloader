@@ -51,6 +51,32 @@ def test_original_mp3_preserves_decoded_audio_without_id3_art_or_ape(media_files
         assert forbidden not in target.read_bytes()
 
 
+@pytest.mark.parametrize('sample_rate,bitrate', [(44100, 128), (44100, 320), (48000, 128), (48000, 320)])
+def test_surround_source_converts_and_stereo_mp3_keeps_gapless_audio(tmp_path, sample_rate, bitrate):
+    source = tmp_path / 'surround.m4a'
+    converted, copied = tmp_path / 'stereo.mp3', tmp_path / 'copied.mp3'
+    ffmpeg('-f', 'lavfi', '-i', f'anullsrc=r={sample_rate}:cl=5.1', '-t', '1.5',
+           '-c:a', 'aac', '-metadata', 'title=PRIVATE_TITLE', source)
+    result = clean(source, converted, bitrate)
+    assert result['channels'] == 2 and result['bitrate'] == bitrate
+    assert not result['copied']
+    first = probe(converted)
+    assert abs(float(first['streams'][0]['duration']) - 1.5) < .15
+    assert first['streams'][0].get('tags', {}) in ({}, {'encoder': 'Lavf'})
+    assert not first['format'].get('tags')
+    assert b'PRIVATE_TITLE' not in converted.read_bytes()
+    # A source's encoder string must also be replaced, not simply allowlisted.
+    tagged = tmp_path / 'tagged-stereo.mp3'
+    ffmpeg('-i', converted, '-c:a', 'copy', '-id3v2_version', '0',
+           '-metadata:s:a:0', 'encoder=LavfPRIV', tagged)
+    assert b'LavfPRIV' in tagged.read_bytes()
+    # Keep the technical gapless header: stripping it adds decoder padding and
+    # changes the samples of an existing MP3, even when its frames are copied.
+    assert clean(tagged, copied)['copied']
+    assert b'LavfPRIV' not in copied.read_bytes()
+    assert audio_hash(tagged, lambda: False) == audio_hash(copied, lambda: False)
+
+
 def test_silent_video_and_cancellation_do_not_publish(media_files, tmp_path):
     with pytest.raises(MediaError) as error:
         clean(media_files / 'vp9.webm', tmp_path / 'none.mp3')

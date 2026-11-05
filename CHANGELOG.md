@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.1 — 2026-11-05
+
+- Fix stereo/surround-to-MP3 downloads failing final metadata verification. Normalize the gapless header to a fixed technical marker while removing source tags and encoder identity. Preserve sample-accurate playback of copied MP3s.
+- Reproduced against live YouTube audio in the installed unified extension; added a real surround/stereo conversion and copy regression.
+- Verified the single extension in the user's Chrome: native screenshot/photo/video commands, downloads after navigation, automatic image cleanup, and WatchLuna playback, seeking, right-click and pop-out.
+
+
 ## 0.13.0 — One extension, 2026-11-05
 
 - Combined video, MP3, photos, screenshots, full uBlock Origin Lite protection and browsing tools under one stable Chrome extension ID.

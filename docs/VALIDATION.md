@@ -1,5 +1,17 @@
 # Validation
 
+## 0.13.1 installed Chrome verification — 2026-11-05
+
+The unified extension was activated in the normal Chrome profile. Its native menus offered video/audio/photo downloads and full-page screenshots under one extension. A full-page PNG and original photo appeared in Chrome's download panel. A tagged H.264/AAC test clip finished in Downloads after immediate navigation away. Chrome's ordinary image-save flow removed author/comment/GPS fields while preserving a 1200×720 JPEG, rotation and color profile.
+
+YouTube played and sought forward. WatchLuna passed its automatic site check, loaded its embedded video, played at 1724×720, sought forward without resetting, and exposed the native download menu despite the site's right-click restrictions. The extension's Pop out button entered and exited native picture-in-picture. These are playback/control checks, not proof that every source on those sites can be downloaded.
+
+Controlled pages in the same Chrome profile verified actual CookieYes rejection with a form preserved, surprise-window blocking, and Open once recovery. Existing isolated suites cover the ad engine, other consent providers, unsupported consent fallback, OCR, settings and message boundaries.
+
+A live YouTube MP3 attempt exposed a real false rejection: FFprobe reports the valid stereo Xing header's encoder marker as a stream tag. The regression failed before the fix. Output now explicitly normalizes that field to the fixed `Lavf` gapless marker and accepts only that exact technical value. Source encoder identity, ID3, APE, artwork, chapters and descriptive tags remain disallowed. Real surround conversion and stereo-copy checks cover 44.1/48 kHz and 128/320 kbps, source-identity removal, full decoding and equal decoded samples after MP3 copying. The same live YouTube source converted successfully after the fix.
+
+Technical basis: [FFmpeg MP3 demuxer](https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/mp3dec.c) uses a recognized marker to apply delay/padding and exposes its encoder tag when the header CRC validates; [MP3 muxer](https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/mp3enc.c) writes that header independently of ID3.
+
 ## 0.13.0 one extension — 2026-11-05
 
 The complete toolset was tested under one extension ID: downloads and metadata cleanup, full ad engine, cookies, popups, video controls, OCR and screenshots. Shared menu/message/offscreen conflicts were resolved. Local suites and the bounded signed-update checks passed; live YouTube playback passed. WatchLuna/Reddit player verification was limited by anti-bot gates. See the [full review](validation/0.13.0/REVIEW.md) for evidence and installation limits.
