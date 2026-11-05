@@ -3,6 +3,8 @@ import { isFullyInitialized } from './js/background.js';
 import {getDefaultFilteringMode,getFilteringMode,setFilteringMode,getFilteringModeDetails,setFilteringModeDetails} from './js/mode-manager.js';
 import {registerContentScripts} from './js/scripting-manager.js';
 import {registerUserScripts} from './js/compiled-filters.js';
+import {enableRulesets} from './js/ruleset-manager.js';
+import {rulesetConfig,saveRulesetConfig} from './js/config.js';
 const MAIN='bhglpjejpddnmfgkaakboniplnoemoak';
 let pending=Promise.resolve();
 const serial=fn=>{const next=pending.then(fn,fn);pending=next.catch(()=>{});return next};
@@ -18,6 +20,20 @@ chrome.runtime.onMessageExternal.addListener((message,sender,reply)=>{
  if(sender.id!==MAIN||sender.tab||sender.url!==`chrome-extension://${MAIN}/background.js`||!message||typeof message!=='object'||Array.isArray(message))return false;
  const keys=Object.keys(message).sort().join(',');
  let task;
+ if(message.type==='protection-annoyances'&&keys==='enabled,type'&&typeof message.enabled==='boolean')task=async()=>{
+  await isFullyInitialized;
+  const saved=await chrome.storage.local.get(['vdAnnoyances','vdAnnoyanceAdded']);
+  if(saved.vdAnnoyances===message.enabled)return {enabled:message.enabled};
+  const selected=new Set(rulesetConfig.enabledRulesets);
+  const added=message.enabled?['annoyances-overlays','annoyances-notifications','annoyances-widgets'].filter(id=>!selected.has(id)):[];
+  if(message.enabled)for(const id of added)selected.add(id);
+  else for(const id of saved.vdAnnoyanceAdded??[])selected.delete(id);
+  const result=await enableRulesets([...selected]);
+  if(result.error)throw new Error('Nuisance filters could not be applied');
+  rulesetConfig.enabledRulesets=result.enabledRulesets??[...selected];await saveRulesetConfig();
+  await apply();await chrome.storage.local.set({vdAnnoyances:message.enabled,vdAnnoyanceAdded:added});
+  return {enabled:message.enabled};
+ };
  if(message.type==='protection-status'&&(keys==='type'||keys==='host,type'&&host(message.host)))task=()=>status(message.host);
  if(message.type==='protection-enabled'&&keys==='enabled,type'&&typeof message.enabled==='boolean')task=async()=>{
   await isFullyInitialized;

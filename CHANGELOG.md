@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0 — Browsing tools, 2026-11-05
+
+- Reject optional cookies with pinned, local Autoconsent rules; restore unsupported or failed dialogs instead of hiding unhandled consent.
+- Enable supported overlay, notification and widget nuisance lists through Full Ad Protection, preserving user-selected lists and leaving cosmetic cookie lists off.
+- Add surprise-window recovery notices with Open once and per-site allowance; retain explicit links and ordinary login/payment popups.
+- Add hover-video seeking, per-site playback speed and native picture-in-picture without intercepting ordinary seek-bar input.
+- Add local English image/screenshot OCR with packaged workers, one-use selections, cookieless cross-origin fallback, bounded decoding and recognition. No OCR uploads or new Chrome permissions.
+- Add hostile-message, sender-isolation, consent, popup, video, OCR and live-site compatibility checks. Keep native download menus and existing output defaults.
+
 ## 0.11.0 — Full video and website ad protection
 
 - Add a separately loaded Ad Protection component powered by the full uBlock Origin Lite 2026.1103.1743 engine in Complete mode: scriptlets, player ad-SDK replacements, popup filtering, extended cosmetic filters, regional lists and upstream troubleshooting tools.

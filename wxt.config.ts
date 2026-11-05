@@ -11,7 +11,7 @@ export default defineConfig({
     name: 'Video Downloader by Abomination81',
     description: 'Video, MP3, original images, screenshots, ad blocking, metadata removal and browsing tools. Built by abomination81.',
     homepage_url: 'https://abomination81.com',
-    version: '0.11.0',
+    version: '0.12.0',
     externally_connectable: { ids: [audio.id] },
     key: identity.key,
     minimum_chrome_version: '127',
@@ -26,6 +26,6 @@ export default defineConfig({
         description: 'Download the video on this page',
       },
     },
-    content_security_policy: { extension_pages: "script-src 'self'; object-src 'none'; base-uri 'none'" },
+    content_security_policy: { extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; base-uri 'none'" },
   },
 });

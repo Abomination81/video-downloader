@@ -1,0 +1,833 @@
+{
+  "browser": "156.0.8078.4",
+  "environment": "Disposable Chromium profile; no personal cookies; TLS validation enabled",
+  "results": [
+    {
+      "name": "YouTube",
+      "url": "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+      "at": "2026-11-05T11:48:04.668Z",
+      "navigation": 200,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 15,
+      "actions": [
+        "Clicked visible play control",
+        {
+          "seek": {
+            "before": 3.868083,
+            "after": 15.163063,
+            "error": null
+          }
+        },
+        {
+          "speed": 1.25
+        },
+        {
+          "pictureInPicture": true
+        }
+      ],
+      "title": "Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film - YouTube",
+      "finalOrigin": "https://www.youtube.com",
+      "gate": false,
+      "before": [
+        {
+          "host": "www.youtube.com",
+          "videos": [
+            {
+              "time": 3.811495,
+              "duration": 634.601,
+              "ready": 4,
+              "paused": false,
+              "width": 640,
+              "height": 360,
+              "error": null,
+              "protected": false,
+              "seekable": [
+                [
+                  0,
+                  634.601
+                ]
+              ]
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "accounts.google.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "www.youtube.com",
+          "videos": [
+            {
+              "time": 15.691236,
+              "duration": 634.601,
+              "ready": 4,
+              "paused": false,
+              "width": 640,
+              "height": 360,
+              "error": null,
+              "protected": false,
+              "seekable": [
+                [
+                  0,
+                  634.601
+                ]
+              ]
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "accounts.google.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "Vimeo",
+      "url": "https://vimeo.com/76979871",
+      "at": "2026-11-05T11:48:16.511Z",
+      "navigation": 200,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 0,
+      "actions": [],
+      "title": "The New Vimeo Player (You Know, For Videos)",
+      "finalOrigin": "https://vimeo.com",
+      "gate": true,
+      "before": [
+        {
+          "host": "vimeo.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "challenges.cloudflare.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "vimeo.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "challenges.cloudflare.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "Dailymotion",
+      "url": "https://www.dailymotion.com/us",
+      "at": "2026-11-05T11:48:24.943Z",
+      "navigation": 200,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 0,
+      "actions": [
+        "Opened a listed video"
+      ],
+      "title": "Dailymotion \u2013 Social video",
+      "finalOrigin": "https://www.dailymotion.com",
+      "gate": false,
+      "before": [
+        {
+          "host": "www.dailymotion.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "www.dailymotion.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "Twitch",
+      "url": "https://www.twitch.tv/nasa",
+      "at": "2026-11-05T11:52:27.125Z",
+      "navigation": 200,
+      "errors": [
+        "getLayoutMap() must be called from a top-level browsing context or allowed by the permission policy."
+      ],
+      "popups": [],
+      "blockedRequests": 8,
+      "actions": [
+        {
+          "seek": {
+            "before": 6.171025,
+            "after": 17.638778,
+            "error": null
+          }
+        },
+        {
+          "speed": 1.25
+        },
+        {
+          "pictureInPicture": true
+        }
+      ],
+      "title": "NASA - Twitch",
+      "finalOrigin": "https://www.twitch.tv",
+      "gate": false,
+      "before": [
+        {
+          "host": "www.twitch.tv",
+          "videos": [
+            {
+              "time": 6.132373,
+              "duration": 46.443989,
+              "ready": 4,
+              "paused": false,
+              "width": 1280,
+              "height": 720,
+              "error": null,
+              "protected": false,
+              "seekable": [
+                [
+                  0,
+                  46.443989
+                ]
+              ]
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "chromewebdata",
+          "videos": [],
+          "tools": 0,
+          "notices": null
+        },
+        {
+          "host": "chromewebdata",
+          "videos": [],
+          "tools": 0,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "www.twitch.tv",
+          "videos": [
+            {
+              "time": 18.212737,
+              "duration": 46.486666,
+              "ready": 4,
+              "paused": false,
+              "width": 1280,
+              "height": 720,
+              "error": null,
+              "protected": false,
+              "seekable": [
+                [
+                  0,
+                  46.486666
+                ]
+              ]
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "chromewebdata",
+          "videos": [],
+          "tools": 0,
+          "notices": null
+        },
+        {
+          "host": "chromewebdata",
+          "videos": [],
+          "tools": 0,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "Pluto",
+      "url": "https://pluto.tv/us/shows/2140689/episode/5f0cab6169b09e000748375b/",
+      "at": "2026-11-05T12:00:17.783Z",
+      "navigation": 200,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 32,
+      "actions": [
+        {
+          "seek": {
+            "before": 4.979973,
+            "after": 16.479337,
+            "error": null
+          }
+        },
+        {
+          "speed": 1.25
+        },
+        {
+          "pictureInPicture": true
+        }
+      ],
+      "title": "Watch Star Trek: The Next Generation Season 3 Episode 1 | Pluto TV",
+      "finalOrigin": "https://pluto.tv",
+      "gate": false,
+      "before": [
+        {
+          "host": "pluto.tv",
+          "videos": [
+            {
+              "time": 4.923719,
+              "duration": 2729.4339999999997,
+              "ready": 4,
+              "paused": false,
+              "width": 1216,
+              "height": 684,
+              "error": null,
+              "protected": false,
+              "seekable": [
+                [
+                  0,
+                  2729.4339999999997
+                ]
+              ]
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "pluto.tv",
+          "videos": [
+            {
+              "time": 17.036444,
+              "duration": 2729.4339999999997,
+              "ready": 4,
+              "paused": false,
+              "width": 1216,
+              "height": 684,
+              "error": null,
+              "protected": false,
+              "seekable": [
+                [
+                  0,
+                  2729.4339999999997
+                ]
+              ]
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "Tubi",
+      "url": "https://tubitv.com/",
+      "at": "2026-11-05T11:49:00.089Z",
+      "navigation": 200,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 17,
+      "actions": [
+        "Clicked visible play control"
+      ],
+      "title": "Watch Free Movies and TV Shows Online | Tubi",
+      "finalOrigin": "https://tubitv.com",
+      "gate": false,
+      "before": [
+        {
+          "host": "tubitv.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "tubitv.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "Reddit",
+      "url": "https://www.reddit.com/r/gridfinity/comments/1xl68js/lots_of_improvements_to_gridfinity_layout_tools/",
+      "at": "2026-11-05T11:49:08.677Z",
+      "navigation": 200,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 0,
+      "actions": [],
+      "title": "Reddit - Prove your humanity",
+      "finalOrigin": "https://www.reddit.com",
+      "gate": true,
+      "before": [
+        {
+          "host": "www.reddit.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "www.google.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "www.google.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "www.reddit.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "www.google.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "www.google.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "Miruro",
+      "url": "https://www.miruro.tv/watch/199588/gals-cant-be-kind-to-otaku?ep=1",
+      "at": "2026-11-05T11:49:16.943Z",
+      "navigation": 404,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 2,
+      "actions": [],
+      "title": "Content removed \u00b7 Miruro",
+      "finalOrigin": "https://www.miruro.tv",
+      "gate": false,
+      "before": [
+        {
+          "host": "www.miruro.tv",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "www.miruro.tv",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "B98",
+      "url": "https://www.b98.tv/video/greek-ow/",
+      "at": "2026-11-05T11:49:25.389Z",
+      "navigation": 200,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 2,
+      "actions": [
+        "Clicked visible play control",
+        {
+          "seek": {
+            "before": 3.850938,
+            "after": 15.13715,
+            "error": null
+          }
+        },
+        {
+          "speed": 1.25
+        },
+        {
+          "pictureInPicture": true
+        }
+      ],
+      "title": "Tom and Jerry - It's Greek To Me-Ow! | B98.TV",
+      "finalOrigin": "https://www.b98.tv",
+      "gate": false,
+      "before": [
+        {
+          "host": "www.b98.tv",
+          "videos": [
+            {
+              "time": 3.788913,
+              "duration": 410.451689,
+              "ready": 4,
+              "paused": false,
+              "width": 720,
+              "height": 524,
+              "error": null,
+              "protected": false,
+              "seekable": [
+                [
+                  0,
+                  410.451689
+                ]
+              ]
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "www.b98.tv",
+          "videos": [
+            {
+              "time": 15.639206,
+              "duration": 410.451689,
+              "ready": 4,
+              "paused": false,
+              "width": 720,
+              "height": 524,
+              "error": null,
+              "protected": false,
+              "seekable": [
+                [
+                  0,
+                  410.451689
+                ]
+              ]
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "Putlocker",
+      "url": "https://putlockerfree2.com/movie/the-dark-knight-2008-Z155V/play/#video-player",
+      "at": "2026-11-05T11:49:37.007Z",
+      "navigation": 403,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 0,
+      "actions": [],
+      "title": "Just a moment...",
+      "finalOrigin": "https://putlockerfree2.com",
+      "gate": true,
+      "controllerCount": 1
+    },
+    {
+      "name": "WatchLuna",
+      "url": "https://watchluna.com/movies/watch-hope-online-free-1058424",
+      "at": "2026-11-05T11:49:41.196Z",
+      "navigation": 403,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 0,
+      "actions": [],
+      "title": "Just a moment...",
+      "finalOrigin": "https://watchluna.com",
+      "gate": true,
+      "controllerCount": 1
+    },
+    {
+      "name": "CNN",
+      "url": "https://www.cnn.com/videos",
+      "at": "2026-11-05T11:52:51.299Z",
+      "navigation": 200,
+      "errors": [
+        "Unexpected end of JSON input"
+      ],
+      "popups": [],
+      "blockedRequests": 3,
+      "actions": [
+        {
+          "speed": 1.25
+        },
+        {
+          "pictureInPicture": false
+        }
+      ],
+      "title": "Latest Videos | CNN",
+      "finalOrigin": "https://www.cnn.com",
+      "gate": false,
+      "before": [
+        {
+          "host": "www.cnn.com",
+          "videos": [
+            {
+              "time": 0,
+              "duration": null,
+              "ready": 0,
+              "paused": true,
+              "width": 0,
+              "height": 0,
+              "error": null,
+              "protected": false,
+              "seekable": []
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "js.stripe.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "m.stripe.network",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "after": [
+        {
+          "host": "www.cnn.com",
+          "videos": [
+            {
+              "time": 0,
+              "duration": null,
+              "ready": 0,
+              "paused": true,
+              "width": 0,
+              "height": 0,
+              "error": null,
+              "protected": false,
+              "seekable": []
+            }
+          ],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "js.stripe.com",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        },
+        {
+          "host": "m.stripe.network",
+          "videos": [],
+          "tools": 1,
+          "notices": null
+        }
+      ],
+      "controllerCount": 1
+    },
+    {
+      "name": "AccuWeather",
+      "url": "https://www.accuweather.com/en/videos",
+      "at": "2026-11-05T11:49:58.447Z",
+      "navigation": 403,
+      "errors": [],
+      "popups": [],
+      "blockedRequests": 0,
+      "actions": [],
+      "title": "Access Denied",
+      "finalOrigin": "https://www.accuweather.com",
+      "gate": true,
+      "controllerCount": 1
+    }
+  ]
+}

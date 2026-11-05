@@ -17,3 +17,4 @@ export async function syncProtection(){
 export function protectionSnapshot(value:ProtectionStatus){return {...value,engine:'complete' as const,permission:true,active:value.enabled,pausedSites:[],updated:null,error:null};}
 
 export async function migrateProtection(pausedSites:string[]){return schema.parse(await send({type:'protection-migrate',pausedSites}));}
+export async function setProtectionAnnoyances(enabled:boolean){return send({type:'protection-annoyances',enabled});}

@@ -129,6 +129,31 @@ export default defineContentScript({
         return;
       }
       if (message?.type === 'probe') respond(snapshot());
+      if (message?.type === 'ocr-image-data' && sender.id === chrome.runtime.id && !sender.tab && typeof message.id === 'string') {
+        const image = elements().find(el => el instanceof HTMLImageElement && ids.get(el) === message.id) as HTMLImageElement | undefined;
+        if (!image) { respond(null); return; }
+        if (!/^(blob:|data:)/.test(image.currentSrc || image.src)) {
+          try {
+            if (!image.complete || !image.naturalWidth || image.naturalWidth * image.naturalHeight > 40_000_000) throw new Error('Image unavailable');
+            const scale = Math.min(1, Math.sqrt(6_000_000 / (image.naturalWidth * image.naturalHeight)));
+            const canvas = document.createElement('canvas'); canvas.width = Math.round(image.naturalWidth * scale); canvas.height = Math.round(image.naturalHeight * scale);
+            canvas.getContext('2d')!.drawImage(image, 0, 0, canvas.width, canvas.height);
+            const data = canvas.toDataURL('image/png');
+            respond(data.length <= 17_000_000 ? { data } : null);
+          } catch { respond(null); } // Cross-origin pixels need the cookieless background fetch.
+          return;
+        }
+        void (async () => {
+          const response = await fetch(image.currentSrc || image.src, { signal: AbortSignal.timeout(10000) });
+          const reader = response.body?.getReader(); if (!reader) throw new Error('No image body');
+          const chunks: Uint8Array[] = []; let size = 0;
+          while (true) { const { done, value } = await reader.read(); if (done) break; size += value.length; if (size > 12 * 1024 * 1024) { await reader.cancel(); throw new Error('Image too large'); } chunks.push(value); }
+          const type = response.headers.get('content-type')?.split(';')[0] ?? '';
+          if (!/^image\/(png|jpeg|webp|gif|bmp)$/.test(type)) throw new Error('Unsupported image');
+          let binary = ''; for (const chunk of chunks) for (let i = 0; i < chunk.length; i += 16384) binary += String.fromCharCode(...chunk.subarray(i, i + 16384));
+          respond({ data: `data:${type};base64,${btoa(binary)}` });
+        })().catch(() => respond(null)); return true;
+      }
       if (message?.type === 'image-data' && typeof message.id === 'string') {
         const image = elements().find((el) => el instanceof HTMLImageElement && ids.get(el) === message.id) as HTMLImageElement | undefined;
         if (!image || !/^(blob:|data:)/.test(image.currentSrc || image.src)) { respond({ ok: false }); return; }
@@ -162,6 +187,8 @@ export default defineContentScript({
     ctx.addEventListener(document, 'DOMContentLoaded', () => { announce(); snapshot(); }, { once: true });
     announce();
     void chrome.runtime.sendMessage({ type: 'frame-ready' }).catch(() => { /* No privileges are available after an extension reload. */ });
+    // Start the page-window guard before document_idle/UI initialization.
+    void chrome.runtime.sendMessage({ type: 'browsing-policy' }).catch(() => {});
     ctx.setTimeout(announce, 250);
     ctx.setTimeout(announce, 1000);
   },

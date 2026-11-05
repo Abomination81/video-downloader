@@ -1,5 +1,19 @@
 # Security and privacy
 
+## Browsing tools and image text
+
+Cookie rejection runs bundled Autoconsent 18.0.0 rules, with opt-in and cosmetic-only cookie hiding disabled. Only named, compiled snippet functions may run in the originating frame; page-supplied code is never evaluated. Requests have per-document budgets and time bounds. Reporting is disabled. Failed/unknown consent flows leave the dialog usable.
+
+Popup notices accept bounded HTTP(S) destinations without embedded credentials. Their actions require trusted browser input; page messages and synthetic clicks cannot launch a tab or save an exception. Explicit links and ordinary buttons retain normal WindowProxy behavior. A hostile page can imitate page UI or replace its own window.open; this supplemental heuristic is not an isolation boundary or a guarantee against all popunders. The full ad engine and Chrome retain their separate protections.
+
+OCR accepts only extension-page requests tied to a recent selected image and exact source document. Selection tokens are one-use, expire after five minutes, and retain at most four temporary URL references in session memory. Existing pixels are preferred; cross-origin fetches omit cookies and referrers, have a 15-second deadline and a 12 MB streaming cap. File signatures and dimensions are checked before decoding; images over 40 megapixels or 32,768 pixels on a side are rejected. Recognition is reduced to six megapixels and bounded to 60 seconds. Local worker, WebAssembly and English language data are packaged with the release. No recognized text or pixels enter extension storage or an OCR service. Closing the page releases its worker and image URL.
+
+The extension CSP permits packaged WebAssembly, not JavaScript string evaluation. Extension pages and OCR assets are not web-accessible. Strict sender and schema checks prevent content scripts and other extensions from invoking privileged helper/UI/OCR commands. New browsing preferences add no Chrome permissions. The nuisance-list bridge accepts only fixed list choices from the exact parent background worker and preserves user-selected lists.
+
+These checks cover the documented threat model, not arbitrary software running with your OS account, a compromised browser or a compromised signed publisher. The unpacked installation and native helper run as your user; protecting that account and the release signing key remains necessary. Validation is extensive but cannot prove that no exploit or site incompatibility exists.
+
+## Downloader and updates
+
 Video Downloader is a local Chrome extension and native helper. The helper accepts framed, validated requests only from the stable extension identity registered by setup. It runs known media tools with argument arrays, not page-supplied shell commands. Source cookies are scoped to relevant domains and travel over a private local pipe; they are not written to job history.
 
 Prepared files are verified before the extension asks Chrome to save them. A short-lived loopback server transfers one file using an unguessable capability. It rejects unexpected website origins and hosts. The saved file is checked again, and Chrome-added source-URL attributes are cleared without removing filesystem quarantine/ZoneId security markings.

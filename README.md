@@ -28,6 +28,11 @@ Use **Video-Downloader.zip** from Releases for installation. GitHub's automatic 
 | Video and website ad protection | Full uBlock Origin Lite engine in Complete mode: network filters, player scriptlets, ad-SDK replacements, popup and cosmetic rules; load Ad Protection once |
 | Chrome's **Save image as** | Automatic cleanup of newly saved images, preserving your filename |
 | **Copy clean link** | Recognizable tracking fields removed; functional, signed and login links preserved |
+| Cookie rejection | Reject optional cookies using bundled consent rules; unsupported dialogs remain usable |
+| Fewer browsing nags | Notification, newsletter, overlay and widget filters through Ad Protection |
+| Surprise-window guard | Block unexpected windows, with **Open once** and a per-site exception |
+| Consistent video controls | Hover a video for ±10 seconds, remembered speed and native **Pop out** |
+| **Copy text from image** | Local English OCR for a selected image or screenshot; no OCR service |
 | Browse normally | Right-click, text selection and copying restored by default; settings can disable restoration |
 
 Downloads continue after you navigate away or close the source tab. Everything runs locally; no developer-operated upload service or account is required.
@@ -56,7 +61,19 @@ Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet
 
 Chrome requires these manual steps for an unpacked extension. Setup does not change Chrome policies, bypass security controls, or require a Chrome Web Store account.
 
-## Full Ad Protection (0.11.0)
+## Browsing tools (0.12.0)
+
+Cookie handling uses pinned DuckDuckGo Autoconsent rules with **opt-out only**. Recognized dialogs are briefly hidden while optional consent is rejected. A failed or unsupported dialog stays available; the extension never treats hiding a banner as rejecting consent and never deliberately chooses Accept all. The Ad Protection companion separately hides supported newsletter, notification, overlay and widget nags. Its cookie-hiding list stays off.
+
+Unexpected windows get a small footer notice. **Open once** opens that destination; **Allow on this site** saves an exception, then you retry the original button. Ordinary links and sign-in/payment buttons keep their normal popup behavior. For a blocked blank window whose destination is not yet known, allow the site and retry. The guard supplements browser and filter-list protection; it cannot infer every site's intent or prevent every popup technique.
+
+Hover a video for **−10s**, **+10s**, speed and **Pop out**. Speed is remembered per site. Seeking uses the player's actual seekable range, including live DVR; it cannot turn a preview into a full video. Native picture-in-picture requires a loaded video and browser/frame permission. **Alt+Shift+Left/Right** seeks the last hovered player; **Alt+Shift+P** pops it out. Ordinary seek bars, typing and selection retain their normal events.
+
+Right-click an image, then choose **Copy text from image** in the toolbar. Or open the text tool and select a local image/screenshot. English recognition runs entirely in the extension using packaged Tesseract WebAssembly and language data. Text is editable and copyable. Images are limited to 12 MB and 40 megapixels; SVG/PDF are not accepted. Existing image pixels are preferred; a cross-origin fallback fetch sends no cookies or page referrer. Some protected images must be saved and opened manually. No OCR text or pixels are saved in extension storage or sent to a recognition service.
+
+Settings has separate switches for these tools and a reset for site exceptions. **Pause page tools** pauses cookies, popup protection and video controls for the current site. The separate **Ad Protection → Pause here** control pauses nag/ad filtering. No reading mode or offline-page saving is included. These additions need no new Chrome permissions or companion installation beyond the existing Ad Protection component.
+
+## Full Ad Protection
 
 Load **protection-companion** once from the installed extension folder. No terminal is needed. It ships the full [uBlock Origin Lite](https://github.com/uBlockOrigin/uBOL-home) engine, pinned to **2026.1103.1743**, with **Complete** filtering enabled by default. Its website access enables network filtering, player scriptlets, ad-SDK replacements, extended cosmetic rules, and popup filtering. Default lists include uBlock filters, EasyList, EasyPrivacy, Peter Lowe, and malware lists. Regional lists and troubleshooting controls remain available in its own toolbar dashboard.
 

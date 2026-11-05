@@ -26,6 +26,8 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg
           npx playwright install --with-deps --no-shell chromium
+      - run: npm run test:browsing
+      - run: npm run test:security
       - run: npm run test:interactions
       - run: npm run test:youtube
       - run: npm run test:screenshot

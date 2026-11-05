@@ -1,5 +1,11 @@
 # Validation
 
+## 0.12.0 browsing tools — 2026-11-05
+
+56 extension tests and 177 helper tests pass, with production browser suites for consent rejection, popup recovery, local image text recognition, sender isolation and all existing download/protection/screenshot workflows. Live media controls were verified on YouTube, B98, Twitch and Pluto. Nine other sampled sites reached access gates, unavailable content or no loaded player and are not counted as playback passes. The live Pluto test exposed immediate picture-in-picture closure; restoring the player's disabled flag only after PiP exits fixed it. Known consent-library cosmetic fallback hiding is disabled so a banner is never hidden as a substitute for rejection.
+
+See the [detailed review and limitations](validation/0.12.0/REVIEW.md) and [technical live-site observations](validation/0.12.0/live-sites.json). No new Chrome permissions or OCR uploads. No all-sites or exploit-free guarantee is made. Main-profile installation remains distinct from isolated browser verification.
+
 ## 0.11.0 full Ad Protection — 2026-11-04
 
 - TypeScript/build and 51 extension unit tests pass. The existing 167 helper cases pass; the expanded updater suite passes 88 cases, including 10 new companion boundary/removal cases.

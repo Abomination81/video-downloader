@@ -30,6 +30,15 @@ def main():
     for name in ("package.json", "extension-identity.json"):
         shutil.copy2(ROOT / name, bundle / "youtube-companion-source" / name)
     shutil.copy2(ROOT / "BUNDLE-LICENSES.md", bundle / "BUNDLE-LICENSES.md")
+    # Preserve third-party source and notices without exhausting old updater
+    # entry limits. Dependencies are pinned by package-lock.json.
+    with zipfile.ZipFile(bundle / "browsing-source.zip", "w", compression=zipfile.ZIP_DEFLATED) as source_zip:
+        for package in ("@duckduckgo/autoconsent", "tesseract.js", "tesseract.js-core", "@tesseract.js-data/eng"):
+            for path in sorted((ROOT / "node_modules" / package).rglob("*")):
+                if path.is_file():
+                    source_zip.write(path, str(Path("browsing-source/dependencies") / path.relative_to(ROOT / "node_modules")))
+        for name in ("package.json", "package-lock.json", "BUNDLE-LICENSES.md", "scripts/build-browsing.mjs"):
+            source_zip.write(ROOT / name, "browsing-source/" + name)
     shutil.copytree(ROOT / "companion/protection", bundle / "protection-companion-source/companion/protection")
     (bundle / "protection-companion-source/scripts").mkdir()
     shutil.copy2(ROOT / "scripts/build-protection-companion.mjs", bundle / "protection-companion-source/scripts/build-protection-companion.mjs")

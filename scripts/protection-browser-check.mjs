@@ -17,7 +17,7 @@ const server=createServer({key:await readFile(join(temp,'key')),cert:await readF
  if(req.url.startsWith('/clip.mp4')){res.setHeader('Content-Type','video/mp4');res.end(clip);return;}
  if(req.url.includes('ima3.js')){sdkHits++;res.setHeader('Content-Type','text/javascript');res.end('window.originalAdSDK=true;');return;}
  if(req.url.endsWith('.js')){res.setHeader('Content-Type','text/javascript');res.end('window.adLoaded=true;');return;}
- res.setHeader('Content-Type','text/html');res.end('<!doctype html><title>Playback fixture</title><div id="AC_ad">Advertisement</div><p id="content">Ordinary content</p><video id="video" controls muted src="/clip.mp4"></video><input value="Editable text"><div id="ad-slot"></div>');
+ res.setHeader('Content-Type','text/html');res.end('<!doctype html><title>Playback fixture</title><div id="AC_ad">Advertisement</div><p id="content">Ordinary content</p><aside id="SubscribePopUpBox">Join our newsletter</aside><video id="video" controls muted src="/clip.mp4"></video><input value="Editable text"><div id="ad-slot"></div>');
 });await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const port=server.address().port;
 const url=(host,path)=>`https://${host}${host==='imasdk.googleapis.com'?'':':'+port}${path}`;
 const paths=[extension,join(extension,'protection-companion'),join(extension,'youtube-companion')].join(',');
@@ -33,6 +33,9 @@ try{
  assert.ok((await protector.evaluate(()=>chrome.scripting.getRegisteredContentScripts())).some(s=>s.world==='MAIN'));
  pass('Complete protection starts; main EasyList/Pluto and old YouTube engine relinquish filtering');
  const external=data=>worker.evaluate(({full,data})=>chrome.runtime.sendMessage(full,data).then(value=>value??null).catch(()=>null),{full,data});
+ const nagIds=['annoyances-overlays','annoyances-notifications','annoyances-widgets'];
+ await assertEventually(async()=>{const enabled=await protector.evaluate(()=>chrome.declarativeNetRequest.getEnabledRulesets());for(const id of nagIds)assert.ok(enabled.includes(id));assert.ok(!enabled.includes('annoyances-cookies'),'Cookie-hiding list must not replace actual rejection')});
+ pass('Browsing nags preset enables overlay, notification and widget lists without hiding consent dialogs');
  // Recreate the first-handoff state to verify existing site exclusions transfer once.
  await protector.evaluate(()=>chrome.storage.local.remove('vdMigrated'));
  await external({type:'protection-migrate',pausedSites:['paused.example']});
@@ -45,6 +48,16 @@ try{
  await page.waitForFunction(()=>getComputedStyle(document.querySelector('#AC_ad')).display==='none');assert.equal(await fetched(),false);
  await page.locator('input').fill('Selection and input still work');await page.locator('input').selectText();assert.equal(await page.locator('input').inputValue(),'Selection and input still work');
  await page.locator('video').evaluate(async v=>{await v.play();v.currentTime=4;});await page.waitForFunction(()=>document.querySelector('video').currentTime>4.2);assert.equal(await page.locator('#content').isVisible(),true);
+ await page.waitForFunction(()=>getComputedStyle(document.querySelector('#SubscribePopUpBox')).display==='none');
+ const before=await protector.evaluate(()=>chrome.declarativeNetRequest.getEnabledRulesets());
+ const browsing=(await request({type:'browsing-status'})).settings;
+ await request({type:'browsing-settings',settings:{...browsing,hideNags:false}});
+ await assertEventually(async()=>assert.deepEqual((await protector.evaluate(()=>chrome.declarativeNetRequest.getEnabledRulesets())).sort(),before.filter(id=>!nagIds.includes(id)).sort()));
+ await page.reload();assert.equal(await page.locator('#SubscribePopUpBox').isVisible(),true);assert.equal(await fetched(),false);
+ await request({type:'browsing-settings',settings:browsing});
+ await assertEventually(async()=>assert.deepEqual((await protector.evaluate(()=>chrome.declarativeNetRequest.getEnabledRulesets())).sort(),before.sort()));
+ await page.reload();await page.waitForFunction(()=>getComputedStyle(document.querySelector('#SubscribePopUpBox')).display==='none');
+ pass('Nags hide and restore independently while advertising protection remains enabled');
  pass('Real ad requests and ad cosmetics are blocked while playback, seeking and text input work');
  await page.goto(url('10play.com.au','/player'));
  const started=Date.now();

@@ -3,6 +3,7 @@ import { automaticChoice } from '../../lib/detection';
 import { candidateSchema, formatsSchema, intentSchema, type Candidate, type DownloadIntent, type DownloadOptions, type FormatOption } from '../../lib/schema';
 import { el, loadJobs, node, notice, request } from '../../lib/ui';
 import {adblockControls} from '../../lib/adblock-ui';
+import { browsingPolicySchema } from '../../lib/browsing-policy';
 
 let tabId: number | undefined;
 let poll: ReturnType<typeof setTimeout>;
@@ -160,6 +161,19 @@ async function init() {
   el('#download-shortcut').textContent = platform.os === 'mac' ? '⌥⇧V' : 'Alt+Shift+V';
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }); tabId = tab?.id;
   const host=tab?.url&&/^https?:/.test(tab.url)?new URL(tab.url).hostname:undefined;
+  if (tabId !== undefined && host) {
+    void request({ type: 'browsing-status', tabId }).then(value => {
+      const state = z.object({ policy: browsingPolicySchema }).parse(value).policy;
+      const pause = el<HTMLButtonElement>('#browsing-pause'); pause.disabled = false;
+      pause.textContent = state.enabled ? 'Pause page tools' : 'Resume page tools';
+      pause.onclick = async () => {
+        pause.disabled = true;
+        try { await request({ type: 'browsing-pause', tabId, paused: state.enabled }); state.enabled = !state.enabled; pause.textContent = state.enabled ? 'Pause page tools' : 'Resume page tools'; notice('Cookie, popup and video tools updated for this site. Reload to fully reset cookie handling.'); }
+        catch (error) { notice((error as Error).message); }
+        finally { pause.disabled = false; }
+      };
+    }).catch(() => {});
+  }
   adblockControls({compact:true,tabId,host});
   const state = await chrome.storage.session.get(['lastError', 'choices', 'formatPicker']);
   if (state.lastError && typeof (state.lastError as { message?: unknown }).message === 'string') notice((state.lastError as { message: string }).message);
@@ -192,3 +206,9 @@ async function featureStatus() {
   }
 }
 void init().catch((error) => notice((error as Error).message));
+el<HTMLButtonElement>('#copy-image-text').onclick = async () => {
+  const button = el<HTMLButtonElement>('#copy-image-text'); button.disabled = true;
+  try { if (tabId === undefined) throw new Error('Open a website and right-click an image first.'); await request({ type: 'ocr-open', tabId }); }
+  catch (error) { notice((error as Error).message); }
+  finally { button.disabled = false; }
+};

@@ -3,6 +3,28 @@ import { defaults, settingsSchema } from '../../lib/schema';
 import { el, notice, request } from '../../lib/ui';
 import { updateSchema } from '../../lib/updates';
 import {adblockControls} from '../../lib/adblock-ui';
+import { browsingSchema } from '../../lib/browsing-policy';
+
+async function browsing() {
+  const read = async () => z.object({ settings: browsingSchema }).parse(await request({ type: 'browsing-status' })).settings;
+  const fields = [['reject-cookies', 'rejectCookies'], ['hide-nags', 'hideNags'], ['popup-guard', 'popupGuard'], ['video-controls', 'videoControls']] as const;
+  const settings = await read();
+  const describe = (value: typeof settings) => { el('#browsing-exceptions').textContent = `${value.pausedSites.length} paused sites · ${value.popupSites.length} sites allowed to open windows.`; };
+  describe(settings);
+  for (const [id, key] of fields) {
+    const input = el<HTMLInputElement>(`#${id}`); input.checked = settings[key];
+    input.onchange = async () => {
+      input.disabled = true;
+      try { await request({ type: 'browsing-settings', settings: { [key]: input.checked } }); el('#browsing-save-status').textContent = 'Saved. Reload open pages to fully apply filter and cookie changes.'; }
+      catch { input.checked = !input.checked; notice('The browsing preference could not be saved.'); }
+      finally { input.disabled = false; }
+    };
+  }
+  el<HTMLButtonElement>('#reset-browsing-exceptions').onclick = async () => {
+    try { await request({ type: 'browsing-settings', settings: { pausedSites: [], popupSites: [] } }); describe(await read()); el('#browsing-save-status').textContent = 'Browsing exceptions reset.'; }
+    catch { notice('The exceptions could not be reset.'); }
+  };
+}
 
 async function protection() {
   try {
@@ -52,6 +74,7 @@ async function updates(manual = false) {
 el<HTMLButtonElement>('#check-updates').onclick = () => void updates(true);
 async function init() {
   adblockControls();
+  void browsing().catch(() => notice('Browsing preferences could not be loaded.'));
   const saved = await chrome.storage.local.get('settings'); const settings = settingsSchema.parse({ ...defaults, ...(saved.settings as object ?? {}) });
   el<HTMLInputElement>('#restore-menus').checked = settings.restoreMenus;
   el<HTMLInputElement>('#restore-copy').checked = settings.restoreCopy;

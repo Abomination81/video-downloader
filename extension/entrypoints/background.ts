@@ -1,4 +1,6 @@
 import {protectionStatus} from '../lib/protection-companion';
+import { initializeBrowsing } from '../lib/browsing-background';
+import { initializeOCR } from '../lib/ocr-background';
 import { z } from 'zod';
 import { automaticChoice, discover, isVideoPage, mediaKind, type Capture } from '../lib/detection';
 import { candidateSchema, cookieSchema, defaults, settingsSchema, snapshotSchema, type Candidate, type Snapshot } from '../lib/schema';
@@ -24,11 +26,13 @@ import { initializeYouTubeCompanion, syncYouTubeCompanion, youtubeCompanionStatu
 import { initializeScreenshotCompanion, syncScreenshotCompanion, screenshotCompanionStatus } from '../lib/screenshot-companion';
 
 export default defineBackground(() => {
+  initializeBrowsing();
   const ads=new AdBlocking();
   initializeScreenshotCompanion();
   initializeYouTubeCompanion();
   const captures = new Map<number, Capture[]>();
   const contexts = new Map<number, Snapshot>();
+  initializeOCR(contexts);
   type Selection = { at: number; pageUrl: string; promise: Promise<Candidate[]> };
   const selections = new Map<number, Selection>();
   const departedSelections = new Map<number, Selection>();
@@ -339,6 +343,7 @@ export default defineBackground(() => {
     return true;
   });
   chrome.runtime.onMessage.addListener((raw: unknown, sender, respond) => {
+    if (raw && typeof raw === 'object' && 'type' in raw && typeof raw.type === 'string' && (raw.type.startsWith('browsing-') || raw.type.startsWith('ocr-'))) return;
     if (raw && typeof raw === 'object' && 'target' in raw && raw.target === 'clipboard') return;
     const contentType = z.object({ type: z.enum(['context', 'media-present', 'frame-ready']) }).passthrough().safeParse(raw);
     if (sender.tab?.id !== undefined && contentType.success) {

@@ -141,7 +141,7 @@ try {
   await ui.setViewportSize({ width: 360, height: 800 });
   await checkBrand(ui);
   await ui.screenshot({ path: join(output, 'settings-narrow.png'), fullPage: true });
-  await ui.locator('.settings').screenshot({ path: join(output, 'settings-controls.png') });
+  await ui.locator('.settings').first().screenshot({ path: join(output, 'settings-controls.png') });
   assert.equal(await ui.locator('#compatible-video').isChecked(), true);
   await ui.locator('#compatible-video').uncheck();
   await ui.waitForFunction(async () => (await chrome.storage.local.get('settings')).settings.compatibleVideo === false);
@@ -214,6 +214,9 @@ try {
   await worker.evaluate((value) => chrome.storage.session.set({ choices: value }), { tabId: mseTab, at: Date.now(), candidates: [{ ...mse.first, title: 'Original streaming video' }, { ...cases.find((c) => c.name === 'auth').first, title: 'Other video option' }] });
   const adReady = context.waitForEvent('page');
   await mse.target.evaluate(() => { window.open('/popup-ad', '_blank'); });
+  // The new guard blocks this background launch; exercise the user's explicit
+  // recovery path before testing that a new tab preserves the media choice.
+  await mse.target.getByRole('button', { name: 'Open blocked window once', exact: true }).click();
   const ad = await adReady;
   await ad.waitForLoadState();
   const choicePopup = await context.newPage();
