@@ -20,6 +20,7 @@ nav .creator{display:flex;align-items:center;gap:var(--space-sm);font-weight:700
 .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--gap-columns);align-items:center;padding-block:var(--space-xl);min-height:620px}
 .hero h1{font-size:clamp(3.4rem,6vw,5.5rem);text-transform:uppercase;line-height:1.04;max-width:15ch}
 .hero p{margin-top:var(--space-lg);font-size:var(--text-lead);max-width:33ch;color:var(--color-muted)}
+.hero .release-note{font-size:var(--text-sm);max-width:48ch;line-height:1.6}
 .actions{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-lg);margin-top:var(--space-xl)}
 .button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:var(--space-sm) var(--space-lg);background:var(--color-accent);color:var(--color-accent-ink);text-decoration:none;font-weight:700}
 .button:hover{background:var(--color-accent-hover);color:var(--color-accent-ink)}

@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Abomination81 Toolkit | Download and install</title>
-  <meta name="description" content="Ad protection, clean media downloads, screenshots, cookie rejection, popup control and browsing tools in one Chrome extension. Built by Abomination81.">
+  <title>Abomination81 Toolkit | Better everyday browsing</title>
+  <meta name="description" content="One Chrome extension for ad protection, MP4 and MP3 downloads, original photos, screenshots, cookie rejection, pop-out video and image text. Built by Abomination81.">
   <meta name="theme-color" content="#000000">
   <link rel="canonical" href="https://abomination81.com/video-downloader/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Abomination81 Toolkit">
-  <meta property="og:description" content="Ad protection, media downloads, screenshots, cookie rejection, popup controls and better browsing.">
+  <meta property="og:description" content="Download video, audio and photos. Block supported ads, capture full pages and cut browsing interruptions. One toolkit, automatic updates.">
   <meta property="og:url" content="https://abomination81.com/video-downloader/">
   <meta property="og:image" content="https://abomination81.com/assets/og/card-a078560e.jpg">
   <meta name="twitter:card" content="summary_large_image">
@@ -24,7 +24,7 @@
   <div class="container">
     <nav aria-label="Main navigation">
       <a class="creator" href="https://abomination81.com"><img src="./assets/icon-192.png" width="40" height="40" alt="">Abomination81</a>
-      <div class="navlinks"><a href="#install">Install</a><a href="https://github.com/Abomination81/video-downloader">GitHub</a></div>
+      <div class="navlinks"><a href="#tools">What’s included</a><a href="#install">Install</a><a href="https://github.com/Abomination81/video-downloader">GitHub</a></div>
     </nav>
     <main id="main">
       <header class="hero">
@@ -32,6 +32,7 @@
           <h1>Abomination81<br>Toolkit.</h1>
           <p>Ad protection, clean media downloads, screenshots and fewer interruptions. One Chrome extension. Built for everyday browsing.</p>
           <div class="actions"><a class="button" href="https://github.com/Abomination81/video-downloader/releases/latest/download/Video-Downloader.zip">Download installer ZIP</a><a href="#install">How to install</a></div>
+          <p class="release-note"><a href="https://github.com/Abomination81/video-downloader/releases/tag/v0.13.3">New in v0.13.3: Zillow &amp; LoopNet compatibility</a><br>Signed updates arrive automatically after setup.</p>
         </div>
         <figure class="product">
           <picture class="product-shot" data-slot="extension" data-kind="product" data-alt="The actual Abomination81 Toolkit extension."><source media="(max-width:700px)" srcset="./assets/video-entry.png"><img src="./assets/video-downloads.png" width="380" height="600" fetchpriority="high" alt="Abomination81 Toolkit with media downloads, screenshots, ad protection and browsing tools."></picture>
@@ -41,16 +42,16 @@
       <section class="section" aria-labelledby="tools">
         <h2 id="tools">One toolkit. Every day.</h2>
         <dl class="tools">
-          <div><dt>Download video</dt><dd>Highest resolution and frame rate. H.264/AAC by default, converting incompatible tracks when needed.</dd></div>
+          <div><dt>Download video</dt><dd>Right-click for an MP4 at the highest available resolution and frame rate. H.264/AAC by default, with identifying metadata removed.</dd></div>
           <div><dt>Choose format or MP3</dt><dd>Inspect available source formats, or right-click Download audio. Up to 320 kbps, with tags and artwork removed.</dd></div>
           <div><dt>Download photo</dt><dd>The largest exposed source, with original format, rotation and animation retained. Identifying metadata removed.</dd></div>
           <div><dt>Save full-page screenshot</dt><dd>Capture a complete page as PNG, or ZIP for large pages. Built into the same extension.</dd></div>
           <div><dt>Video and website ad protection</dt><dd>Full uBlock Origin Lite in Complete mode. Filters ad requests, supported player ad systems, popups and banners. Pause it per site.</dd></div>
-          <div><dt>Leave the page</dt><dd>Background jobs keep running. Finished files appear in Chrome’s download panel and normal download folder.</dd></div>
+          <div><dt>Download, then keep browsing</dt><dd>Switch pages or close the source tab after starting a download. The silent helper keeps working; finished files appear in Chrome’s download panel and your Downloads folder by default.</dd></div>
         </dl>
       </section>
       <section class="section browsing" aria-labelledby="browsing">
-        <div><h2 id="browsing">Fewer interruptions.</h2><p>Reject optional cookies, hide supported browsing nags, and catch surprise windows. A small notice lets you open a blocked window once or allow that site.</p><p>Hover a video for consistent seeking, remembered speed and <strong>Pop out</strong>. Restore right-click, copying and selection. <strong>Copy clean link</strong> removes common tracking fields.</p><p><strong>Copy text from image</strong> reads images and screenshots locally in English. Nothing is uploaded to an OCR service. Chrome image saves also get identifying metadata cleaned after completion.</p><p>Unsupported cookie dialogs remain usable. Pop-out depends on the player and browser’s permissions. Every tool has its own controls.</p></div>
+        <div><h2 id="browsing">Fewer interruptions.</h2><p>Reject optional cookies, hide supported browsing nags, and catch surprise windows. A small notice lets you open a blocked window once or allow that site.</p><p>Hover a video for consistent seeking, remembered speed and <strong>Pop out</strong>. Restore right-click, copying and selection. <strong>Copy clean link</strong> removes common tracking fields.</p><p><strong>Copy text from image</strong> reads images and screenshots locally in English. Nothing is uploaded to an OCR service. Chrome image saves also get identifying metadata cleaned after completion.</p><p><strong>Zillow and LoopNet stay in control.</strong> Both sites and their subdomains are whitelisted: ad filtering, cookie handling, popup protection, video controls and right-click/copy overrides stay off to preserve their listing and map interactions. Manual downloads and screenshots remain available.</p><p>Unsupported cookie dialogs remain usable. Pop-out depends on the player and browser’s permissions. Every tool has its own controls.</p></div>
         <figure><div class="settings-shot"><img src="./assets/settings.png" width="360" height="660" loading="lazy" alt="Abomination81 Toolkit settings with the local helper connection and download preferences."></div><figcaption>Controls in the actual extension settings.</figcaption></figure>
       </section>
       <section class="section install" id="install" aria-labelledby="setup">
@@ -64,13 +65,14 @@
           <li>Refresh webpages, then right-click and choose <strong>Download video</strong>.</li>
         </ol>
         <details class="setup-note"><summary>Requirements: Chrome 127+. Mac tested; Windows installation unverified.</summary><p>Internet required. Mac setup may install Homebrew and ask for your password. Windows requires WinGet. Use the installer ZIP, not GitHub’s automatic source archives.</p></details>
-        <details class="setup-note"><summary>Already installed? Move to one extension</summary><p>Version 0.13 brings every tool into the main extension. Run the new installer once, load its parent extension folder, and disable the old companions. Chrome requires this one-time setup because permissions change. Future signed updates are automatic. Video and website protection starts in Complete mode, including YouTube; unsupported or stitched ads can remain.</p></details>
+        <details class="setup-note"><summary>Already using the unified Toolkit? Updates are automatic.</summary><p>No reinstall is needed for v0.13.3. The signed updater installs the new version, and Chrome activates it when the extension is idle. Restart Chrome to activate an installed update immediately. Refresh open Zillow and LoopNet pages afterward to clear filters already applied to them.</p></details>
+        <details class="setup-note"><summary>Still using the old companion extensions?</summary><p>Version 0.13 brings every tool into the main extension, now named Abomination81 Toolkit. Run the installer once, load its parent extension folder, and disable the old companions. Chrome requires this one-time setup because permissions change. Future signed updates are automatic.</p></details>
 
       </section>
       <section class="section coverage" aria-labelledby="coverage">
         <h2 id="coverage">Know what you’re downloading.</h2>
         <div class="coverage-copy">
-          <p>Conversion can be lossy. Original source mode preserves codecs and HDR. Platform upload limits still apply. No DRM or recording fallback. <a href="https://github.com/Abomination81/video-downloader/blob/main/docs/VALIDATION.md">Coverage and validation</a>. <a href="https://github.com/Abomination81/video-downloader/releases/latest">Release notes and checksums</a>.</p>
+          <p>Site support varies. Unsupported or stitched ads can remain. Compatible MP4 conversion can be lossy; original source mode preserves codecs and HDR. Platform upload limits still apply. No DRM or recording fallback. <a href="https://github.com/Abomination81/video-downloader/blob/main/docs/VALIDATION.md">Coverage and validation</a>. <a href="https://github.com/Abomination81/video-downloader/releases/latest">Release notes and checksums</a>.</p>
         </div>
       </section>
     </main>
