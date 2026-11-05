@@ -12,7 +12,11 @@ Object.assign(manifest,{name:'Ad Protection by Abomination81',short_name:'Ad Pro
 manifest.action.default_title='Ad Protection · Abomination81';
 await writeFile(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 await writeFile(join(output,'bundle-bridge.js'),(await readFile(join(source,'bundle-bridge.js'),'utf8')).replace("engineVersion:'2026.1103.1743'",`engineVersion:${JSON.stringify(provenance.version)}`));await cp(join(source,'branding.css'),join(output,'branding.css'));
-const background=await readFile(join(output,'js/background.js'),'utf8');await writeFile(join(output,'js/background.js'),background+'\nexport { isFullyInitialized };\n');
+const background=await readFile(join(output,'js/background.js'),'utf8');
+// Engine migrations compare calendar-style uBOL versions, not our bundle semver.
+const versionGetter='function getCurrentVersion() {\n    return runtime.getManifest().version;\n}';
+if(!background.includes(versionGetter))throw new Error('Review upstream engine-version getter');
+await writeFile(join(output,'js/background.js'),background.replace(versionGetter,`function getCurrentVersion() {\n    return ${JSON.stringify(provenance.version)};\n}`)+'\nexport { isFullyInitialized };\n');
 const mode=await readFile(join(output,'js/mode-manager.js'),'utf8');
 const before="none: [],\n    basic: [],\n    optimal: [ 'all-urls' ],\n    complete: [],";
 if(!mode.includes(before))throw new Error('Review upstream default-mode change');

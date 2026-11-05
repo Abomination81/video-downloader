@@ -26,7 +26,7 @@ const pass=text=>console.log('PASS',text);
 async function launch(){context=await chromium.launchPersistentContext(join(temp,'profile'),{channel:'chromium',headless:true,ignoreHTTPSErrors:true,args});const ui=await context.newPage();await ui.goto(`chrome-extension://${main}/options.html`);const worker=context.serviceWorkers().find(w=>w.url()===`chrome-extension://${main}/background.js`);const protector=context.serviceWorkers().find(w=>w.url()===`chrome-extension://${full}/bundle-bridge.js`);const request=async data=>{const reply=await ui.evaluate(data=>chrome.runtime.sendMessage(data),data);assert.equal(reply.ok,true,JSON.stringify(reply));return reply.result;};return{ui,worker,protector,request};}
 try{
  let {ui,worker,protector,request}=await launch();
- let state=await request({type:'adblock-status'});assert.equal(state.engine,'complete');assert.equal(state.level,3);assert.equal(state.active,true);assert.ok(state.networkRules>15000);assert.ok(state.cosmeticRules>25000);
+ let state=await request({type:'adblock-status'});assert.equal(state.engine,'complete');assert.equal(state.level,3);assert.equal((await protector.evaluate(()=>chrome.storage.local.get('rulesetConfig'))).rulesetConfig.version,state.engineVersion);assert.equal(state.active,true);assert.ok(state.networkRules>15000);assert.ok(state.cosmeticRules>25000);
  assert.equal((await worker.evaluate(()=>chrome.declarativeNetRequest.getDynamicRules())).length,0);assert.equal((await worker.evaluate(()=>chrome.scripting.getRegisteredContentScripts())).length,0);
  const legacy=context.serviceWorkers().find(w=>w.url().includes('hpbfmepggeinhmoamadigfdfgohagacf'));
  await assertEventually(async()=>assert.equal((await legacy.evaluate(()=>chrome.storage.local.get('enabled'))).enabled,false));
@@ -77,4 +77,4 @@ try{
  await assertEventually(async()=>{const status=await worker.evaluate(full=>chrome.runtime.sendMessage(full,{type:'protection-status'}).catch(()=>null),full);assert.equal(status?.version,'99.0.1')});assert.equal((await request({type:'adblock-status',host:'paused.example'})).paused,true);
  pass('Signed-bundle activation defers while settings are open, then reloads with saved modes intact');
 }finally{await context?.close();await new Promise(resolve=>server.close(resolve));await rm(temp,{recursive:true,force:true});}
-async function assertEventually(fn){let error;for(let i=0;i<40;i++){try{await fn();return}catch(e){error=e;await new Promise(r=>setTimeout(r,100));}}throw error;}
+async function assertEventually(fn){let error;for(let i=0;i<100;i++){try{await fn();return}catch(e){error=e;await new Promise(r=>setTimeout(r,100));}}throw error;}

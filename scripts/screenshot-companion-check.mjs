@@ -105,7 +105,8 @@ try {
   await primary.evaluate(() => chrome.runtime.reload());
   for (let n = 0; n < 100; n++) {
     for (const w of context.serviceWorkers()) { try { if (new URL(w.url()).hostname === main.id && await w.evaluate(() => chrome.runtime.getManifest().version) === next) primary = w; } catch {} }
-    if (await primary.evaluate(() => chrome.runtime.getManifest().version).catch(() => '') === next) break;
+    // A new worker can expose its manifest before asynchronous companion setup finishes.
+    if (await primary.evaluate(async next => chrome.runtime.getManifest().version === next && !!await chrome.alarms.get('screenshot-companion-update'), next).catch(() => false)) break;
     await new Promise(r => setTimeout(r, 100));
   }
   assert.ok(await primary.evaluate(() => chrome.alarms.get('screenshot-companion-update')));
