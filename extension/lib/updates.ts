@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import { syncScreenshotCompanion } from './screenshot-companion';
-import { syncYouTubeCompanion } from './youtube-companion';
 import { defaults, settingsSchema } from './schema';
 import { HelperError, native } from './native';
 
@@ -45,7 +43,7 @@ export class Updates {
     if (value.installedVersion === chrome.runtime.getManifest().version || value.state === 'applying' || this.isBusy()) return value;
     const disk = z.object({ version: z.string() }).parse(await (await fetch(chrome.runtime.getURL('manifest.json'), { cache: 'no-store' })).json());
     if (disk.version !== value.installedVersion) {
-      const manual = { ...value, state: 'manual', message: 'Chrome is using an older extension folder. Load the installed extension folder once to activate automatic updates. Settings shows the installed companion folders.' };
+      const manual = { ...value, state: 'manual', message: 'Chrome is using an older extension folder. Load the installed extension folder once to activate automatic updates. Settings shows the installed folder.' };
       await chrome.storage.local.set({ updateStatus: manual });
       return manual;
     }
@@ -65,7 +63,7 @@ export class Updates {
   private async tick() {
     if (this.running) return;
     this.running = true;
-    try { await syncYouTubeCompanion(); await syncScreenshotCompanion(); await this.check(); }
+    try { await this.check(); }
     catch (error) {
       // Updating is auxiliary. Keep downloads usable and show the failure in
       // Settings; the persistent alarm retries without an error badge/pop-up.

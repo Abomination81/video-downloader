@@ -36,8 +36,9 @@ export function initializeBrowsing() {
   });
   chrome.runtime.onMessage.addListener((raw, sender, respond) => {
     if (sender.id !== chrome.runtime.id || typeof raw?.type !== 'string' || !raw.type.startsWith('browsing-')) return;
-    const ownPage = sender.url?.startsWith(chrome.runtime.getURL('')) === true;
-    const content = !ownPage && sender.tab?.id !== undefined;
+    const extensionPage = sender.url?.startsWith(chrome.runtime.getURL('')) === true;
+    const ownPage = ['popup.html', 'options.html'].some(path => sender.url?.split(/[?#]/)[0] === chrome.runtime.getURL(path));
+    const content = !extensionPage && sender.tab?.id !== undefined;
     let work: (() => Promise<unknown>) | undefined;
     if (content) {
       const message = z.discriminatedUnion('type', [
@@ -95,8 +96,7 @@ export function initializeBrowsing() {
         return serial(async () => {
           if (messageData.type === 'browsing-settings') {
             await chrome.storage.local.set({ browsing: { ...await settings(), ...messageData.settings } });
-            // Let the companion finish replacing registered scripts before the
-            // UI invites the user to reload. It is optional on older installs.
+            // Apply the built-in nuisance lists before offering a reload.
             await sync().catch(() => {});
           }
           else {

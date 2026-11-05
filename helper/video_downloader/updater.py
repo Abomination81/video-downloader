@@ -210,13 +210,37 @@ def validate_bundle(bundle, update):
         child_id = ''.join(chr(97 + int(c, 16)) for c in digest)
         if child_id != AUDIO_COMPANION_ID or audio['version'] != update['version'] or set(audio.get('permissions', [])) != {'contextMenus', 'storage', 'alarms'} or any(audio.get(field) for field in ('host_permissions', 'optional_host_permissions', 'optional_permissions', 'content_scripts')) or audio.get('externally_connectable') != {'ids': [EXTENSION_ID]} or manifest.get('externally_connectable') != {'ids': [AUDIO_COMPANION_ID]}:
             raise UpdateError('The audio companion identity or permissions do not match this installation')
-    validate_youtube_companion(bundle, update)
-    validate_screenshot_companion(bundle, update)
-    validate_protection_companion(bundle, update)
+    if (bundle / 'extension/integration/services.js').is_file() or (app_dir() / 'extension/integration/services.js').is_file():
+        validate_unified_extension(bundle, manifest)
+    else:
+        validate_youtube_companion(bundle, update)
+        validate_screenshot_companion(bundle, update)
+        validate_protection_companion(bundle, update)
     wheels = list((bundle / "helper-wheel").glob("*.whl"))
     if len(wheels) != 1 or wheels[0].name != f"video_downloader_helper-{update['version']}-py3-none-any.whl" or not (bundle / "update-requirements.txt").is_file():
         raise UpdateError("The update helper package is incomplete")
     return wheels[0]
+
+
+def validate_unified_extension(bundle, value):
+    """Do not silently broaden the combined extension's authority on updates."""
+    permissions = {'contextMenus', 'nativeMessaging', 'storage', 'webRequest', 'webNavigation', 'cookies', 'downloads', 'alarms', 'scripting', 'offscreen', 'clipboardWrite', 'activeTab', 'declarativeNetRequest', 'unlimitedStorage', 'userScripts'}
+    extension = bundle / 'extension'
+    try:
+        if (value.get('manifest_version') != 3 or value.get('incognito') != 'not_allowed'
+                or set(value.get('permissions', [])) != permissions
+                or value.get('host_permissions') != ['*://*/*']
+                or value.get('background') != {'service_worker': 'background.js', 'type': 'module'}
+                or value.get('content_security_policy') != {'extension_pages': "script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; base-uri 'none'"}
+                or any(value.get(field) for field in ('externally_connectable', 'optional_permissions', 'optional_host_permissions', 'update_url', 'sandbox', 'oauth2', 'devtools_page', 'chrome_url_overrides'))
+                or not (extension / 'integration/services.js').is_file()
+                or any(path != extension / 'manifest.json' for path in extension.rglob('manifest.json'))):
+            raise ValueError('policy')
+        resources = value.get('web_accessible_resources', [])
+        if not resources or any(not entry.get('use_dynamic_url') or entry.get('matches') != ['<all_urls>'] or not entry.get('resources') or any((not resource.lstrip('/').startswith('web_accessible_resources/') and resource not in {'/strictblock.html', '/zapper-ui.html', '/picker-ui.html', '/unpicker-ui.html'}) or '..' in resource or '*' in resource for resource in entry['resources']) for entry in resources):
+            raise ValueError('resource boundary')
+    except (ValueError, KeyError, TypeError, AttributeError, OSError) as error:
+        raise UpdateError('The unified extension permissions or private-page boundary changed; install manually after review') from error
 
 
 def validate_youtube_companion(bundle, update):

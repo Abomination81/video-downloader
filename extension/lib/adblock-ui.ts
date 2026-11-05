@@ -7,7 +7,7 @@ export function adblockControls(options:{compact?:boolean;tabId?:number;host?:st
   let state:z.infer<typeof statusSchema>|undefined;
   const render=(value:z.infer<typeof statusSchema>)=>{
     state=value;button.disabled=false;
-    const engine=document.querySelector<HTMLElement>('#protection-engine');if(engine)engine.textContent=value.engine==='complete'?`Full protection connected · uBlock Origin Lite${value.version!==chrome.runtime.getManifest().version?' · Update pending: close the Ad Protection popup/settings. If it stays pending, load its stable installed folder.':''}.`:'For complete video ad filtering, load protection-companion once from the installed extension folder.';
+    const engine=document.querySelector<HTMLElement>('#protection-engine');if(engine)engine.textContent=value.engine==='complete'?'Built-in full protection · uBlock Origin Lite.':'Ad protection could not start. Reload the extension.';
     button.textContent=options.compact?(!value.permission?'Enable':value.enabled?'On':'Off'):!value.permission?'Enable ad blocking':value.enabled?'Turn off ad blocking':'Turn on ad blocking';
     button.setAttribute('aria-label',!value.permission?'Enable general ad blocking':value.enabled?'Turn off general ad blocking':'Turn on general ad blocking');
     button.dataset.ready=String(value.active);

@@ -6,7 +6,7 @@ import { within } from './probe';
 const limit = 12 * 1024 * 1024;
 export function initializeOCR(contexts: Map<number, Snapshot>) {
   chrome.runtime.onMessage.addListener((raw, sender, respond) => {
-    if (sender.id !== chrome.runtime.id || !sender.url?.startsWith(chrome.runtime.getURL('')) || !raw?.type?.startsWith('ocr-')) return;
+    if (sender.id !== chrome.runtime.id || !['popup.html', 'options.html', 'ocr.html'].some(path => sender.url?.split(/[?#]/)[0] === chrome.runtime.getURL(path)) || !raw?.type?.startsWith('ocr-')) return;
     const parsed = z.discriminatedUnion('type', [
       z.object({ type: z.literal('ocr-open'), tabId: z.number().int().nonnegative() }).strict(),
       z.object({ type: z.literal('ocr-image'), id: z.string().uuid() }).strict(),

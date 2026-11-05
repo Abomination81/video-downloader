@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.0 — One extension, 2026-11-05
+
+- Combined video, MP3, photos, screenshots, full uBlock Origin Lite protection and browsing tools under one stable Chrome extension ID.
+- Unified context menu and toolbar, direct internal protection controls, serialized offscreen tasks and screenshot-aware update deferral.
+- Retired the overlapping basic filter engine and companion setup. One-time reinstall is required because Chrome permissions change; subsequent signed updates remain automatic.
+- Tightened shared message routing and documented the combined GPL distribution and shared permission boundary.
+
 ## 0.12.0 — Browsing tools, 2026-11-05
 
 - Reject optional cookies with pinned, local Autoconsent rules; restore unsupported or failed dialogs instead of hiding unhandled consent.

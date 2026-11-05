@@ -1,11 +1,11 @@
 {
   "name": "video-downloader",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wxt",
-    "build": "wxt build && node scripts/build-companion.mjs && node scripts/build-youtube-companion.mjs && node scripts/build-screenshot-companion.mjs && node scripts/build-adblock.mjs && node scripts/build-protection-companion.mjs && node scripts/build-browsing.mjs",
+    "build": "wxt build && node scripts/build-screenshot-companion.mjs && node scripts/build-protection-companion.mjs && node scripts/build-browsing.mjs && node scripts/build-unified.mjs",
     "typecheck": "wxt prepare && tsc --noEmit",
     "test": "vitest run",
     "test:helper": "uv run --project helper --extra dev pytest helper/tests -q",
@@ -15,12 +15,11 @@
     "package": "npm run build && uv run --python 3.13 scripts/package.py",
     "test:formats": "node scripts/formats-browser-check.mjs",
     "test:menus": "node scripts/companion-browser-check.mjs",
-    "test:youtube": "node scripts/youtube-companion-check.mjs",
-    "test:screenshot": "node scripts/screenshot-companion-check.mjs",
-    "test:ads": "node scripts/adblock-browser-check.mjs && node scripts/pluto-browser-check.mjs",
+    "test:screenshot": "node scripts/unified-browser-check.mjs",
     "test:protection": "node scripts/protection-browser-check.mjs",
     "test:browsing": "node scripts/browsing-browser-check.mjs",
-    "test:security": "node scripts/browsing-security-check.mjs"
+    "test:security": "node scripts/browsing-security-check.mjs",
+    "test:unified": "node scripts/unified-browser-check.mjs"
   },
   "dependencies": {
     "@duckduckgo/autoconsent": "18.0.0",

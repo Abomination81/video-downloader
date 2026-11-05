@@ -1,0 +1,108 @@
+[
+  {
+    "site": "WatchLuna",
+    "navigation": "loaded",
+    "frames": [
+      {
+        "host": "watchluna.com",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 0,
+        "ready": [],
+        "title": "Just a moment..."
+      },
+      {
+        "host": "challenges.cloudflare.com",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 0,
+        "ready": [],
+        "title": "Checking your Browser…"
+      }
+    ],
+    "candidates": 1
+  },
+  {
+    "site": "YouTube",
+    "navigation": "loaded",
+    "frames": [
+      {
+        "host": "www.youtube.com",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 1,
+        "ready": [
+          {
+            "ready": 4,
+            "playing": true
+          }
+        ],
+        "title": "Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film - YouTube"
+      },
+      {
+        "host": "accounts.google.com",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 0,
+        "ready": [],
+        "title": "Error 401 (Bad Request)!!1"
+      },
+      {
+        "host": "",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 0,
+        "ready": [],
+        "title": ""
+      }
+    ],
+    "candidates": 1
+  },
+  {
+    "site": "Reddit",
+    "navigation": "loaded",
+    "frames": [
+      {
+        "host": "www.reddit.com",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 0,
+        "ready": [],
+        "title": "Reddit - Prove your humanity"
+      },
+      {
+        "host": "www.google.com",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 0,
+        "ready": [],
+        "title": "reCAPTCHA"
+      },
+      {
+        "host": "",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 0,
+        "ready": [],
+        "title": ""
+      },
+      {
+        "host": "",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 0,
+        "ready": [],
+        "title": ""
+      },
+      {
+        "host": "www.google.com",
+        "tools": true,
+        "nativeMenu": true,
+        "videos": 0,
+        "ready": [],
+        "title": "reCAPTCHA"
+      }
+    ],
+    "candidates": 1
+  }
+]

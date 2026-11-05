@@ -2,7 +2,6 @@ import { defineConfig } from 'wxt';
 import { readFileSync } from 'node:fs';
 
 const identity = JSON.parse(readFileSync('extension-identity.json', 'utf8')) as { key: string };
-const audio = JSON.parse(readFileSync('companion/audio/identity.json', 'utf8')) as { id: string };
 
 export default defineConfig({
   srcDir: 'extension',
@@ -11,13 +10,12 @@ export default defineConfig({
     name: 'Video Downloader by Abomination81',
     description: 'Video, MP3, original images, screenshots, ad blocking, metadata removal and browsing tools. Built by abomination81.',
     homepage_url: 'https://abomination81.com',
-    version: '0.12.0',
-    externally_connectable: { ids: [audio.id] },
+    version: '0.13.0',
+    incognito: 'not_allowed',
     key: identity.key,
     minimum_chrome_version: '127',
-    permissions: ['contextMenus', 'nativeMessaging', 'storage', 'webRequest', 'webNavigation', 'cookies', 'downloads', 'alarms', 'scripting', 'offscreen', 'clipboardWrite'],
-    optional_permissions:['declarativeNetRequestWithHostAccess'],
-    host_permissions: ['http://*/*', 'https://*/*'],
+    permissions: ['contextMenus', 'nativeMessaging', 'storage', 'webRequest', 'webNavigation', 'cookies', 'downloads', 'alarms', 'scripting', 'offscreen', 'clipboardWrite', 'activeTab', 'declarativeNetRequest', 'unlimitedStorage', 'userScripts'],
+    host_permissions: ['*://*/*'],
     icons: { 16: 'icon-16.png', 48: 'icon-48.png', 128: 'brand/icon-192.png' },
     action: { default_title: 'Download video · Abomination81', default_icon: { 16: 'icon-16.png', 48: 'icon-48.png' } },
     commands: {

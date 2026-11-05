@@ -29,9 +29,7 @@ jobs:
       - run: npm run test:browsing
       - run: npm run test:security
       - run: npm run test:interactions
-      - run: npm run test:youtube
       - run: npm run test:screenshot
-      - run: npm run test:ads
       - run: npm run test:protection
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
@@ -60,5 +58,6 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --no-shell chromium
+      - run: uv run --project helper --extra dev pytest helper/tests/test_updater.py -q -k unified
       - run: npm run test:formats
       - run: npm run test:menus

@@ -21,6 +21,31 @@ from video_downloader import __version__, bootstrap, native, store, updater
 NEXT_VERSION = ".".join([*__version__.split(".")[:2], str(int(__version__.split(".")[2]) + 1)])
 
 
+@pytest.mark.parametrize('change', [None, 'external', 'child', 'permission', 'resource', 'missing'])
+def test_unified_extension_keeps_one_manifest_and_private_pages(tmp_path, change):
+    root = Path(__file__).resolve().parents[2]
+    path = root / '.output/chrome-mv3/manifest.json'
+    if not path.is_file():
+        pytest.skip('Build the extension for the combined artifact policy test')
+    value = json.loads(path.read_text())
+    ext = tmp_path / 'extension'
+    (ext / 'integration').mkdir(parents=True)
+    (ext / 'integration/services.js').write_text('')
+    (ext / 'manifest.json').write_text(json.dumps(value))
+    if change == 'external': value['externally_connectable'] = {'matches': ['https://*/*']}
+    if change == 'permission': value['permissions'].append('debugger')
+    if change == 'resource': value['web_accessible_resources'][0]['resources'] = ['screenshot/preview.html']
+    if change == 'child':
+        (ext / 'child').mkdir()
+        (ext / 'child/manifest.json').write_text('{}')
+    if change == 'missing': (ext / 'integration/services.js').unlink()
+    if change is None:
+        updater.validate_unified_extension(tmp_path, value)
+    else:
+        with pytest.raises(updater.UpdateError, match='unified extension'):
+            updater.validate_unified_extension(tmp_path, value)
+
+
 @pytest.fixture
 def signed():
     key = Ed25519PrivateKey.generate()

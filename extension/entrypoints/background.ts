@@ -1,3 +1,4 @@
+import { integrated } from '../lib/integrated';
 import {protectionStatus} from '../lib/protection-companion';
 import { initializeBrowsing } from '../lib/browsing-background';
 import { initializeOCR } from '../lib/ocr-background';
@@ -19,17 +20,12 @@ import { selectedImage } from '../lib/images';
 import { SavedImages } from '../lib/saved-images';
 import { Updates } from '../lib/updates';
 import { downloadOptionsSchema, type DownloadIntent, type DownloadOptions } from '../lib/schema';
-import { AUDIO_COMPANION_ID, companionRequestSchema, companionSender } from '../lib/companion';
 
-import { initializeYouTubeCompanion, syncYouTubeCompanion, youtubeCompanionStatus } from '../lib/youtube-companion';
 
-import { initializeScreenshotCompanion, syncScreenshotCompanion, screenshotCompanionStatus } from '../lib/screenshot-companion';
 
 export default defineBackground(() => {
   initializeBrowsing();
   const ads=new AdBlocking();
-  initializeScreenshotCompanion();
-  initializeYouTubeCompanion();
   const captures = new Map<number, Capture[]>();
   const contexts = new Map<number, Snapshot>();
   initializeOCR(contexts);
@@ -120,17 +116,16 @@ export default defineBackground(() => {
     try { return await run(); }
     finally { activeActions--; }
   }
-  const updates = new Updates(() => activeActions > 0);
+  const updates = new Updates(() => activeActions > 0 || integrated().captureBusy());
   chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.removeAll(() => {
-      // PAGE applies only when no more-specific target applies. These two
-      // entries are mutually exclusive, so Chrome never creates a parent tree.
+      // Chrome groups multiple matching commands under this one extension.
       chrome.contextMenus.create({ id: 'download-video', title: 'Download video', contexts: ['page', 'video'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
       chrome.contextMenus.create({ id: 'save-original-image', title: 'Download photo', contexts: ['image'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
+      chrome.contextMenus.create({ id: 'download-audio', title: 'Download audio', contexts: ['page', 'video', 'audio'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
+      chrome.contextMenus.create({ id: 'save-screenshot', title: 'Save full-page screenshot', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
+      chrome.contextMenus.create({ id: 'copy-clean-link', title: 'Copy clean link', contexts: ['page', 'link'], documentUrlPatterns: ['http://*/*', 'https://*/*'] });
     });
-    void syncYouTubeCompanion();
-    void syncScreenshotCompanion();
-    void chrome.runtime.sendMessage(AUDIO_COMPANION_ID, { type: 'audio-companion-sync' }).catch(() => undefined);
     // Connect pages already open during first installation as well as updates.
     // WXT disposes any prior copy without reloading pages or losing forms.
     const files = chrome.runtime.getManifest().content_scripts?.flatMap(script => script.js ?? []) ?? [];
@@ -307,6 +302,9 @@ export default defineBackground(() => {
     }
   }
   chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === 'save-screenshot' && tab?.id !== undefined) { void integrated().capture(tab, true).catch(report); return; }
+    if (info.menuItemId === 'copy-clean-link') { const url = httpUrl.safeParse(info.linkUrl ?? tab?.url); if (url.success) void action(() => copyLink(cleanLink(url.data))).catch(report); return; }
+    if (info.menuItemId === 'download-audio' && tab?.id !== undefined) { void action(() => downloadFrom(tab.id!, info, 'audio')).catch(report); return; }
     if (info.menuItemId === 'save-original-image' && tab?.id !== undefined) { void action(() => saveImage(tab.id!, info.frameId ?? 0, info.srcUrl)).catch(report); return; }
     if (info.menuItemId === 'download-video' && tab?.id !== undefined) void action(() => downloadFrom(tab.id!, info)).catch(async (error) => {
       await report(error);
@@ -316,33 +314,8 @@ export default defineBackground(() => {
   chrome.commands.onCommand.addListener((command, tab) => {
     if (command === 'download-video' && tab?.id !== undefined) void action(() => downloadFrom(tab.id!)).catch(report);
   });
-  const audioRequests = new Map<string, { at: number; promise: Promise<unknown> }>();
-  chrome.runtime.onMessageExternal.addListener((raw: unknown, sender, respond) => {
-    if (!companionSender(sender)) return;
-    const parsed = companionRequestSchema.safeParse(raw);
-    if (!parsed.success) { respond({ ok: false, error: { code: 'invalid_request', message: 'Update both extensions and try again.' } }); return; }
-    const request = parsed.data;
-    if (request.type === 'audio-companion-status') {
-      respond({ ok: true, result: { version: chrome.runtime.getManifest().version, busy: activeActions > 0 } }); return;
-    }
-    let pending: Promise<unknown>;
-    if (request.type === 'audio-companion-open') pending = action(() => chrome.action.openPopup());
-    else {
-      const previous = audioRequests.get(request.requestId);
-      if (previous) pending = previous.promise;
-      else {
-        for (const [id, value] of audioRequests) if (Date.now() - value.at > 15 * 60 * 1000) audioRequests.delete(id);
-        if (audioRequests.size >= 50) audioRequests.delete(audioRequests.keys().next().value!);
-        pending = action(() => downloadFrom(request.tabId, { menuItemId: 'download-audio', editable: false, frameId: request.frameId, pageUrl: request.pageUrl, ...(request.frameUrl ? { frameUrl: request.frameUrl } : {}), ...(request.mediaType ? { mediaType: request.mediaType } : {}), ...(request.srcUrl ? { srcUrl: request.srcUrl } : {}) }, 'audio', request.requestId));
-        audioRequests.set(request.requestId, { at: Date.now(), promise: pending });
-      }
-    }
-    void pending.then(result => respond({ ok: true, result })).catch(async error => {
-      await report(error); respond({ ok: false, error: errorResult(error) });
-    });
-    return true;
-  });
   chrome.runtime.onMessage.addListener((raw: unknown, sender, respond) => {
+    if (raw && typeof raw === 'object' && 'what' in raw) return;
     if (raw && typeof raw === 'object' && 'type' in raw && typeof raw.type === 'string' && (raw.type.startsWith('browsing-') || raw.type.startsWith('ocr-'))) return;
     if (raw && typeof raw === 'object' && 'target' in raw && raw.target === 'clipboard') return;
     const contentType = z.object({ type: z.enum(['context', 'media-present', 'frame-ready']) }).passthrough().safeParse(raw);
@@ -371,8 +344,9 @@ export default defineBackground(() => {
       return;
     }
     // Only our extension pages can start jobs or control the native helper.
-    if (sender.id !== chrome.runtime.id || !sender.url?.startsWith(chrome.runtime.getURL(''))) return;
+    if (sender.id !== chrome.runtime.id || !['popup.html', 'options.html'].some(path => sender.url?.split(/[?#]/)[0] === chrome.runtime.getURL(path))) return;
     const parsed = z.discriminatedUnion('type', [
+      z.object({ type: z.literal('capture-page'), tabId: z.number().int().nonnegative() }).strict(),
       z.object({ type: z.literal('find'), tabId: z.number().int().nonnegative() }).strict(),
       z.object({ type: z.literal('start'), candidate: candidateSchema, requestId: z.string().uuid(), options: downloadOptionsSchema.optional() }).strict(),
       z.object({ type: z.literal('inspect'), candidate: candidateSchema, requestId: z.string().uuid() }).strict(),
@@ -393,8 +367,9 @@ export default defineBackground(() => {
       if(request.type==='adblock-status')return ads.status(request.host);
       if(request.type==='adblock-set')return ads.setEnabled(request.enabled);
       if(request.type==='adblock-site')return ads.setSite(request.host,request.paused);
-      if (request.type === 'screenshot-companion-status') return screenshotCompanionStatus();
-      if (request.type === 'youtube-protection-status') {const full=await protectionStatus();return full?{installed:true,enabled:full.enabled,version:full.version,engine:'complete'}:youtubeCompanionStatus();}
+      if (request.type === 'capture-page') { const tab = await chrome.tabs.get(request.tabId); void integrated().capture(tab).catch(report); return { started: true }; }
+      if (request.type === 'screenshot-companion-status') return { installed: true, version: chrome.runtime.getManifest().version };
+      if (request.type === 'youtube-protection-status') {const full=await protectionStatus();return full?{installed:true,enabled:full.enabled,version:full.version,engine:'complete'}:{installed:false};}
       if (request.type === 'find') return { candidates: await find(request.tabId) };
       if (request.type === 'start') return start(request.candidate, request.requestId, request.options?.assetType ?? 'video', undefined, request.options);
       if (request.type === 'inspect') return inspect(request.candidate, request.requestId);

@@ -200,7 +200,7 @@ async function featureStatus() {
       const value = z.object({ installed: z.boolean(), enabled: z.boolean().optional() }).parse(await request({ type }));
       const state = el(selector);
       state.textContent = !value.installed ? 'Setup' : value.enabled === false ? 'Paused' : '';
-      state.title = !value.installed ? 'Load this companion once in Settings.' : value.enabled === false ? 'Protection is paused in the YouTube companion.' : 'Companion connected.';
+      state.title = !value.installed ? 'Reload the extension to start this tool.' : value.enabled === false ? 'Ad protection is paused.' : 'Built into this extension.';
       state.dataset.ready = String(value.installed && value.enabled !== false);
     } catch { el(selector).textContent = 'Check Settings'; }
   }
@@ -211,4 +211,12 @@ el<HTMLButtonElement>('#copy-image-text').onclick = async () => {
   try { if (tabId === undefined) throw new Error('Open a website and right-click an image first.'); await request({ type: 'ocr-open', tabId }); }
   catch (error) { notice((error as Error).message); }
   finally { button.disabled = false; }
+};
+
+el<HTMLButtonElement>('#capture-page').onclick = async () => {
+  try {
+    if (tabId === undefined) throw new Error('Open a webpage first.');
+    await request({ type: 'capture-page', tabId });
+    window.close();
+  } catch (error) { notice((error as Error).message); }
 };

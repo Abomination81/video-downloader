@@ -1,5 +1,10 @@
 # Validation
 
+## 0.13.0 one extension — 2026-11-05
+
+The complete toolset was tested under one extension ID: downloads and metadata cleanup, full ad engine, cookies, popups, video controls, OCR and screenshots. Shared menu/message/offscreen conflicts were resolved. Local suites and the bounded signed-update checks passed; live YouTube playback passed. WatchLuna/Reddit player verification was limited by anti-bot gates. See the [full review](validation/0.13.0/REVIEW.md) for evidence and installation limits.
+
+
 ## 0.12.0 browsing tools — 2026-11-05
 
 56 extension tests and 177 helper tests pass, with production browser suites for consent rejection, popup recovery, local image text recognition, sender isolation and all existing download/protection/screenshot workflows. Live media controls were verified on YouTube, B98, Twitch and Pluto. Nine other sampled sites reached access gates, unavailable content or no loaded player and are not counted as playback passes. The live Pluto test exposed immediate picture-in-picture closure; restoring the player's disabled flag only after PiP exits fixed it. Known consent-library cosmetic fallback hiding is disabled so a banner is never hidden as a substitute for rejection.

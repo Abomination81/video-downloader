@@ -17,18 +17,13 @@ def main():
     (bundle / "runtime-requirements.txt").write_text(requirements)
     update_requirements = subprocess.run(["uv", "export", "--project", str(ROOT / "helper"), "--no-dev", "--no-emit-project", "--no-header"], capture_output=True, text=True, check=True).stdout
     (bundle / "update-requirements.txt").write_text(update_requirements)
-    shutil.copytree(ROOT / ".output/chrome-mv3", bundle / "extension")
+    shutil.copytree(ROOT / ".output/chrome-mv3", bundle / "extension", ignore=shutil.ignore_patterns("_metadata", ".DS_Store"))
     (bundle / "scripts").mkdir()
     for name in ("install.py", "install-windows.ps1", "uninstall.py"):
         shutil.copy2(ROOT / "scripts" / name, bundle / "scripts" / name)
     shutil.copy2(ROOT / "helper/video_downloader/bootstrap.py", bundle / "scripts/native_bootstrap.py")
-    for name in ("Install.command", "Install-Windows.cmd", "Update-engine.command", "Update-engine-Windows.cmd", "Uninstall.command", "Uninstall-Windows.cmd", "extension-identity.json", "README.md", "CHANGELOG.md", "SECURITY.md", "LICENSE"):
+    for name in ("Install.command", "Install-Windows.cmd", "Update-engine.command", "Update-engine-Windows.cmd", "Uninstall.command", "Uninstall-Windows.cmd", "extension-identity.json", "README.md", "CHANGELOG.md", "SECURITY.md", "LICENSE", "LICENSE-GPL-3.0"):
         shutil.copy2(ROOT / name, bundle / name)
-    shutil.copytree(ROOT / "companion/youtube", bundle / "youtube-companion-source/companion/youtube")
-    (bundle / "youtube-companion-source/scripts").mkdir()
-    shutil.copy2(ROOT / "scripts/build-youtube-companion.mjs", bundle / "youtube-companion-source/scripts/build-youtube-companion.mjs")
-    for name in ("package.json", "extension-identity.json"):
-        shutil.copy2(ROOT / name, bundle / "youtube-companion-source" / name)
     shutil.copy2(ROOT / "BUNDLE-LICENSES.md", bundle / "BUNDLE-LICENSES.md")
     # Preserve third-party source and notices without exhausting old updater
     # entry limits. Dependencies are pinned by package-lock.json.
@@ -39,41 +34,15 @@ def main():
                     source_zip.write(path, str(Path("browsing-source/dependencies") / path.relative_to(ROOT / "node_modules")))
         for name in ("package.json", "package-lock.json", "BUNDLE-LICENSES.md", "scripts/build-browsing.mjs"):
             source_zip.write(ROOT / name, "browsing-source/" + name)
-    shutil.copytree(ROOT / "companion/protection", bundle / "protection-companion-source/companion/protection")
-    (bundle / "protection-companion-source/scripts").mkdir()
-    shutil.copy2(ROOT / "scripts/build-protection-companion.mjs", bundle / "protection-companion-source/scripts/build-protection-companion.mjs")
-    for name in ("package.json", "extension-identity.json"):
-        shutil.copy2(ROOT / name, bundle / "protection-companion-source" / name)
-    shutil.copytree(ROOT / "filters", bundle / "adblock-source/filters")
-    (bundle / "adblock-source/scripts/lib").mkdir(parents=True)
-    shutil.copy2(ROOT / "scripts/lib/compile-ad-filters.mjs", bundle / "adblock-source/scripts/lib/compile-ad-filters.mjs")
-    shutil.copy2(ROOT / "scripts/build-adblock.mjs", bundle / "adblock-source/scripts/build-adblock.mjs")
-    shutil.copytree(ROOT / "extension/adblock", bundle / "adblock-source/extension/adblock")
-    (bundle / "adblock-source/extension/lib").mkdir()
-    shutil.copy2(ROOT / "extension/lib/pluto-filter.ts", bundle / "adblock-source/extension/lib/pluto-filter.ts")
-    shutil.copy2(ROOT / "package.json", bundle / "adblock-source/package.json")
-    shutil.copy2(ROOT / "package-lock.json", bundle / "adblock-source/package-lock.json")
-    shutil.copytree(ROOT / "companion/screenshot", bundle / "screenshot-companion-source/companion/screenshot")
-    (bundle / "screenshot-companion-source/scripts").mkdir()
-    shutil.copy2(ROOT / "scripts/build-screenshot-companion.mjs", bundle / "screenshot-companion-source/scripts/build-screenshot-companion.mjs")
-    for name in ("package.json", "extension-identity.json"):
-        shutil.copy2(ROOT / name, bundle / "screenshot-companion-source" / name)
-    # Companion builders share the checked-in artwork and remain reproducible offline.
-    for directory in ("youtube-companion-source", "screenshot-companion-source", "protection-companion-source"):
-        public = bundle / directory / "extension/public"
-        (public / "brand").mkdir(parents=True)
-        shutil.copy2(ROOT / "extension/public/brand/mark.svg", public / "brand/mark.svg")
-        for size in (16, 32, 48, 128):
-            shutil.copy2(ROOT / f"extension/public/icon-{size}.png", public / f"icon-{size}.png")
+    # GPL complete corresponding source includes the integrated downloader,
+    # pinned engine distribution/source, local modifications, tests and builders.
+    with zipfile.ZipFile(bundle / "extension-source.zip", "w", compression=zipfile.ZIP_DEFLATED) as source_zip:
+        names = subprocess.check_output(["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=ROOT, text=True).splitlines()
+        for name in sorted(set(names)):
+            path = ROOT / name
+            if path.is_file() and not name.startswith(("docs/validation/", "docs/.hallmark/")):
+                source_zip.write(path, "video-downloader/" + name)
     shutil.copytree(ROOT / "docs", bundle / "docs", ignore=shutil.ignore_patterns(".hallmark", ".DS_Store", "__pycache__"))
-    # GPL source stays included in a standard ZIP, without exceeding the entry
-    # cap in already-installed helpers. Chrome only needs the runtime tree.
-    source = bundle / "protection-companion-source"
-    with zipfile.ZipFile(bundle / "protection-companion-source.zip", "w", compression=zipfile.ZIP_DEFLATED) as source_zip:
-        for path in sorted(source.rglob("*")):
-            if path.is_file():
-                source_zip.write(path, str(path.relative_to(bundle)))
-    shutil.rmtree(source)
     files = [path for path in bundle.rglob("*") if path.is_file()]
     if len(files) > 1000 or sum(path.stat().st_size for path in files) > 128 * 1024 * 1024:
         raise RuntimeError("Bundle exceeds the oldest supported updater's archive limits")
@@ -82,6 +51,8 @@ def main():
         for path in sorted(bundle.rglob("*")):
             if path.is_file():
                 zip_file.write(path, str(path.relative_to(output)))
+    if archive.stat().st_size > 64 * 1024 * 1024:
+        raise RuntimeError("Signed archive exceeds the 64 MiB updater limit")
     print(archive)
 
 

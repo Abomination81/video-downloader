@@ -2,7 +2,7 @@
 
 [![Release](https://img.shields.io/github/v/release/Abomination81/video-downloader?color=39ff14&labelColor=000000)](https://github.com/Abomination81/video-downloader/releases/latest)
 [![Checks](https://github.com/Abomination81/video-downloader/actions/workflows/checks.yml/badge.svg)](https://github.com/Abomination81/video-downloader/actions/workflows/checks.yml)
-[![MIT license](https://img.shields.io/badge/license-MIT-39ff14?labelColor=000000)](LICENSE)
+[![GPL-3.0-or-later](https://img.shields.io/badge/extension-GPL--3.0+-39ff14?labelColor=000000)](LICENSE-GPL-3.0)
 
 **Built by [Abomination81](https://abomination81.com)** · [X @Abomination81](https://x.com/Abomination81) · [GitHub](https://github.com/Abomination81)
 
@@ -24,12 +24,12 @@ Use **Video-Downloader.zip** from Releases for installation. GitHub's automatic 
 | **Choose format** (toolbar) | Inspect available source resolutions, frame rates, codecs and size estimates; choose a format for this download |
 | **Download audio** | Best available audio, up to 320 kbps by default; tags, artwork and chapters removed; native Chrome download entry |
 | **Download photo** | Largest exposed image source, original format and quality, identifying metadata removed |
-| **Save full-page screenshot** | A full-page PNG, or one ZIP of PNG parts for large pages; separate screenshot companion |
-| Video and website ad protection | Full uBlock Origin Lite engine in Complete mode: network filters, player scriptlets, ad-SDK replacements, popup and cosmetic rules; load Ad Protection once |
+| **Save full-page screenshot** | A full-page PNG, or one ZIP of PNG parts for large pages; built into the main extension |
+| Video and website ad protection | Full uBlock Origin Lite engine in Complete mode: network filters, player scriptlets, ad-SDK replacements, popup and cosmetic rules; built in |
 | Chrome's **Save image as** | Automatic cleanup of newly saved images, preserving your filename |
 | **Copy clean link** | Recognizable tracking fields removed; functional, signed and login links preserved |
 | Cookie rejection | Reject optional cookies using bundled consent rules; unsupported dialogs remain usable |
-| Fewer browsing nags | Notification, newsletter, overlay and widget filters through Ad Protection |
+| Fewer browsing nags | Notification, newsletter, overlay and widget filters through the built-in ad engine |
 | Surprise-window guard | Block unexpected windows, with **Open once** and a per-site exception |
 | Consistent video controls | Hover a video for ±10 seconds, remembered speed and native **Pop out** |
 | **Copy text from image** | Local English OCR for a selected image or screenshot; no OCR service |
@@ -48,22 +48,23 @@ Downloads continue after you navigate away or close the source tab. Everything r
 
 1. Unzip **Video-Downloader.zip**, then open **Install.command**. It installs the helper and any missing tools for your account. Internet access is required. If Homebrew is missing, setup installs it and macOS may ask for your password.
 2. The installer opens an extension folder and Chrome's extensions page. Turn on **Developer mode**, click **Load unpacked**, and select that extension folder.
-3. Load the **audio-companion** subfolder as a second extension to get the separate audio command.
-4. Load the **protection-companion** subfolder for Full Ad Protection. It includes YouTube; the older bundled YouTube companion pauses automatically. Disable other standalone ad blockers to avoid conflicts.
-5. Load the **screenshot-companion** subfolder for full-page screenshots. Disable standalone Still Screenshot if installed.
-6. Reload any video pages that were already open.
+3. Reload already-open video pages. Every tool is now in **one extension**.
 
-The installed main extension folder is `~/Library/Application Support/Video Downloader/extension`; its companions are the `audio-companion`, `protection-companion` and `screenshot-companion` subfolders. The older `youtube-companion` remains included for existing installs. The main and audio extensions share one helper and download history. Ad Protection and screenshots have separate permissions. All loaded bundle components update together after their one-time Chrome setup. [Chrome groups multiple commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus), so companions keep the commands directly in the menu. The original ZIP can be deleted after setup.
+The installed folder is `~/Library/Application Support/Video Downloader/extension`. Select this parent folder once. Do not load subfolders. The silent helper handles media conversion and metadata removal; it has no separate Chrome extension.
+
+**Upgrading from 0.12 or earlier:** run the new installer once, load the parent folder above, and remove or disable the old Audio, Ad Protection, YouTube Protection and Screenshot companion extensions. This consolidation changes Chrome permissions, so older updaters correctly require manual setup. Future signed updates install automatically. Existing download files and main-extension preferences remain.
+
+[Chrome groups multiple matching commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus). Video, audio, photo, screenshot and clean-link commands therefore appear under one Video Downloader menu.
 
 ## Install on Windows
 
-Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet to install missing FFmpeg, Deno, and ExifTool, and installs a private Python runtime automatically. Then enable Developer mode at `chrome://extensions`, click **Load unpacked**, and choose the extension folder opened by setup. Load its **audio-companion** subfolder as a second extension , **protection-companion** for Full Ad Protection, and **screenshot-companion** for full-page screenshots. Disable other standalone ad blockers, then reload open video pages. Windows installation scripts are supplied; check `docs/VALIDATION.md` for platforms actually tested.
+Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet to install missing FFmpeg, Deno, and ExifTool, and installs a private Python runtime automatically. Then enable Developer mode at `chrome://extensions`, click **Load unpacked**, and choose the extension folder opened by setup. No companion extensions are needed. Disable old companions, then reload open pages. Windows installation scripts are supplied; check `docs/VALIDATION.md` for platforms actually tested.
 
 Chrome requires these manual steps for an unpacked extension. Setup does not change Chrome policies, bypass security controls, or require a Chrome Web Store account.
 
-## Browsing tools (0.12.0)
+## Browsing tools
 
-Cookie handling uses pinned DuckDuckGo Autoconsent rules with **opt-out only**. Recognized dialogs are briefly hidden while optional consent is rejected. A failed or unsupported dialog stays available; the extension never treats hiding a banner as rejecting consent and never deliberately chooses Accept all. The Ad Protection companion separately hides supported newsletter, notification, overlay and widget nags. Its cookie-hiding list stays off.
+Cookie handling uses pinned DuckDuckGo Autoconsent rules with **opt-out only**. Recognized dialogs are briefly hidden while optional consent is rejected. A failed or unsupported dialog stays available; the extension never treats hiding a banner as rejecting consent and never deliberately chooses Accept all. The built-in ad engine hides supported newsletter, notification, overlay and widget nags. Its cookie-hiding list stays off.
 
 Unexpected windows get a small footer notice. **Open once** opens that destination; **Allow on this site** saves an exception, then you retry the original button. Ordinary links and sign-in/payment buttons keep their normal popup behavior. For a blocked blank window whose destination is not yet known, allow the site and retry. The guard supplements browser and filter-list protection; it cannot infer every site's intent or prevent every popup technique.
 
@@ -71,21 +72,19 @@ Hover a video for **−10s**, **+10s**, speed and **Pop out**. Speed is remember
 
 Right-click an image, then choose **Copy text from image** in the toolbar. Or open the text tool and select a local image/screenshot. English recognition runs entirely in the extension using packaged Tesseract WebAssembly and language data. Text is editable and copyable. Images are limited to 12 MB and 40 megapixels; SVG/PDF are not accepted. Existing image pixels are preferred; a cross-origin fallback fetch sends no cookies or page referrer. Some protected images must be saved and opened manually. No OCR text or pixels are saved in extension storage or sent to a recognition service.
 
-Settings has separate switches for these tools and a reset for site exceptions. **Pause page tools** pauses cookies, popup protection and video controls for the current site. The separate **Ad Protection → Pause here** control pauses nag/ad filtering. No reading mode or offline-page saving is included. These additions need no new Chrome permissions or companion installation beyond the existing Ad Protection component.
+Settings has separate switches for these tools and a reset for site exceptions. **Pause page tools** pauses cookies, popup protection and video controls for the current site. The **Ad blocking → Pause here** control pauses nag/ad filtering. No reading mode or offline-page saving is included. All tools are included in the main extension.
 
 ## Full Ad Protection
 
-Load **protection-companion** once from the installed extension folder. No terminal is needed. It ships the full [uBlock Origin Lite](https://github.com/uBlockOrigin/uBOL-home) engine, pinned to **2026.1103.1743**, with **Complete** filtering enabled by default. Its website access enables network filtering, player scriptlets, ad-SDK replacements, extended cosmetic rules, and popup filtering. Default lists include uBlock filters, EasyList, EasyPrivacy, Peter Lowe, and malware lists. Regional lists and troubleshooting controls remain available in its own toolbar dashboard.
+The full [uBlock Origin Lite](https://github.com/uBlockOrigin/uBOL-home) engine is built in, pinned to **2026.1103.1743**, with **Complete** filtering enabled by default. It includes network filters, player scriptlets, ad-SDK replacements, extended cosmetic rules and popup filtering. Default lists include uBlock filters, EasyList, EasyPrivacy, Peter Lowe and malware lists. Open **Advanced filter settings** from Settings for regional lists and custom rules.
 
-The main downloader menu controls global on/off and **Pause here**. Reload a page after changing protection. Existing site pauses transfer on first connection. The older basic EasyList/Pluto filter and bundled Still YouTube engine stand down automatically when Full Ad Protection connects. New installs do not need to load the old YouTube companion. Until the new companion is loaded, the existing basic mode and YouTube companion continue to work.
-
-Once loaded, its files and engine/filter refreshes arrive through signed bundle updates; it activates after its settings and popup close. Chrome requires this one-time load for the new component and cannot silently grant a new extension website access. Use the stable installed folder, not an extracted ZIP or the project's dist folder. Settings displays the exact folder on your computer.
+The main toolbar controls global on/off and **Pause here**. Reload the page after changing protection. Legacy basic filter rules are retired before the new engine starts; legacy main-extension site pauses transfer once. Remove old companion extensions when upgrading. Engine and filter refreshes arrive in signed updates.
 
 Filtering runs locally. There is no developer-operated browsing telemetry or download account. Optional custom-list subscriptions contact the sources you choose. Custom user-script features may also require Chrome's **Allow user scripts** switch; bundled default scriptlets do not require it. Loopback sites are excluded by default so local apps and the download handoff work normally.
 
 Coverage depends on the site and maintained rules. Client-side prerolls, many countdowns and popup ads are covered where rules identify their ad system; ads baked into the content or protected server-side streams may remain. A clip playing on screen does not guarantee every ad can be removed without breaking playback. DisplayLink protected-video black screens remain a separate display limitation. See [validation](docs/VALIDATION.md) for tested behavior rather than a universal-coverage promise.
 
-The renamed uBlock Origin Lite distribution and integration are GPL-3.0-or-later. Its pinned source, corresponding engine source, notices and offline packaging script ship in every installer under `protection-companion-source.zip`. The independent downloader remains MIT licensed. See [bundle licenses](BUNDLE-LICENSES.md).
+The combined extension is GPL-3.0-or-later. Complete corresponding source and notices ship in `extension-source.zip`. See [bundle licenses](BUNDLE-LICENSES.md).
 
 ## Download
 
@@ -96,7 +95,7 @@ The renamed uBlock Origin Lite distribution and integration are GPL-3.0-or-later
 - Transparent overlays, cross-origin frames, and closed shadow roots are included in discovery.
 - If the menu still cannot open, click the extension's toolbar button or press **Alt+Shift+V**. Pin the extension to make the button easy to reach.
 - If multiple videos match, choose the correct one from the list.
-- Video targets show **Download video** and **Download audio** as separate native entries. Audio targets show **Download audio**; image targets show **Download photo**. The audio companion is needed for the separate audio entry. **Choose format** and **Copy clean link** are in the toolbar popup.
+- Video targets offer **Download video** and **Download audio** in the Video Downloader menu. Audio targets offer **Download audio**; image targets offer **Download photo**. **Choose format** and **Copy clean link** are in the toolbar popup.
 - Files appear in **Chrome's native download panel**, accessible from its down arrow and Downloads page. The entry appears after the file has passed its metadata checks. The extension shows progress while the helper downloads and prepares the file.
 - Downloads normally save directly in each person's own `Downloads` folder (`~/Downloads` on Mac, `%USERPROFILE%\Downloads` on Windows). A different location deliberately configured in Chrome is respected. The shared bundle contains no personal save location.
 - You can navigate to another video, change pages, or close the video tab and popup after starting. The source and scoped session are captured at selection time; a detached helper continues the work. The browser handoff is tracked independently of the tab.
@@ -181,16 +180,10 @@ No cloud service or permanent local server is required. SQLite stores job state,
 
 Research decisions and primary sources are in `docs/RESEARCH.md`. Dependency licenses remain their respective licenses; this repository's original source is MIT licensed.
 
-## Legacy YouTube protection (0.8.0)
+## Full-page screenshots
 
-Existing installs retain **YouTube Protection by Abomination81**, powered by Still 0.1.2. Full Ad Protection supersedes it in 0.11.0; new installations should load `protection-companion`. The old component remains available from `youtube-companion` for YouTube-only use. Disable standalone Still before enabling the companion and reload YouTube. Settings shows the companion folder and status. Pin its toolbar button to pause/enable protection.
+Right-click → **Save full-page screenshot** saves directly to Downloads. **Capture with preview** in the main toolbar opens the result first. Keep the source tab and window active while capture runs. Large pages save as a ZIP of PNG parts; navigating away cancels safely. Screenshot pixels stay local. Updates wait for captures and previews to close.
 
-It filters YouTube desktop videos, Shorts and embeds using bundled local code. It has only YouTube host permissions and cannot access downloader cookies, history, jobs or the helper. It has no telemetry or remote filters. Your protection preference stays local and survives bundle updates. Existing YouTube tabs need reloading after protection changes or updates. YouTube changes and ads stitched into content can limit filtering.
+## License and source
 
-This companion is GPL-3.0-or-later; see [bundle licenses](BUNDLE-LICENSES.md); offline source/build notes are included under `youtube-companion-source/companion/youtube/README.md` in the installer ZIP. It is installed separately to preserve permissions and licensing. Friends load it once; subsequent signed bundle updates coordinate its version automatically.
-
-## Full page screenshots (0.9.0)
-
-The installer includes **Full Page Screenshot by Abomination81**, powered by Still 1.1.0. Load `screenshot-companion` once from inside the installed extension folder and disable standalone Still Screenshot. Right-click a webpage → **Save full-page screenshot** to save directly to Downloads. Keep the page and Chrome window active until it finishes. Large captures arrive as one ZIP containing PNG parts; the toolbar retains an optional preview.
-
-It keeps its own three permissions (`activeTab`, `scripting`, `contextMenus`), with no all-sites, cookie, native-helper, download-history or persistent screenshot access. Abomination Settings shows its version and installation folder. The local connection shares version information only; it cannot start captures or transfer screenshot pixels. Updates travel in the existing signed bundle and wait until captures and previews close. Chrome's save-location preferences still apply. [Companion design, source and limits](companion/screenshot/README.md).
+The combined Chrome extension is distributed under GPL-3.0-or-later because it integrates uBlock Origin Lite. The original downloader/helper and Still screenshot code retain their MIT notices. Every installer includes `extension-source.zip` with the complete corresponding project source, pinned engine source, modifications and build scripts. Dependency source/notices are also included. See [BUNDLE-LICENSES.md](BUNDLE-LICENSES.md).
