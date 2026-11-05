@@ -63,7 +63,7 @@ try{
  assert.equal((await request({type:'adblock-status'})).active,true);
  pass('Non-background and malformed control messages cannot change protection or invoke downloads');
  await mkdir(join(root,'output/playwright'),{recursive:true});await ui.reload();await ui.locator('#protection-engine').filter({hasText:'Full protection connected'}).waitFor();await ui.screenshot({path:join(root,'output/playwright/full-protection-settings.png'),fullPage:true});
- const dashboard=await context.newPage();await dashboard.goto(`chrome-extension://${full}/dashboard.html`);await dashboard.locator('.vd-brand').waitFor();await dashboard.screenshot({path:join(root,'output/playwright/full-protection-dashboard.png'),fullPage:true});await dashboard.close();
+ const dashboard=await context.newPage();await dashboard.goto(`chrome-extension://${full}/dashboard.html`);await dashboard.locator('.vd-brand').waitFor();assert.equal(await dashboard.evaluate(async()=>{const {i18n}=await import(chrome.runtime.getURL('js/i18n.js'));const fragment=i18n.patchUnicodeFlags('🇨🇦');const img=fragment.querySelector('img');document.body.append(fragment);await img.decode();const valid=img.naturalWidth>0;img.remove();return valid}),true);await dashboard.screenshot({path:join(root,'output/playwright/full-protection-dashboard.png'),fullPage:true});await dashboard.close();
  await context.close();({ui,worker,protector,request}=await launch());assert.equal((await request({type:'adblock-status'})).level,3);assert.equal((await request({type:'adblock-status',host:'paused.example'})).paused,true);
  pass('Complete mode and site exceptions survive a real Chrome restart');
  // This is a disposable Chromium profile, never the user's Chrome settings.

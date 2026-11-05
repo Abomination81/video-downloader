@@ -1,5 +1,5 @@
 /* GPL-3.0-or-later distribution/integration of uBlock Origin Lite. */
-import {readFile,writeFile,mkdir,cp} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,cp,readdir,rm} from 'node:fs/promises';
 import {createHash} from 'node:crypto';import {join,resolve} from 'node:path';
 const root=resolve(import.meta.dirname,'..'),source=join(root,'companion/protection'),output=join(root,'.output/chrome-mv3/protection-companion');
 const json=async path=>JSON.parse(await readFile(path,'utf8'));
@@ -28,5 +28,13 @@ for(const file of ['popup.html','dashboard.html']){
 for(const size of [16,32,128])await cp(join(root,`extension/public/icon-${size}.png`),join(output,`img/icon_${size}.png`));
 await cp(join(root,'extension/public/icon-128.png'),join(output,'img/icon_64.png'));
 for(const size of [16,32,64,128])await cp(join(output,`img/icon_${size}.png`),join(output,`img/icon_${size}_off.png`));
+// Keep all flags while staying below the 1,000-entry cap in older updaters.
+// Only presentation assets change representation; original PNGs stay in source.
+const flags={},flagDir=join(output,'img/flags-of-the-world');
+for(const file of (await readdir(flagDir)).sort())if(file.endsWith('.png')){flags[file.slice(0,-4)]='data:image/png;base64,'+(await readFile(join(flagDir,file))).toString('base64');await rm(join(flagDir,file));}
+const i18n=await readFile(join(output,'js/i18n.js'),'utf8'),flagLookup='img.src = `/img/flags-of-the-world/${countryCode}.png`;';
+if(!i18n.includes(flagLookup))throw new Error('Review upstream flag lookup');
+await writeFile(join(output,'js/i18n.js'),`import flagImages from './flag-images.js';\n`+i18n.replace(flagLookup,"img.src = flagImages[countryCode] ?? '';"));
+await writeFile(join(output,'js/flag-images.js'),'// Public-domain flags; original images and attribution included with source.\nexport default '+JSON.stringify(flags)+';\n');
 await cp(join(source,'README.md'),join(output,'ABOMINATION81-NOTICES.md'));
 console.log('Built comprehensive protection',identity.id,provenance.version);

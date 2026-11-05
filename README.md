@@ -68,7 +68,7 @@ Filtering runs locally. There is no developer-operated browsing telemetry or dow
 
 Coverage depends on the site and maintained rules. Client-side prerolls, many countdowns and popup ads are covered where rules identify their ad system; ads baked into the content or protected server-side streams may remain. A clip playing on screen does not guarantee every ad can be removed without breaking playback. DisplayLink protected-video black screens remain a separate display limitation. See [validation](docs/VALIDATION.md) for tested behavior rather than a universal-coverage promise.
 
-The renamed uBlock Origin Lite distribution and integration are GPL-3.0-or-later. Its pinned source, corresponding engine source, notices and offline packaging script ship in every installer under `protection-companion-source/`. The independent downloader remains MIT licensed. See [bundle licenses](BUNDLE-LICENSES.md).
+The renamed uBlock Origin Lite distribution and integration are GPL-3.0-or-later. Its pinned source, corresponding engine source, notices and offline packaging script ship in every installer under `protection-companion-source.zip`. The independent downloader remains MIT licensed. See [bundle licenses](BUNDLE-LICENSES.md).
 
 ## Download
 

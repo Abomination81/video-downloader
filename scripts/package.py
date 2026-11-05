@@ -57,6 +57,17 @@ def main():
         for size in (16, 32, 48, 128):
             shutil.copy2(ROOT / f"extension/public/icon-{size}.png", public / f"icon-{size}.png")
     shutil.copytree(ROOT / "docs", bundle / "docs", ignore=shutil.ignore_patterns(".hallmark", ".DS_Store", "__pycache__"))
+    # GPL source stays included in a standard ZIP, without exceeding the entry
+    # cap in already-installed helpers. Chrome only needs the runtime tree.
+    source = bundle / "protection-companion-source"
+    with zipfile.ZipFile(bundle / "protection-companion-source.zip", "w", compression=zipfile.ZIP_DEFLATED) as source_zip:
+        for path in sorted(source.rglob("*")):
+            if path.is_file():
+                source_zip.write(path, str(path.relative_to(bundle)))
+    shutil.rmtree(source)
+    files = [path for path in bundle.rglob("*") if path.is_file()]
+    if len(files) > 1000 or sum(path.stat().st_size for path in files) > 128 * 1024 * 1024:
+        raise RuntimeError("Bundle exceeds the oldest supported updater's archive limits")
     archive = output / "Video-Downloader.zip"
     with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zip_file:
         for path in sorted(bundle.rglob("*")):
