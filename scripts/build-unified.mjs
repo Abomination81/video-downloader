@@ -75,6 +75,11 @@ const menuEnd = capture.indexOf('const sleep =', menuStart);
 assert(menuStart > 0 && menuEnd > menuStart);
 capture = capture.slice(0, menuStart) + capture.slice(menuEnd);
 capture = capture.replace('chrome.action.onClicked.addListener(tab => { void capture(tab); });', '');
+// A tab-specific empty badge would permanently hide the downloader's global
+// badge on that tab. Null releases the override after capture/cancellation.
+capture = capture.replace("setBadgeText({ tabId: job.tabId, text: '' })", "setBadgeText({ tabId: job.tabId, text: null })");
+capture = capture.replace("setBadgeBackgroundColor({ color: '#B94F36' })", "setBadgeBackgroundColor({ tabId: job.tabId, color: '#39ff14' })");
+
 capture = capture.replace('chrome.contextMenus.onClicked.addListener(handleContextClick);', 'export { capture };');
 capture = capture.replace("  const job = current;\n", "  if (port.name !== 'still-preview-v1') return;\n  const job = current;\n");
 await write('screenshot/capture-background.js', capture);
@@ -82,9 +87,9 @@ await replace('screenshot/preview.html', '<meta charset="utf-8">', `<meta charse
 for (const file of ['manifest.json', 'background.js', 'bundle-sync.js']) await rm(join(out, 'screenshot', file));
 await rename(join(out, 'background.js'), join(out, 'downloader-background.js'));
 await write('background.js', `import { protection } from './integration/protection.js';
-import { capture, isCaptureActive } from './screenshot/capture-background.js';
+import { capture, captureBusy } from './integration/capture.js';
 import { acquireOffscreen } from './integration/offscreen.js';
-globalThis.vdServices = Object.freeze({ protection, capture, captureBusy: isCaptureActive, acquireOffscreen });
+globalThis.vdServices = Object.freeze({ protection, capture, captureBusy, acquireOffscreen });
 // WXT registers synchronously; its entry callback runs after this service module.
 import './downloader-background.js';
 `);

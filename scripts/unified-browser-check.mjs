@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium } from 'playwright';
 import { startFixtures } from '../tests/fixtures/screenshot-server.mjs';
+import { clickActionPopup } from './lib/click-action-popup.mjs';
 const root = resolve(import.meta.dirname, '..'), id = JSON.parse(await readFile(join(root, 'extension-identity.json'))).id;
 const temporary = await mkdtemp(join(tmpdir(), 'unified-tools-')), extension = join(temporary, 'extension');
 await cp(join(root, '.output/chrome-mv3'), extension, { recursive: true });
@@ -50,11 +51,8 @@ try {
   // Genuine toolbar gesture grants activeTab in the disposable test profile.
   const targets = await cdp.send('Target.getTargets', {filter:[{type:'tab'},{exclude:true}]});
   await cdp.send('Extensions.triggerAction', {id,targetId:targets.targetInfos.find(t=>t.url===source.url()).targetId});
-  // This extension has an action popup. Dismiss it through normal tab focus
-  // before invoking the capture handler; the real capture button closes it.
-  await ui.bringToFront(); await source.bringToFront();
   let opened = context.waitForEvent('page');
-  await worker.evaluate(async tabId => { void vdServices.capture(await chrome.tabs.get(tabId)); }, tabId);
+  await clickActionPopup(cdp, `chrome-extension://${id}/popup.html`, '#capture-page');
   let preview = await opened; await preview.waitForURL(`chrome-extension://${id}/screenshot/preview.html*`);
   await preview.waitForFunction(() => /captured|stopped/i.test(document.querySelector('h1')?.textContent ?? ''));
   assert.equal(await preview.locator('h1').textContent(), 'Your page, captured', await preview.locator('body').innerText());
@@ -63,6 +61,8 @@ try {
   const png = join(output,'unified-screenshot.png'); await (await saved).saveAs(png);
   const bytes = await readFile(png); assert.deepEqual([bytes.readUInt32BE(16),bytes.readUInt32BE(20)],[1000,3100]);
   assert.equal(await source.evaluate(()=>scrollY),0);
+  assert.equal(await worker.evaluate(async tabId=>{await chrome.action.setBadgeText({text:'D'});return chrome.action.getBadgeText({tabId})},tabId),'D');
+  await worker.evaluate(()=>chrome.action.setBadgeText({text:''}));
   assert.equal(await preview.evaluate(async()=>{try{return (await chrome.runtime.sendMessage({type:'jobs'})) == null}catch{return true}}),true);
   assert.equal(await preview.evaluate(async url=>{try{await fetch(url);return false}catch{return true}},fixtures.origin+'/leak'),true);
   await preview.close();
