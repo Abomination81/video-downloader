@@ -50,10 +50,14 @@ try {
   // Genuine toolbar gesture grants activeTab in the disposable test profile.
   const targets = await cdp.send('Target.getTargets', {filter:[{type:'tab'},{exclude:true}]});
   await cdp.send('Extensions.triggerAction', {id,targetId:targets.targetInfos.find(t=>t.url===source.url()).targetId});
+  // This extension has an action popup. Dismiss it through normal tab focus
+  // before invoking the capture handler; the real capture button closes it.
+  await ui.bringToFront(); await source.bringToFront();
   let opened = context.waitForEvent('page');
   await worker.evaluate(async tabId => { void vdServices.capture(await chrome.tabs.get(tabId)); }, tabId);
   let preview = await opened; await preview.waitForURL(`chrome-extension://${id}/screenshot/preview.html*`);
-  await preview.waitForFunction(() => document.querySelector('h1')?.textContent === 'Your page, captured');
+  await preview.waitForFunction(() => /captured|stopped/i.test(document.querySelector('h1')?.textContent ?? ''));
+  assert.equal(await preview.locator('h1').textContent(), 'Your page, captured', await preview.locator('body').innerText());
   assert.equal(await worker.evaluate(()=>vdServices.captureBusy()), false);
   const saved = preview.waitForEvent('download'); await preview.locator('#save').click();
   const png = join(output,'unified-screenshot.png'); await (await saved).saveAs(png);
@@ -77,4 +81,7 @@ try {
   await preview.waitForFunction(()=>document.querySelector('h1')?.textContent?.includes('stopped'));
   assert.equal(await worker.evaluate(()=>vdServices.captureBusy()),false);
   console.log('PASS navigation cancels capture safely without stitching another page');
+} catch (error) {
+  console.error('Capture test state', JSON.stringify(await Promise.all(context.pages().map(async page => ({url:page.url(),body:await page.locator('body').innerText().catch(()=> 'closed')})))));
+  throw error;
 } finally {await context.close();await new Promise(r=>fixtures.server.close(r));await rm(temporary,{recursive:true,force:true});}
