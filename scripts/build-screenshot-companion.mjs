@@ -39,11 +39,11 @@ manifest.content_security_policy.extension_pages = manifest.content_security_pol
 manifest.action.default_title = 'Save full-page screenshot';
 await writeFile(join(output, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
 const html = (await readFile(join(output, 'preview.html'), 'utf8'))
-  .replace('<title>Still: Private capture</title>', '<title>Full Page Screenshot · Abomination81</title>')
+  .replace('<title>Still: Private capture</title>', '<title>Full-page screenshot · Abomination81 Toolkit</title>')
   .replace('</head>', '<link rel="stylesheet" href="branding.css"></head>')
   .replace('src="icons/48.png"', 'src="brand/mark.svg"')
   .replace('<strong>Still</strong>', '<strong>Full-page screenshot</strong>')
-  .replace('Private full-page capture', 'Video Downloader')
+  .replace('Private full-page capture', 'Abomination81 Toolkit')
   .replace('click Still on a webpage', 'click the screenshot toolbar button on a webpage')
   .replace('Screenshots stay in this tab until you save or discard them.', 'Screenshots stay here until you save or discard them.<span class="creator-links"><a href="https://abomination81.com" target="_blank" rel="noopener noreferrer">Built by abomination81</a><a href="https://x.com/Abomination81" target="_blank" rel="noopener noreferrer">@abomination81</a></span>');
 await writeFile(join(output, 'preview.html'), html);

@@ -29,7 +29,7 @@ def main():
             (directory / f'{HOST}.json').unlink(missing_ok=True)
     if app.exists() and '--keep-runtime' not in sys.argv:
         shutil.rmtree(app)
-    print('Remove Video Downloader from chrome://extensions to finish uninstalling.')
+    print('Remove Abomination81 Toolkit from chrome://extensions to finish uninstalling.')
     print('Shared tools installed with Homebrew or WinGet are kept.')
 
 

@@ -34,7 +34,7 @@ def main():
     (ROOT / "dist/update.json").write_bytes(raw)
     (ROOT / "dist/update.json.sig").write_bytes(base64.b64encode(key.sign(raw)))
     (ROOT / "dist/SHA256SUMS.txt").write_text(f"{digest}  Video-Downloader.zip\n")
-    print(f"Signed Video Downloader {version}")
+    print(f"Signed Abomination81 Toolkit {version}")
 
 
 if __name__ == "__main__":

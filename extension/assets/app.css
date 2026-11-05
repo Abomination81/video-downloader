@@ -12,6 +12,8 @@ main { width: 100%; max-width: var(--app-width); margin-inline: auto; padding: v
 .app-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .app-mark { flex-shrink: 0; width: 32px; height: 32px; }
 .topbar h1 { font-size: 18px; letter-spacing: -0.03em; color: var(--color-ink); }
+.popup .topbar h1 { font-size: 17px; max-width: none; }
+.topbar > a, .topbar > .muted { flex-shrink: 0; }
 .topbar a { font-size: 12px; color: var(--color-muted); text-decoration: none; padding-block: 8px; }
 .intro { position: relative; isolation: isolate; overflow: hidden; padding: var(--space-lg); border: 1px solid var(--color-rule); border-radius: var(--radius-card); background: var(--color-paper-3); }
 .intro h2 { font-size: 27px; line-height: 1.15; letter-spacing: -0.04em; }

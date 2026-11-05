@@ -124,7 +124,7 @@ def register(app, python, extension_id):
         launcher = app / "native-host"
         launcher.write_text("#!/bin/sh\nexec " + shlex.quote(str(python)) + " " + shlex.quote(str(bootstrap)) + ' "$@"\n')
         launcher.chmod(0o700)
-    manifest = {"name": HOST, "description": "Video Downloader · Built by abomination81", "path": str(launcher), "type": "stdio", "allowed_origins": [f"chrome-extension://{extension_id}/"]}
+    manifest = {"name": HOST, "description": "Abomination81 Toolkit · Built by abomination81", "path": str(launcher), "type": "stdio", "allowed_origins": [f"chrome-extension://{extension_id}/"]}
     manifest_path = app / f"{HOST}.json"
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
     if os.name == "nt":
@@ -178,9 +178,9 @@ def setup(args, app, bootstrap):
     expected = json.loads((ROOT / "extension-identity.json").read_text())["id"]
     if extension_id != expected:
         raise RuntimeError("The extension identity does not match this bundle.")
-    print("Video Downloader · Built by abomination81")
+    print("Abomination81 Toolkit · Built by abomination81")
     print("abomination81.com · X: @Abomination81 · github.com/Abomination81")
-    print("Setting up Video Downloader for your account…")
+    print("Setting up Abomination81 Toolkit for your account…")
     binaries = install_tools()
     if not python.exists():
         execute([args.uv, "venv", "--python", "3.13", environment])

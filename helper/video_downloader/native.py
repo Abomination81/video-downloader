@@ -185,7 +185,7 @@ def serve(input_stream, output_stream):
 
 def main():
     if len(sys.argv) < 2 or sys.argv[1] != f"chrome-extension://{EXTENSION_ID}/":
-        raise SystemExit("This helper is started by the Video Downloader extension.")
+        raise SystemExit("This helper is started by the Abomination81 Toolkit extension.")
     os.umask(0o077)
     private_dir(app_dir())
     if os.name == "nt":

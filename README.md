@@ -1,4 +1,4 @@
-# Video Downloader
+# Abomination81 Toolkit
 
 [![Release](https://img.shields.io/github/v/release/Abomination81/video-downloader?color=39ff14&labelColor=000000)](https://github.com/Abomination81/video-downloader/releases/latest)
 [![Checks](https://github.com/Abomination81/video-downloader/actions/workflows/checks.yml/badge.svg)](https://github.com/Abomination81/video-downloader/actions/workflows/checks.yml)
@@ -6,9 +6,11 @@
 
 **Built by [Abomination81](https://abomination81.com)** · [X @Abomination81](https://x.com/Abomination81) · [GitHub](https://github.com/Abomination81)
 
-![Video Downloader by Abomination81. Video, audio, images, screenshots and browsing tools.](docs/assets/video-downloader-hero.svg)
+![Abomination81 Toolkit. Video, audio, images, screenshots and browsing tools.](docs/assets/video-downloader-hero.svg)
 
-**Right-click. Download video. Get a clean, compatible MP4.** A Chrome extension and silent local helper find the highest-resolution source, save H.264 video and AAC audio by default, and remove identifying metadata. Compatible tracks are copied; other tracks are converted when needed.
+**Ad protection, media downloads, screenshots and browsing tools in one Chrome extension.** Reject optional cookies, block surprise windows, restore copying, pop out videos and read text from images locally.
+
+The silent local helper finds the highest-resolution source, saves H.264 video and AAC audio by default, and removes identifying metadata. Compatible tracks are copied; other tracks are converted when needed.
 
 It also restores text selection and copying, copies links without common tracking parameters, and saves original images with identifying metadata removed. Chrome's ordinary image downloads are cleaned automatically too.
 
@@ -40,7 +42,7 @@ Downloads continue after you navigate away or close the source tab. Everything r
 <details>
 <summary>See the extension</summary>
 
-<img src="docs/assets/downloads.png" width="380" alt="The green and black downloader with video, audio, images, screenshots, ad blocking and browsing tools.">
+<img src="docs/assets/downloads.png" width="380" alt="Abomination81 Toolkit with video, audio, images, screenshots, ad blocking and browsing tools.">
 
 </details>
 
@@ -54,7 +56,7 @@ The installed folder is `~/Library/Application Support/Video Downloader/extensio
 
 **Upgrading from 0.12 or earlier:** run the new installer once, load the parent folder above, and remove or disable the old Audio, Ad Protection, YouTube Protection and Screenshot companion extensions. This consolidation changes Chrome permissions, so older updaters correctly require manual setup. Future signed updates install automatically. Existing download files and main-extension preferences remain.
 
-[Chrome groups multiple matching commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus). Video, audio, photo, screenshot and clean-link commands therefore appear under one Video Downloader menu.
+[Chrome groups multiple matching commands from one extension](https://developer.chrome.com/docs/extensions/reference/api/contextMenus). Video, audio, photo, screenshot and clean-link commands therefore appear under one Abomination81 Toolkit menu.
 
 ## Install on Windows
 
@@ -95,7 +97,7 @@ The combined extension is GPL-3.0-or-later. Complete corresponding source and no
 - Transparent overlays, cross-origin frames, and closed shadow roots are included in discovery.
 - If the menu still cannot open, click the extension's toolbar button or press **Alt+Shift+V**. Pin the extension to make the button easy to reach.
 - If multiple videos match, choose the correct one from the list.
-- Video targets offer **Download video** and **Download audio** in the Video Downloader menu. Audio targets offer **Download audio**; image targets offer **Download photo**. **Choose format** and **Copy clean link** are in the toolbar popup.
+- Video targets offer **Download video** and **Download audio** in the Abomination81 Toolkit menu. Audio targets offer **Download audio**; image targets offer **Download photo**. **Choose format** and **Copy clean link** are in the toolbar popup.
 - Files appear in **Chrome's native download panel**, accessible from its down arrow and Downloads page. The entry appears after the file has passed its metadata checks. The extension shows progress while the helper downloads and prepares the file.
 - Downloads normally save directly in each person's own `Downloads` folder (`~/Downloads` on Mac, `%USERPROFILE%\Downloads` on Windows). A different location deliberately configured in Chrome is respected. The shared bundle contains no personal save location.
 - You can navigate to another video, change pages, or close the video tab and popup after starting. The source and scoped session are captured at selection time; a detached helper continues the work. The browser handoff is tracked independently of the tab.

@@ -38,7 +38,7 @@ popup = popup.replace('<title>Still</title>', '<title>YouTube Protection · Abom
   .replace('<span class="mark" aria-hidden="true">Ⅱ</span>', '<img class="mark" src="brand/mark.svg" alt="" width="32" height="32">')
   .replace('<h1>Still</h1>', '<h1>YouTube Protection</h1>')
   .replace('Data sent by Still', 'Remote data sharing')
-  .replace('Filters are included in this extension.', 'Powered by Still. Only version and on/off status are shared locally with Video Downloader. Filters are included in this extension.')
+  .replace('Filters are included in this extension.', 'Powered by Still. Only version and on/off status are shared locally with Abomination81 Toolkit. Filters are included in this extension.')
   .replace('v0.1.2 · Local by design', '<a href="https://abomination81.com" target="_blank" rel="noopener noreferrer">Built by abomination81</a><a href="https://x.com/Abomination81" target="_blank" rel="noopener noreferrer">@abomination81</a>');
 await writeFile(join(output, 'popup.html'), popup);
 console.log('Built YouTube companion', identity.id);

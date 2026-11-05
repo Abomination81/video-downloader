@@ -23,8 +23,8 @@ def main():
         notes = ROOT / f"docs/RELEASE-{tag}.md"
         if not notes.exists():
             notes = ROOT / "dist/release-notes.md"
-            notes.write_text(f"Video Downloader {tag}. Built by [Abomination81](https://abomination81.com).\n\nSigned automatic update. Finished downloads and settings are kept.\n\nSee [Changelog](https://github.com/{REPOSITORY}/blob/main/CHANGELOG.md) for changes.\n")
-        subprocess.run(["gh", "release", "create", tag, "--repo", REPOSITORY, "--draft", "--target", head, "--title", f"Video Downloader {tag}", "--notes-file", str(notes)], check=True)
+            notes.write_text(f"Abomination81 Toolkit {tag}. Built by [Abomination81](https://abomination81.com).\n\nSigned automatic update. Finished downloads and settings are kept.\n\nSee [Changelog](https://github.com/{REPOSITORY}/blob/main/CHANGELOG.md) for changes.\n")
+        subprocess.run(["gh", "release", "create", tag, "--repo", REPOSITORY, "--draft", "--target", head, "--title", f"Abomination81 Toolkit {tag}", "--notes-file", str(notes)], check=True)
     assets = [str(ROOT / "dist" / name) for name in ["Video-Downloader.zip", "SHA256SUMS.txt", "update.json", "update.json.sig"]]
     subprocess.run(["gh", "release", "upload", tag, "--repo", REPOSITORY, "--clobber", *assets], check=True)
     subprocess.run(["gh", "release", "edit", tag, "--repo", REPOSITORY, "--draft=false", "--latest"], check=True)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.2 — Abomination81 Toolkit, 2026-11-05
+
+- Rename the extension to **Abomination81 Toolkit** across Chrome's extension list, native menu group, toolbar, settings, screenshot preview, installer and public guide.
+- Describe the full suite: ad protection, media downloads, screenshots, cookie rejection, popup controls, video controls, copying and local image text recognition.
+- Keep the existing extension identity, installation location and signed update route so current unified installations update without reinstalling or losing preferences.
+
 ## 0.13.1 — 2026-11-05
 
 - Fix stereo/surround-to-MP3 downloads failing final metadata verification. Normalize the gapless header to a fixed technical marker while removing source tags and encoder identity. Preserve sample-accurate playback of copied MP3s.

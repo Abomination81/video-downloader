@@ -22,7 +22,7 @@ const before="none: [],\n    basic: [],\n    optimal: [ 'all-urls' ],\n    compl
 if(!mode.includes(before))throw new Error('Review upstream default-mode change');
 await writeFile(join(output,'js/mode-manager.js'),mode.replace(before,"none: [ 'localhost', '127.0.0.1' ],\n    basic: [],\n    optimal: [],\n    complete: [ 'all-urls' ],"));
 for(const file of ['popup.html','dashboard.html']){
- let html=await readFile(join(output,file),'utf8');html=html.replace('src="img/ublock.svg" alt="uBO Lite"','src="img/icon_32.png" alt="Ad Protection"').replace('</head>','<link rel="stylesheet" href="branding.css"></head>').replace('</body>','<footer class="vd-brand"><span>Ad Protection · powered by uBlock Origin Lite</span><a href="https://x.com/Abomination81" target="_blank" rel="noopener noreferrer">Built by abomination81</a></footer></body>');await writeFile(join(output,file),html);
+ let html=await readFile(join(output,file),'utf8');html=html.replace('src="img/ublock.svg" alt="uBO Lite"','src="img/icon_32.png" alt="Ad Protection"').replace('</head>','<link rel="stylesheet" href="branding.css"></head>').replace('</body>','<footer class="vd-brand"><span>Abomination81 Toolkit · Ad protection powered by uBlock Origin Lite</span><a href="https://x.com/Abomination81" target="_blank" rel="noopener noreferrer">Built by abomination81</a></footer></body>');await writeFile(join(output,file),html);
 }
 // Keep upstream attribution; the renamed distribution uses the user's own mark.
 for(const size of [16,32,128])await cp(join(root,`extension/public/icon-${size}.png`),join(output,`img/icon_${size}.png`));

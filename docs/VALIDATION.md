@@ -1,5 +1,11 @@
 # Validation
 
+## 0.13.2 toolkit naming — 2026-11-05
+
+Production Chrome build exposes **Abomination81 Toolkit** as the manifest name, toolbar title, popup and settings heading. Visual checks pass at 320, 360 and 380 px popup widths and 320, 390 and 1440 px guide widths. Public screenshots were refreshed from the built extension. The creator homepage card, README banner, screenshot preview and installer use the same name.
+
+Type checking, 56 extension tests, six installer tests and the unified browser suite pass. The latter verifies one menu owner, protection startup, screenshot/offscreen coordination, real capture and safe navigation cancellation. Package validation preserves the existing extension identity, permissions and update archive layout for automatic upgrades.
+
 ## 0.13.1 installed Chrome verification — 2026-11-05
 
 The unified extension was activated in the normal Chrome profile. Its native menus offered video/audio/photo downloads and full-page screenshots under one extension. A full-page PNG and original photo appeared in Chrome's download panel. A tagged H.264/AAC test clip finished in Downloads after immediate navigation away. Chrome's ordinary image-save flow removed author/comment/GPS fields while preserving a 1200×720 JPEG, rotation and color profile.

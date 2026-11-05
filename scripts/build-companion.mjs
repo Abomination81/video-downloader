@@ -18,7 +18,7 @@ await copyFile(join(root, 'extension/public/fonts/anton-latin.woff2'), join(outp
 await copyFile(join(root, 'extension/public/fonts/OFL-Anton.txt'), join(output, 'fonts/OFL-Anton.txt'));
 await writeFile(join(output, 'manifest.json'), JSON.stringify({
   manifest_version: 3, name: 'Download Audio by Abomination81', version, key: identity.key, minimum_chrome_version: '127',
-  description: 'Separate Download audio right-click command. Uses Video Downloader’s helper and verified MP3 metadata cleanup. Built by abomination81.',
+  description: 'Separate Download audio right-click command. Uses Abomination81 Toolkit’s helper and verified MP3 metadata cleanup. Built by abomination81.',
   homepage_url: 'https://abomination81.com/video-downloader/', permissions: ['contextMenus', 'storage', 'alarms'],
   externally_connectable: { ids: [main.id] }, background: { service_worker: 'background.js', type: 'module' },
   icons: { 16: 'icon-16.png', 48: 'icon-48.png' },
