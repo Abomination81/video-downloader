@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { automaticChoice } from '../../lib/detection';
 import { candidateSchema, formatsSchema, intentSchema, type Candidate, type DownloadIntent, type DownloadOptions, type FormatOption } from '../../lib/schema';
 import { el, loadJobs, node, notice, request } from '../../lib/ui';
+import {adblockControls} from '../../lib/adblock-ui';
 
 let tabId: number | undefined;
 let poll: ReturnType<typeof setTimeout>;
@@ -158,6 +159,8 @@ async function init() {
   const platform = await chrome.runtime.getPlatformInfo();
   el('#download-shortcut').textContent = platform.os === 'mac' ? '⌥⇧V' : 'Alt+Shift+V';
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }); tabId = tab?.id;
+  const host=tab?.url&&/^https?:/.test(tab.url)?new URL(tab.url).hostname:undefined;
+  adblockControls({compact:true,tabId,host});
   const state = await chrome.storage.session.get(['lastError', 'choices', 'formatPicker']);
   if (state.lastError && typeof (state.lastError as { message?: unknown }).message === 'string') notice((state.lastError as { message: string }).message);
   const savedPicker = pickerSchema.safeParse(state.formatPicker);

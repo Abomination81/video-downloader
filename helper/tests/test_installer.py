@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from video_downloader import __version__
 
 
 @pytest.mark.parametrize("account", ["friend-one", "friend with spaces"])
@@ -30,7 +31,7 @@ def test_shared_bundle_uses_each_accounts_downloads(tmp_path, monkeypatch, accou
     (bundle / "extension/youtube-companion/manifest.json").write_text('{"name":"YouTube companion fixture"}')
     (bundle / "extension/screenshot-companion").mkdir()
     (bundle / "extension/screenshot-companion/manifest.json").write_text('{"name":"Screenshot companion fixture"}')
-    wheel = bundle / "helper-wheel/video_downloader_helper-0.9.2-py3-none-any.whl"
+    wheel = bundle / f"helper-wheel/video_downloader_helper-{__version__}-py3-none-any.whl"
     wheel.parent.mkdir()
     wheel.touch()
     constraints = bundle / "runtime-requirements.txt"

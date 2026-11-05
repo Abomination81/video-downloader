@@ -1,0 +1,8 @@
+{
+  "source": "https://easylist.to/easylist/easylist.txt",
+  "sha256": "467c016c1df66483e49dcc12c4793232816a5afa9ce09aa4753bba8b7508a05d",
+  "lastModified": "Thu, 05 Nov 2026 05:20:50 GMT",
+  "license": "CC-BY-SA-3.0",
+  "attribution": "The EasyList authors (https://easylist.to/)",
+  "parser": "@ghostery/adblocker@2.20.3 (MPL-2.0, build only)"
+}

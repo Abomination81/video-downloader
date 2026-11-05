@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { defaults, settingsSchema } from '../../lib/schema';
 import { el, notice, request } from '../../lib/ui';
 import { updateSchema } from '../../lib/updates';
+import {adblockControls} from '../../lib/adblock-ui';
 
 async function protection() {
   try {
@@ -49,6 +50,7 @@ async function updates(manual = false) {
 }
 el<HTMLButtonElement>('#check-updates').onclick = () => void updates(true);
 async function init() {
+  adblockControls();
   const saved = await chrome.storage.local.get('settings'); const settings = settingsSchema.parse({ ...defaults, ...(saved.settings as object ?? {}) });
   el<HTMLInputElement>('#restore-menus').checked = settings.restoreMenus;
   el<HTMLInputElement>('#restore-copy').checked = settings.restoreCopy;

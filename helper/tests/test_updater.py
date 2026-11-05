@@ -125,6 +125,15 @@ def test_permission_expansion_needs_manual_install(installed, tmp_path, signed):
         updater.validate_bundle(new, update)
 
 
+def test_optional_ad_permission_keeps_signed_updates_automatic(installed, tmp_path, signed):
+    _, identity, manifest = installed
+    update, _ = signed
+    new = bundle(tmp_path, identity, {**manifest, "optional_permissions": ["declarativeNetRequestWithHostAccess"]})
+    updater.validate_bundle(new, update)
+    # Optional permissions still require Chrome's separate user gesture/grant.
+    assert json.loads((new / "extension/manifest.json").read_text())["permissions"] == manifest["permissions"]
+
+
 def test_failed_commit_restores_extension_and_runtime(installed, tmp_path, signed, monkeypatch):
     app, identity, manifest = installed
     update, _ = signed

@@ -16,6 +16,18 @@ export default defineContentScript({
     let restoreCopy = defaults.restoreCopy;
     let tabHasMedia = false;
     let announced = false;
+    let adSheet:CSSStyleSheet|undefined;
+    let adCSS='';
+    function applyAdCSS(css:string) {
+      if(css===adCSS)return;
+      adCSS=css;
+      if(!css&&!adSheet)return;
+      adSheet??=new CSSStyleSheet();
+      adSheet.replaceSync(css);
+      const sheets=document.adoptedStyleSheets.filter(sheet=>sheet!==adSheet);
+      document.adoptedStyleSheets=css?[...sheets,adSheet]:sheets;
+    }
+    ctx.onInvalidated(()=>{if(adSheet)document.adoptedStyleSheets=document.adoptedStyleSheets.filter(sheet=>sheet!==adSheet);});
     const channel = '__video_downloader_frames_v1__';
     const box = (el: Element) => { const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; };
     function elements(): Element[] {
@@ -110,7 +122,12 @@ export default defineContentScript({
     ctx.addEventListener(window, 'keydown', (event) => {
       if (restoreCopy && !isEditing(event.target) && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && ['a', 'c'].includes(event.key.toLowerCase())) event.stopImmediatePropagation();
     }, { capture: true });
-    const onRuntimeMessage: Parameters<typeof chrome.runtime.onMessage.addListener>[0] = (message, _sender, respond) => {
+    const onRuntimeMessage: Parameters<typeof chrome.runtime.onMessage.addListener>[0] = (message, sender, respond) => {
+      if(message?.type==='ad-policy') {
+        if(sender.id!==chrome.runtime.id||sender.tab||typeof message.css!=='string'||message.css.length>750000)return;
+        try{applyAdCSS(message.css);respond({ok:true});}catch{respond({ok:false});}
+        return;
+      }
       if (message?.type === 'probe') respond(snapshot());
       if (message?.type === 'image-data' && typeof message.id === 'string') {
         const image = elements().find((el) => el instanceof HTMLImageElement && ids.get(el) === message.id) as HTMLImageElement | undefined;

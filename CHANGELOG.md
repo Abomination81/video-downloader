@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0 — website ad blocking, 2026-11-04
+
+- Add opt-in website filtering to the main extension, with bundled EasyList data, native Chrome network rules and cosmetic selectors. Pack equivalent domain filters without dropping supported entries from this snapshot.
+- Add a global switch, per-site pause and explicit page reload controls. Filtering permission is requested only from the user's Enable button; existing required permissions and the four-extension setup are unchanged.
+- Add a narrow Pluto on-demand adapter for known session metadata and DASH ad periods, plus pause-ad hiding. Live, unknown and stitched HLS ads can remain. YouTube retains its separate protection engine.
+- Keep filter refreshes inside signed releases, include source/attribution, and validate Chrome regex support before activation. Player failure does not disable downloads.
+
 ## 0.9.2 — local design update, 2026-11-04
 
 - Replace the ghoul/eye artwork with an original green download mark across the tool, toolbar and companion icons.

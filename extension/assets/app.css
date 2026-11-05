@@ -99,6 +99,10 @@ noscript { display: block; padding: var(--space-lg); }
 .feature-state { margin-left: 4px; color: var(--color-muted); font-size: 9px; font-weight: 400; }
 .feature-state[data-ready='true'] { color: var(--color-accent); }
 .feature-state[data-ready='true']::after { content: ''; display: inline-block; width: 4px; height: 4px; vertical-align: 2px; border-radius: 50%; background: var(--color-accent-deep); }
+.inline-toggle { border:0;padding:0;background:none;color:var(--color-accent-deep);font:500 10px var(--font-body);cursor:pointer; }
+.inline-toggle:disabled { color:var(--color-muted);cursor:wait; }
+.capabilities h3 .inline-toggle { margin-left:4px; }
+.capabilities p .inline-toggle { font-size:10px; }
 .utility-button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 0; border: 0; background: none; color: var(--color-ink-2); font: 600 12px var(--font-body); text-align: left; cursor: pointer; }
 .utility-button svg { margin: 0; }
 .utility-button small { margin-left: auto; font-size: 10px; font-weight: 400; color: var(--color-muted); }

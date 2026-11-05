@@ -7,6 +7,8 @@ import { jobSchema } from '../lib/schema';
 import { recoverSnapshots, within } from '../lib/probe';
 import { COPY_CSS } from '../lib/copy-policy';
 import { setNativeMenuPolicy } from '../lib/menu-policy';
+import {AdBlocking} from '../lib/adblocking';
+import {adHost} from '../lib/adblock-policy';
 import { cleanLink } from '../lib/clean-link';
 import { copyLink } from '../lib/clipboard';
 import { httpUrl } from '../lib/schema';
@@ -21,6 +23,7 @@ import { initializeYouTubeCompanion, syncYouTubeCompanion, youtubeCompanionStatu
 import { initializeScreenshotCompanion, syncScreenshotCompanion, screenshotCompanionStatus } from '../lib/screenshot-companion';
 
 export default defineBackground(() => {
+  const ads=new AdBlocking();
   initializeScreenshotCompanion();
   initializeYouTubeCompanion();
   const captures = new Map<number, Capture[]>();
@@ -357,6 +360,7 @@ export default defineBackground(() => {
       }
       if (contentType.data.type === 'media-present') mediaTabs.add(tabId);
       void menuPolicy(tabId);
+      if(contentType.data.type==='frame-ready')void ads.frame(sender).catch(()=>undefined);
       respond({ ok: true });
       return;
     }
@@ -370,6 +374,9 @@ export default defineBackground(() => {
       z.object({ type: z.literal('copy-link'), url: httpUrl }).strict(),
       z.object({ type: z.literal('copy-context-link'), tabId: z.number().int().nonnegative() }).strict(),
       z.object({ type: z.literal('save-image'), tabId: z.number().int().nonnegative(), frameId: z.number().int().nonnegative().default(0), srcUrl: z.string().max(16384).optional() }).strict(),
+      z.object({type:z.literal('adblock-status'),host:adHost.optional()}).strict(),
+      z.object({type:z.literal('adblock-set'),enabled:z.boolean()}).strict(),
+      z.object({type:z.literal('adblock-site'),host:adHost,paused:z.boolean()}).strict(),
       z.object({ type: z.enum(['ping', 'jobs', 'clear', 'youtube-protection-status', 'screenshot-companion-status']) }).strict(),
       z.object({ type: z.enum(['check-updates', 'update-status']) }).strict(),
       z.object({ type: z.enum(['cancel', 'reveal', 'retry-save']), jobId: z.string().regex(/^[0-9a-f]{32}$/) }).strict(),
@@ -377,6 +384,9 @@ export default defineBackground(() => {
     if (!parsed.success) { respond({ ok: false, error: { code: 'invalid_request', message: 'Reload the extension and try again.' } }); return; }
     const request = parsed.data;
     void action(async () => {
+      if(request.type==='adblock-status')return ads.status(request.host);
+      if(request.type==='adblock-set')return ads.setEnabled(request.enabled);
+      if(request.type==='adblock-site')return ads.setSite(request.host,request.paused);
       if (request.type === 'screenshot-companion-status') return screenshotCompanionStatus();
       if (request.type === 'youtube-protection-status') return youtubeCompanionStatus();
       if (request.type === 'find') return { candidates: await find(request.tabId) };

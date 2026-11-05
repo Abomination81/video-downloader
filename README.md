@@ -26,6 +26,7 @@ Use **Video-Downloader.zip** from Releases for installation. GitHub's automatic 
 | **Download photo** | Largest exposed image source, original format and quality, identifying metadata removed |
 | **Save full-page screenshot** | A full-page PNG, or one ZIP of PNG parts for large pages; separate screenshot companion |
 | YouTube ad blocking | Local filtering for videos, Shorts and embedded players; separate YouTube companion |
+| Website ad blocking | Bundled EasyList network and cosmetic filters, per-site pause, and a narrow Pluto on-demand adapter; enable once in the toolbar or Settings |
 | Chrome's **Save image as** | Automatic cleanup of newly saved images, preserving your filename |
 | **Copy clean link** | Recognizable tracking fields removed; functional, signed and login links preserved |
 | Browse normally | Right-click, text selection and copying restored by default; settings can disable restoration |
@@ -55,6 +56,16 @@ The installed main extension folder is `~/Library/Application Support/Video Down
 Unzip the bundle and open **Install-Windows.cmd**. Setup uses Microsoft's WinGet to install missing FFmpeg, Deno, and ExifTool, and installs a private Python runtime automatically. Then enable Developer mode at `chrome://extensions`, click **Load unpacked**, and choose the extension folder opened by setup. Load its **audio-companion** subfolder as a second extension , **youtube-companion** for YouTube Protection, and **screenshot-companion** for full-page screenshots. Disable standalone Still if installed, then reload YouTube. Windows installation scripts are supplied; check `docs/VALIDATION.md` for platforms actually tested.
 
 Chrome requires these manual steps for an unpacked extension. Setup does not change Chrome policies, bypass security controls, or require a Chrome Web Store account.
+
+## Website ad blocking (0.10.0)
+
+Open the main toolbar popup or Settings and click **Enable ad blocking**, then approve Chrome's filtering permission. This is optional and requires no extra extension. Reload open pages after enabling it. Existing download permissions and automatic updates stay unchanged; updates cannot silently approve the new optional permission for you.
+
+EasyList network and cosmetic filters run locally using Chrome's native request-filtering API and bundled CSS. **Pause here** restores a site's requests and appearance; **Reload page** applies changes to its player. The global switch in Settings disables general filtering. YouTube continues to use its separate companion. Filter data updates arrive in signed releases, with no browsing telemetry or remotely downloaded executable code.
+
+Pluto includes pause-ad hiding and a narrow on-demand adapter for known session metadata and DASH ad periods. Unknown or live stream formats remain unchanged. Ads stitched into HLS/content, first-party ads and anti-blocking changes can still get through. This is not a promise of ad-free playback on every service. Protected playback over DisplayLink is a separate display limitation.
+
+EasyList data retains its CC BY-SA 3.0 license and attribution; see [bundle licenses](BUNDLE-LICENSES.md) and [filter provenance](filters/README.md).
 
 ## Download
 
