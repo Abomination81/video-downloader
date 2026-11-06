@@ -47,7 +47,6 @@ async function check() {
     el('#connection').textContent = result.ready ? 'Ready when you are.' : 'Finish installing the helper.';
     el('#connection-detail').textContent = result.ready ? 'Downloads keep running when you leave the page. Finished files appear in Chrome’s download panel.' : 'Rerun the installer from your download bundle to install missing tools.';
     if (result.extensionDir) el('#installed-extension-folder').textContent = result.extensionDir;
-    el('#versions').textContent = `Extension ${chrome.runtime.getManifest().version} · Helper ${result.version}`;
   } catch (error) { el('#connection').textContent = 'Install your local helper.'; el('#connection-detail').textContent = (error as Error).message; }
   finally { button.disabled = false; }
   await protection();
@@ -60,15 +59,22 @@ async function updates(manual = false) {
   clearTimeout(updateTimer);
   try {
     const value = updateSchema.parse(await request({ type: manual ? 'check-updates' : 'update-status' }));
+    const running = chrome.runtime.getManifest().version;
+    const pending = value.installedVersion !== running;
+    el('#versions').textContent = `Running in Chrome: ${running} · Installed: ${value.installedVersion}`;
     el('#update-detail').textContent = value.enabled || manual ? value.message : 'Automatic updates are off. Check manually whenever you want.';
-    if (value.state !== 'manual' && value.installedVersion !== chrome.runtime.getManifest().version) el('#update-detail').textContent = `Version ${value.installedVersion} is installed. Close this settings tab to activate it automatically.`;
-    if (['checking', 'downloading', 'preparing', 'waiting', 'applying'].includes(value.state)) updateTimer = setTimeout(() => void updates(), 2500);
+    el('#activate-update').hidden = !pending || value.state !== 'ready';
+    if (['checking', 'downloading', 'preparing', 'waiting', 'applying'].includes(value.state) || pending && value.state !== 'manual') updateTimer = setTimeout(() => void updates(), 2500);
   } catch { el('#update-detail').textContent = 'Updates could not be checked. Check the helper connection and try again.'; }
   finally { button.disabled = false; }
   await protection();
   await screenshots();
 }
 el<HTMLButtonElement>('#check-updates').onclick = () => void updates(true);
+el<HTMLButtonElement>('#activate-update').onclick = async () => {
+  const tab = await chrome.tabs.getCurrent();
+  if (tab?.id !== undefined) await chrome.tabs.remove(tab.id);
+};
 async function init() {
   adblockControls();
   void browsing().catch(() => notice('Browsing preferences could not be loaded.'));

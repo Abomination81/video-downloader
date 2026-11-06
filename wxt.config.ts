@@ -10,7 +10,7 @@ export default defineConfig({
     name: 'Abomination81 Toolkit',
     description: 'Video, MP3, original images, screenshots, ad blocking, metadata removal and browsing tools. Built by abomination81.',
     homepage_url: 'https://abomination81.com',
-    version: '0.13.5',
+    version: '0.13.6',
     incognito: 'not_allowed',
     key: identity.key,
     minimum_chrome_version: '127',

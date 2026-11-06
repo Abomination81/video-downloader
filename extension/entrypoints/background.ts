@@ -365,7 +365,7 @@ export default defineBackground(() => {
     ]).safeParse(raw);
     if (!parsed.success) { respond({ ok: false, error: { code: 'invalid_request', message: 'Reload the extension and try again.' } }); return; }
     const request = parsed.data;
-    void action(async () => {
+    const run = async () => {
       if(request.type==='adblock-status')return ads.status(request.host);
       if(request.type==='adblock-set')return ads.setEnabled(request.enabled);
       if(request.type==='adblock-site')return ads.setSite(request.host,request.paused);
@@ -393,7 +393,11 @@ export default defineBackground(() => {
         return { jobs: await downloads.decorate(value.jobs) };
       }
       return native(request.type, 'jobId' in request ? { jobId: request.jobId } : {});
-    }).then((result) => respond({ ok: true, result })).catch((error) => respond({ ok: false, error: errorResult(error) }));
+    };
+    // An update check must not count itself as a download in progress. Actual
+    // actions and screenshot capture still defer activation through isBusy.
+    const result = request.type === 'check-updates' || request.type === 'update-status' ? run() : action(run);
+    void result.then((result) => respond({ ok: true, result })).catch((error) => respond({ ok: false, error: errorResult(error) }));
     return true;
   });
 });

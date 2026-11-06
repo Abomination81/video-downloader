@@ -21,7 +21,7 @@ describe('safe update activation', () => {
       alarms: { onAlarm: event(), get: vi.fn(async () => ({ periodInMinutes: 0.5 })), create: vi.fn(async () => {}) },
       runtime: { onStartup: event(), onInstalled: event(), getManifest: () => ({ version: '0.5.1' }), getURL: () => 'chrome-extension://fixture/', getContexts: vi.fn(async () => []), reload },
       storage: { onChanged: event(), local: { set: vi.fn(async () => {}) } },
-      tabs: { query: vi.fn(async () => []) },
+      tabs: { onRemoved: event(), query: vi.fn(async () => []) },
     });
     vi.mocked(native).mockImplementation(async type => type === 'jobs' ? { jobs: [] } : status);
   });
@@ -30,6 +30,30 @@ describe('safe update activation', () => {
   it('activates a committed update when idle', async () => {
     await new Updates(() => false).status();
     expect(reload).toHaveBeenCalledOnce();
+  });
+
+  it('replaces an old hourly alarm with a one-minute local check', async () => {
+    chrome.alarms.get = vi.fn(async () => ({ name: 'silent-updates', scheduledTime: 0, periodInMinutes: 60, persistAcrossSessions: true }));
+    new Updates();
+    await vi.waitFor(() => expect(chrome.alarms.create).toHaveBeenCalledWith('silent-updates', { delayInMinutes: 1, periodInMinutes: 1 }));
+  });
+
+  it('explains the open Toolkit tab and activates promptly when it closes', async () => {
+    chrome.tabs.query = vi.fn(async () => [{ url: 'chrome-extension://fixture/options.html' }] as chrome.tabs.Tab[]);
+    const updates = new Updates();
+    const value = await updates.status();
+    expect(value.message).toContain('Close Toolkit settings');
+    expect(reload).not.toHaveBeenCalled();
+    chrome.tabs.query = vi.fn(async () => []);
+    vi.mocked(chrome.tabs.onRemoved.addListener).mock.calls[0]![0](42, { windowId: 1, isWindowClosing: false });
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce());
+  });
+
+  it('keeps downloads alive and explains why activation is waiting', async () => {
+    vi.mocked(native).mockImplementation(async type => type === 'jobs' ? { jobs: [{ state: 'downloading' }] } : status);
+    const value = await new Updates().status();
+    expect(value.message).toContain('after current downloads finish');
+    expect(reload).not.toHaveBeenCalled();
   });
 
   it('preserves an action that is selecting or starting a download', async () => {

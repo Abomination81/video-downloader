@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.6 — Clearer, faster update activation, 2026-11-06
+
+- Stop treating the update check itself as an active download that blocks activation.
+- Notice updates installed by the local helper with a one-minute local check instead of waiting up to an hour. Release-server checks remain limited to every six hours.
+- Show the version running in Chrome beside the version installed on disk, with the actual reason activation is waiting.
+- Add **Close Settings to apply update** and retry activation as soon as a Toolkit tab closes. Keep download, screenshot and preview safeguards.
+
 ## 0.13.5 — Hover-only video controls, 2026-11-06
 
 - Replace the floating seek palette with a slim bottom timeline and playback, volume, speed, pop-out and fullscreen controls.

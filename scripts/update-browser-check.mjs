@@ -86,9 +86,12 @@ try {
   const staged = await settingsPage.evaluate(() => chrome.runtime.sendMessage({ type: 'update-status' }));
   assert.equal(staged.result.installedVersion, current.version);
   assert.equal(await worker.evaluate(() => chrome.runtime.getManifest().version), '0.4.999', 'An open Settings page did not defer activation');
-  await settingsPage.close();
-  await worker.evaluate(() => chrome.alarms.create('silent-updates', { when: Date.now() + 100 }));
-  console.log('CHECK committed update and scheduled Chrome alarm');
+  await settingsPage.reload();
+  await settingsPage.locator('#activate-update').waitFor({ state: 'visible' });
+  assert.equal(await settingsPage.locator('#versions').textContent(), `Running in Chrome: 0.4.999 · Installed: ${current.version}`);
+  assert.match(await settingsPage.locator('#update-detail').textContent(), /Close Toolkit settings/);
+  await settingsPage.locator('#activate-update').click();
+  console.log('CHECK truthful version display and one-click activation from Settings');
   // Chrome may deliver an unpacked extension alarm at the 30-second minimum;
   // leave room for its worker replacement instead of expiring at that boundary.
   const deadline = Date.now() + 60000;
