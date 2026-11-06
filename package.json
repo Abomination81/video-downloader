@@ -1,6 +1,6 @@
 {
   "name": "video-downloader",
-  "version": "0.13.4",
+  "version": "0.13.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,7 +17,7 @@
     "test:menus": "node scripts/companion-browser-check.mjs",
     "test:screenshot": "node scripts/unified-browser-check.mjs",
     "test:protection": "node scripts/protection-browser-check.mjs",
-    "test:browsing": "node scripts/browsing-browser-check.mjs",
+    "test:browsing": "node scripts/video-controls-browser-check.mjs && node scripts/browsing-browser-check.mjs",
     "test:security": "node scripts/browsing-security-check.mjs",
     "test:unified": "node scripts/unified-browser-check.mjs"
   },

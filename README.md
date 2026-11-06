@@ -33,7 +33,7 @@ Use **Video-Downloader.zip** from Releases for installation. GitHub's automatic 
 | Cookie rejection | Reject optional cookies using bundled consent rules; unsupported dialogs remain usable |
 | Fewer browsing nags | Notification, newsletter, overlay and widget filters through the built-in ad engine |
 | Surprise-window guard | Block unexpected windows, with **Open once** and a per-site exception |
-| Consistent video controls | Hover a video for ±10 seconds, remembered speed and native **Pop out** |
+| Consistent video controls | A slim hover-only timeline when the player lacks controls, with speed and **Pop out** |
 | **Copy text from image** | Local English OCR for a selected image or screenshot; no OCR service |
 | Browse normally | Right-click, text selection and copying restored by default; settings can disable restoration |
 
@@ -72,7 +72,7 @@ Cookie handling uses pinned DuckDuckGo Autoconsent rules with **opt-out only**. 
 
 Unexpected windows get a small footer notice. **Open once** opens that destination; **Allow on this site** saves an exception, then you retry the original button. Ordinary links and sign-in/payment buttons keep their normal popup behavior. For a blocked blank window whose destination is not yet known, allow the site and retry. The guard supplements browser and filter-list protection; it cannot infer every site's intent or prevent every popup technique.
 
-Hover a video for **−10s**, **+10s**, speed and **Pop out**. Speed is remembered per site. Seeking uses the player's actual seekable range, including live DVR; it cannot turn a preview into a full video. Native picture-in-picture requires a loaded video and browser/frame permission. **Alt+Shift+Left/Right** seeks the last hovered player; **Alt+Shift+P** pops it out. Ordinary seek bars, typing and selection retain their normal events.
+Videos without usable controls get a slim control bar along the bottom while hovered: seek, play/pause, volume, speed, **Pop out** and fullscreen. It disappears immediately when the pointer leaves. Native controls and recognized custom player controls, including those that fade in on hover, keep their own interface. Speed is remembered per site. Seeking uses the player's actual seekable range, including live DVR; it cannot turn a preview into a full video. Native picture-in-picture requires a loaded video and browser/frame permission. **Alt+Shift+Left/Right** seeks the last hovered player; **Alt+Shift+P** pops it out. Ordinary seek bars, typing and selection retain their normal events.
 
 Right-click an image, then choose **Copy text from image** in the toolbar. Or open the text tool and select a local image/screenshot. English recognition runs entirely in the extension using packaged Tesseract WebAssembly and language data. Text is editable and copyable. Images are limited to 12 MB and 40 megapixels; SVG/PDF are not accepted. Existing image pixels are preferred; a cross-origin fallback fetch sends no cookies or page referrer. Some protected images must be saved and opened manually. No OCR text or pixels are saved in extension storage or sent to a recognition service.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.5 — Hover-only video controls, 2026-11-06
+
+- Replace the floating seek palette with a slim bottom timeline and playback, volume, speed, pop-out and fullscreen controls.
+- Show the fallback only while hovering a video that lacks usable controls; leave native and recognized custom players, including auto-hiding controls, alone.
+- Hide immediately on hover exit, scrolling, focus changes and cross-origin frame exit. Retain keyboard shortcuts, remembered speed and existing video input behavior.
+
 ## 0.13.4 — Facebook download recovery, 2026-11-05
 
 - Recover Facebook downloads when the extractor cannot parse the signed-in page: retry the same video once with a fresh public session.

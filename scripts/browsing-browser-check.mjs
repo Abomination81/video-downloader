@@ -31,7 +31,7 @@ const server=createServer((req,res)=>{
   body='<div id="unknown" role="dialog" style="position:fixed;bottom:0;padding:30px;background:white">We use cookies to personalize ads and analyze traffic. <button id="only-accept">Accept all</button></div>';
   script='window.accepted=0;document.querySelector("#only-accept").onclick=()=>window.accepted++;';
  } else if(req.url==='/player'||req.url==='/popups'){
-  body=`<div class="video-player"><video controls muted preload="auto" src="/source.mp4" style="width:640px;height:360px"></video><button id="play-ad">Play</button></div><a id="legit" href="http://localhost:${port}/destination" target="_blank">Open information</a><button id="login">Sign in</button><input id="typing"><div id="click-area" style="height:60px;width:400px">Blank space</div>`;
+  body=`<div class="video-player"><video muted preload="auto" src="/source.mp4" style="width:640px;height:360px"></video><button id="play-ad">Play</button></div><a id="legit" href="http://localhost:${port}/destination" target="_blank">Open information</a><button id="login">Sign in</button><input id="typing"><div id="click-area" style="height:60px;width:400px">Blank space</div>`;
   script=`window.loginOpener=false;document.querySelector('#play-ad').onclick=()=>window.open('http://localhost:${port}/ad');document.querySelector('#click-area').onclick=()=>window.open('http://localhost:${port}/ad');document.querySelector('#login').onclick=()=>{const child=window.open('about:blank','login','width=400,height=400');window.loginOpener=!!child;if(child)child.location='http://localhost:${port}/destination'};`;
  } else if(req.url==='/image'){
   body='<img id="text-image" alt="Fixture text" style="width:900px;height:220px">';
@@ -78,11 +78,11 @@ try{
  await page.locator('video').evaluate(v=>new Promise(r=>v.readyState>=4?r():v.addEventListener('canplaythrough',r,{once:true})));
  await page.waitForFunction(()=>!!document.querySelector('#abomination-browsing-tools'));
  await page.evaluate(()=>{const overlay=document.createElement('div');overlay.id='transparent-player-overlay';overlay.style='position:absolute;left:24px;top:24px;width:640px;height:360px;background:transparent';overlay.addEventListener('pointermove',e=>e.stopPropagation());document.body.append(overlay);});
- await page.mouse.move(300,200);await page.getByRole('button',{name:'Forward 10 seconds',exact:true}).waitFor();
+ await page.mouse.move(300,200);await page.getByRole('slider',{name:'Seek video',exact:true}).waitFor();
  await page.evaluate(()=>document.querySelector('#transparent-player-overlay').remove());
- await page.locator('video').hover();await page.getByRole('button',{name:'Forward 10 seconds',exact:true}).click();
+ await page.locator('video').hover();await page.getByRole('slider',{name:'Seek video',exact:true}).click();
  assert.ok(await page.locator('video').evaluate(v=>v.currentTime>9.5));
- await page.getByRole('button',{name:'Increase playback speed',exact:true}).click();await page.getByRole('button',{name:'Increase playback speed',exact:true}).click();
+ const speed=page.getByRole('combobox',{name:'Playback speed'});await speed.focus();await speed.press('ArrowRight');await speed.press('ArrowRight');
  await page.waitForFunction(()=>document.querySelector('video').playbackRate===1.5);
  await page.reload();await page.waitForFunction(()=>document.querySelector('video').playbackRate===1.5);
  await page.locator('video').evaluate(v=>{v.disablePictureInPicture=true});

@@ -41,10 +41,10 @@ try{
     }
     await page.waitForTimeout(4000);report.before=await mediaState(page);
     for(const frame of page.frames().slice(0,15)){
-     try{const video=frame.locator('video').filter({visible:true}).first();if(!await video.count())continue;const box=await video.boundingBox();if(!box)continue;await page.mouse.move(box.x+box.width/2,box.y+box.height/2);const seek=frame.getByRole('button',{name:'Forward 10 seconds',exact:true});if(await seek.isVisible()){
+     try{const video=frame.locator('video').filter({visible:true}).first();if(!await video.count())continue;const box=await video.boundingBox();if(!box)continue;await page.mouse.move(box.x+box.width/2,box.y+box.height/2);const seek=frame.getByRole('slider',{name:'Seek video',exact:true});if(await seek.isVisible()){
        const previous=await video.evaluate(v=>({time:v.currentTime,paused:v.paused,ready:v.readyState,seekable:v.seekable.length}));
-       if(previous.seekable&&previous.ready>=2){await seek.click({timeout:2000});await page.waitForTimeout(1500);const after=await video.evaluate(v=>({time:v.currentTime,ready:v.readyState,error:v.error?.code??null}));report.actions.push({seek:{before:previous.time,after:after.time,error:after.error}})}
-       const speed=frame.getByRole('button',{name:'Increase playback speed',exact:true});await speed.click({timeout:2000});report.actions.push({speed:await video.evaluate(v=>v.playbackRate)});
+       if(previous.seekable&&previous.ready>=2){await page.keyboard.press('Alt+Shift+ArrowRight');await page.waitForTimeout(1500);const after=await video.evaluate(v=>({time:v.currentTime,ready:v.readyState,error:v.error?.code??null}));report.actions.push({seek:{before:previous.time,after:after.time,error:after.error}})}
+       const speed=frame.getByRole('combobox',{name:'Playback speed',exact:true});await speed.focus();await speed.press('ArrowRight');report.actions.push({speed:await video.evaluate(v=>v.playbackRate)});
        const pip=frame.getByRole('button',{name:'Pop out video',exact:true});await pip.click({timeout:2000});await page.waitForTimeout(400);const active=await frame.evaluate(()=>!!document.pictureInPictureElement);report.actions.push({pictureInPicture:active,...(!active?{message:await frame.locator("#abomination-browsing-tools .message").innerText().catch(()=>"unavailable")}: {})});if(active)await frame.evaluate(()=>document.exitPictureInPicture());break;
       }
      }catch(error){report.actions.push({controlError:error.message.split('\n')[0].slice(0,150)})}

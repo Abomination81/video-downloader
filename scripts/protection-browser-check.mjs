@@ -45,7 +45,7 @@ try{
  const page=await context.newPage();await page.goto(url('reader.example','/article'));
  const fetched=()=>page.evaluate(url=>fetch(url).then(r=>r.text()).then(body=>body.includes('window.adLoaded=true'),()=>false),url('ad.doubleclick.net','/ad.js'));
  await page.waitForFunction(()=>getComputedStyle(document.querySelector('#AC_ad')).display==='none');assert.equal(await fetched(),false);
- await page.locator('input').fill('Selection and input still work');await page.locator('input').selectText();assert.equal(await page.locator('input').inputValue(),'Selection and input still work');
+ await page.getByRole('textbox').fill('Selection and input still work');await page.getByRole('textbox').selectText();assert.equal(await page.getByRole('textbox').inputValue(),'Selection and input still work');
  await page.locator('video').evaluate(async v=>{await v.play();v.currentTime=4;});await page.waitForFunction(()=>document.querySelector('video').currentTime>4.2);assert.equal(await page.locator('#content').isVisible(),true);
  await page.waitForFunction(()=>getComputedStyle(document.querySelector('#SubscribePopUpBox')).display==='none');
  const before=await protector.evaluate(()=>chrome.declarativeNetRequest.getEnabledRulesets());

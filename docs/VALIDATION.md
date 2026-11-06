@@ -1,5 +1,13 @@
 # Validation
 
+## 0.13.5 Hover-only video controls — 2026-11-06
+
+Replaced the floating palette with a bottom-aligned timeline and compact playback controls. Production-extension browser fixtures verify seek clicks and drags, playback and volume, keyboard speed selection and per-site persistence, native picture-in-picture, and fullscreen with native controls restored on exit. A screenshot of the actual bottom bar is recorded under `output/playwright/hover-video-controls.png` (ignored build artifact).
+
+The fallback stays hidden for native controls, opacity-hidden custom bars, semantic seek controls, controls created by hover handlers, and closed-shadow controls. It remains usable over transparent overlays and for disabled/absent controls, neighboring videos, open shadow roots and cross-origin frames. Pointer exit, focused controls, scrolling, removed videos and runtime native-controls changes are covered. Cross-origin frame exit is coordinated between content scripts because Chromium can omit the child's exit event; this message channel only dismisses UI and cannot invoke player or privileged actions.
+
+Passed locally: TypeScript checking, production build, 58 TypeScript tests, 199 Python tests, the hover-control browser matrix, existing browsing/cookie/popup/OCR checks, real native/custom seek and copy/selection interactions, browsing security checks, production ad protection and Zillow/LoopNet compatibility, unified screenshots, native video/audio delivery, format selection, and automatic extension activation with page/form state preserved. These are controlled browser fixtures; custom-player detection is conservative and cannot identify every proprietary website UI.
+
 ## 0.13.4 Facebook extraction recovery — 2026-11-05
 
 Reproduced in the user’s signed-in Chrome: the native Download video command reached the helper, and Facebook extraction failed with the known “Cannot parse data” error. The same public reel exposed 11 formats without the session. Temporary diagnostics recorded only failure categories, source type and cookie count; no cookie values, signed URLs or raw error messages were retained. The diagnostic instrumentation was removed after reproduction.
