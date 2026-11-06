@@ -6,8 +6,10 @@ import shutil
 import sys
 import threading
 import time
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import yt_dlp
 
@@ -70,6 +72,39 @@ def cookie_jar(cookies):
     return jar
 
 
+@contextmanager
+def extracted_source(options, source, cookies, cancelled):
+    """Retry Facebook's logged-in parse failure once using a fresh public session."""
+    host = urlsplit(source.url).hostname or ""
+    facebook = source.kind == "page" and (host == "facebook.com" or host.endswith(".facebook.com"))
+    for public in (False, True):
+        if cancelled():
+            raise Cancelled()
+        attempt = options
+        if public:
+            # Never reuse the authenticated cookie jar or a referring page URL.
+            attempt = {**options, "http_headers": {
+                key: value for key, value in options.get("http_headers", {}).items()
+                if key.lower() in ("user-agent", "accept")
+            }}
+        with yt_dlp.YoutubeDL(attempt) as ydl:
+            ydl.cookiejar.set_policy(http.cookiejar.DefaultCookiePolicy(strict_ns_domain=http.cookiejar.DefaultCookiePolicy.DomainStrictNonDomain))
+            if not public:
+                for cookie in cookie_jar(cookies):
+                    ydl.cookiejar.set_cookie(cookie)
+            try:
+                info = ydl.extract_info(source.url, download=False)
+            except yt_dlp.utils.DownloadError as error:
+                if not public and facebook and cookies and "cannot parse data" in str(error).lower():
+                    continue
+                raise
+            if cancelled():
+                raise Cancelled()
+            # Download failures raised by the caller must not trigger extraction retries.
+            yield ydl, info
+            return
+
+
 def classify_download_error(error) -> MediaError:
     # Only inspect internally; do not store or return raw messages containing URLs.
     text = str(error).lower()
@@ -110,11 +145,7 @@ def download(request: Start, job_id: str, directory: Path, cancelled):
                 if request.assetType == 'audio':
                     options.update(format='ba/b', format_sort=['abr', 'asr', 'acodec', 'br'])
                 if selection: options['format'] = '+'.join(selection['ids'])
-                with yt_dlp.YoutubeDL(options) as ydl:
-                    ydl.cookiejar.set_policy(http.cookiejar.DefaultCookiePolicy(strict_ns_domain=http.cookiejar.DefaultCookiePolicy.DomainStrictNonDomain))
-                    for cookie in cookie_jar(request.cookies):
-                        ydl.cookiejar.set_cookie(cookie)
-                    info = ydl.extract_info(source.url, download=False)
+                with extracted_source(options, source, request.cookies, cancelled) as (ydl, info):
                     info = formats.single(info, source)
                     if selection: formats.validate(selection, info)
                     title = str(info.get("title") or request.title).replace("\x00", "")[:300]

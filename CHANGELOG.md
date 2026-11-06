@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.4 — Facebook download recovery, 2026-11-05
+
+- Recover Facebook downloads when the extractor cannot parse the signed-in page: retry the same video once with a fresh public session.
+- Apply the same recovery to MP3 downloads and the format picker. Keep authenticated extraction first; private/login-required and DRM failures do not trigger this fallback.
+- Retain highest-quality compatible MP4 output, metadata verification and Chrome download-panel delivery.
+
 ## 0.13.3 — Zillow and LoopNet compatibility, 2026-11-05
 
 - Whitelist Zillow, LoopNet and their subdomains across ad filtering, cookie rejection, popup protection, hover video controls and right-click/copy overrides.

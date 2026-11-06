@@ -1,5 +1,11 @@
 # Validation
 
+## 0.13.4 Facebook extraction recovery — 2026-11-05
+
+Reproduced in the user’s signed-in Chrome: the native Download video command reached the helper, and Facebook extraction failed with the known “Cannot parse data” error. The same public reel exposed 11 formats without the session. Temporary diagnostics recorded only failure categories, source type and cookie count; no cookie values, signed URLs or raw error messages were retained. The diagnostic instrumentation was removed after reproduction.
+
+With the fix, the same native right-click command completed through Chrome’s download manager and saved a 1080 × 1920, 30 fps H.264/AAC MP4 to the user’s Downloads folder. Highest available resolution, compatibility conversion and final metadata verification passed. The new regression exercises video, MP3 and format inspection against real media fixtures while simulating the observed authenticated parse failure. It also checks a fresh cookie-free retry, referer removal, preserved authenticated success, cancellation, one-retry limits, domain boundaries and private/DRM errors. All 199 helper tests passed locally.
+
 ## 0.13.3 site compatibility — 2026-11-05
 
 The production build was tested in isolated Chromium with controlled HTTPS fixtures mapped to zillow.com, www.zillow.com, loopnet.com and www.loopnet.com. Listing mouse hover updates the map price; network requests pass through; ad/nag selectors remain visible. Cookie dialogs, site-controlled menus and text selection remain untouched, with no popup guard or hover controls installed in either the main document or its third-party embedded frame. Settings changes, protection off/on, direct engine mode requests and a browser restart preserve the exclusions. Non-exempt pages retain real network/cosmetic blocking and player ad-SDK replacement. This is a controlled compatibility regression, not a claim that the user’s live Zillow account was tested.

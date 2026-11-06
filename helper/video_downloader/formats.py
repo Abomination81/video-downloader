@@ -1,6 +1,5 @@
 """Short-lived format choices. Source addresses and cookies stay off disk."""
 import hashlib
-import http.cookiejar
 import json
 import math
 import os
@@ -17,7 +16,7 @@ from . import store
 from .config import app_dir, private_dir
 from .media import Cancelled, MediaError
 from .models import Inspect
-from .worker import classify_download_error, cookie_jar, engine_options
+from .worker import classify_download_error, engine_options, extracted_source
 
 TTL = 15 * 60
 SAFE_ID = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$")
@@ -162,10 +161,8 @@ def run_probe(request, job_id, hard_exit=False):
                 options = engine_options(source, directory, lambda _: None, impersonate, request.outputProfile)
                 options.update(socket_timeout=10, retries=1, extractor_retries=1, ignore_no_formats_error=True)
                 try:
-                    with yt_dlp.YoutubeDL(options) as ydl:
-                        ydl.cookiejar.set_policy(http.cookiejar.DefaultCookiePolicy(strict_ns_domain=http.cookiejar.DefaultCookiePolicy.DomainStrictNonDomain))
-                        for cookie in cookie_jar(request.cookies): ydl.cookiejar.set_cookie(cookie)
-                        info = single(ydl.extract_info(source.url, download=False), source)
+                    with extracted_source(options, source, request.cookies, cancelled) as (_, extracted):
+                        info = single(extracted, source)
                         public, private = catalogue(info, index)
                     if cancelled(): raise Cancelled()
                     if not public: continue
