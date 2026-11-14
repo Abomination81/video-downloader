@@ -89,6 +89,9 @@ try {
   await settingsPage.reload();
   await settingsPage.locator('#activate-update').waitFor({ state: 'visible' });
   assert.equal(await settingsPage.locator('#versions').textContent(), `Running in Chrome: 0.4.999 · Installed: ${current.version}`);
+  // Settings also starts protection/status queries. Activation correctly waits
+  // for those actions, then its next status poll reports the remaining open tab.
+  await settingsPage.waitForFunction(() => document.querySelector('#update-detail').textContent.includes('Close Toolkit settings'));
   assert.match(await settingsPage.locator('#update-detail').textContent(), /Close Toolkit settings/);
   await settingsPage.locator('#activate-update').click();
   console.log('CHECK truthful version display and one-click activation from Settings');
