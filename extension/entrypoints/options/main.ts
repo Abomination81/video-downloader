@@ -15,11 +15,18 @@ async function browsing() {
     const input = el<HTMLInputElement>(`#${id}`); input.checked = settings[key];
     input.onchange = async () => {
       input.disabled = true;
-      try { await request({ type: 'browsing-settings', settings: { [key]: input.checked } }); el('#browsing-save-status').textContent = 'Saved. Reload open pages to fully apply filter and cookie changes.'; }
+      try { await request({ type: 'browsing-settings', settings: { [key]: input.checked } }); el('#browsing-save-status').textContent = key === 'videoControls' ? 'Saved. Video controls update immediately on open pages.' : 'Saved. Reload open pages to fully apply filter and cookie changes.'; }
       catch { input.checked = !input.checked; notice('The browsing preference could not be saved.'); }
       finally { input.disabled = false; }
     };
   }
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local' || !changes.browsing) return;
+    const value = browsingSchema.safeParse(changes.browsing.newValue);
+    if (!value.success) return;
+    for (const [id, key] of fields) el<HTMLInputElement>(`#${id}`).checked = value.data[key];
+    describe(value.data);
+  });
   el<HTMLButtonElement>('#reset-browsing-exceptions').onclick = async () => {
     try { await request({ type: 'browsing-settings', settings: { pausedSites: [], popupSites: [] } }); describe(await read()); el('#browsing-save-status').textContent = 'Browsing exceptions reset.'; }
     catch { notice('The exceptions could not be reset.'); }

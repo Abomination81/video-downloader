@@ -47,6 +47,7 @@ try {
     await page.goto(`http://127.0.0.1:${port}/${path}`);
     await page.locator('#abomination-browsing-tools').waitFor({state:'attached'});
     await page.waitForFunction(() => [...document.querySelectorAll('video')].every(v => v.readyState >= 3));
+    await page.waitForFunction(() => window.__abominationPopupGuard?.enabled);
   };
   await open('plain');
   assert.equal(await hidden(page), true, 'No controls before hover');
@@ -128,6 +129,28 @@ try {
   await page.waitForFunction(() => !document.querySelector('video').controls);
   await page.locator('video').hover(); await controls(page).waitFor();
   console.log('PASS fullscreen entry and return');
+  const identity = JSON.parse(await readFile(join(root, 'extension-identity.json'), 'utf8'));
+  const settings = await context.newPage(); await settings.goto(`chrome-extension://${identity.id}/options.html`);
+  let menu = await context.newPage(); await menu.goto(`chrome-extension://${identity.id}/popup.html`);
+  const toggle = () => menu.getByRole('switch', { name: 'Hover video controls' });
+  await toggle().uncheck();
+  await settings.waitForFunction(() => !document.querySelector('#video-controls').checked);
+  await menu.close();
+  await page.bringToFront(); await page.locator('video').hover();
+  await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
+  assert.equal(await hidden(page), true, 'The toolbar toggle disables hover controls on an already-open page');
+  menu = await context.newPage(); await menu.goto(`chrome-extension://${identity.id}/popup.html`);
+  await menu.waitForFunction(() => !document.querySelector('#hover-video-controls').disabled);
+  assert.equal(await toggle().isChecked(), false, 'Off preference survives closing and reopening the menu');
+  await toggle().check();
+  await settings.waitForFunction(() => document.querySelector('#video-controls').checked);
+  await page.bringToFront(); await page.mouse.move(950,750); await page.locator('video').hover(); await controls(page).waitFor();
+  await settings.locator('#video-controls').uncheck();
+  await menu.waitForFunction(() => !document.querySelector('#hover-video-controls').checked);
+  await controls(page).waitFor({ state: 'hidden' });
+  await menu.screenshot({ path: join(root, 'output/playwright/hover-controls-toggle.png'), fullPage: true });
+  await menu.close(); await settings.close();
+  console.log('PASS toolbar toggle applies live, persists, re-enables controls and stays in sync with Settings');
   assert.deepEqual(errors,[]);
 } finally {
   await context?.close(); await new Promise(r => server.close(r)); await rm(profile,{recursive:true,force:true});

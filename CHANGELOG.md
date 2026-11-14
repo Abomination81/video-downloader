@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.7 — Hover-controls toggle, 2026-11-14
+
+- Add **Hover video controls** directly to the toolbar menu under Browsing tools.
+- Apply the toggle immediately to open pages, remember the choice and keep the toolbar and Settings in sync. Existing player controls remain unchanged.
+
 ## 0.13.6 — Clearer, faster update activation, 2026-11-06
 
 - Stop treating the update check itself as an active download that blocks activation.

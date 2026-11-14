@@ -4,7 +4,7 @@ import { automaticChoice } from '../../lib/detection';
 import { candidateSchema, formatsSchema, intentSchema, type Candidate, type DownloadIntent, type DownloadOptions, type FormatOption } from '../../lib/schema';
 import { el, loadJobs, node, notice, request } from '../../lib/ui';
 import {adblockControls} from '../../lib/adblock-ui';
-import { browsingPolicySchema } from '../../lib/browsing-policy';
+import { browsingPolicySchema, browsingSchema } from '../../lib/browsing-policy';
 
 let tabId: number | undefined;
 let poll: ReturnType<typeof setTimeout>;
@@ -156,7 +156,35 @@ el<HTMLButtonElement>('#copy-clean-link').onclick = async () => {
   } catch (error) { notice((error as Error).message); }
   finally { button.disabled = false; }
 };
+async function hoverVideoControls() {
+  const toggle = el<HTMLInputElement>('#hover-video-controls');
+  const detail = el('#hover-video-controls-detail');
+  const render = (enabled: boolean) => {
+    toggle.checked = enabled;
+    detail.textContent = enabled ? 'On · Show controls on hover when a player has none.' : 'Off · Hide the Toolkit’s video controls on all sites.';
+  };
+  try {
+    const value = z.object({ settings: browsingSchema }).parse(await request({ type: 'browsing-status' }));
+    render(value.settings.videoControls);
+    toggle.disabled = false;
+  } catch { detail.textContent = 'Could not load this setting. Reopen the menu to try again.'; return; }
+  toggle.onchange = async () => {
+    const enabled = toggle.checked;
+    toggle.disabled = true;
+    try {
+      await request({ type: 'browsing-settings', settings: { videoControls: enabled } });
+      render(enabled);
+    } catch { render(!enabled); notice('The video controls setting could not be saved. Try again.'); }
+    finally { toggle.disabled = false; }
+  };
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local' || !changes.browsing) return;
+    const value = browsingSchema.safeParse(changes.browsing.newValue);
+    if (value.success) render(value.data.videoControls);
+  });
+}
 async function init() {
+  void hoverVideoControls();
   void featureStatus();
   const platform = await chrome.runtime.getPlatformInfo();
   el('#download-shortcut').textContent = platform.os === 'mac' ? '⌥⇧V' : 'Alt+Shift+V';
