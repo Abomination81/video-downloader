@@ -2,6 +2,7 @@ import { defineConfig } from 'wxt';
 import { readFileSync } from 'node:fs';
 
 const identity = JSON.parse(readFileSync('extension-identity.json', 'utf8')) as { key: string };
+const { version } = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
 
 export default defineConfig({
   srcDir: 'extension',
@@ -10,7 +11,7 @@ export default defineConfig({
     name: 'Abomination81 Toolkit',
     description: 'Video, MP3, original images, screenshots, ad blocking, metadata removal and browsing tools. Built by abomination81.',
     homepage_url: 'https://abomination81.com',
-    version: '0.13.7',
+    version,
     incognito: 'not_allowed',
     key: identity.key,
     minimum_chrome_version: '127',
