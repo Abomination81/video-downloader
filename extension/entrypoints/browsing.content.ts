@@ -212,6 +212,7 @@ export default defineContentScript({
       if (!policy.enabled || !policy.videoControls) hide();
       if (!policy.enabled || !policy.popupGuard || policy.allowPopups) notice.hidden = true;
       discover();
+      host.dataset.ready = 'true';
     };
     const listener: Parameters<typeof chrome.runtime.onMessage.addListener>[0] = (message, sender) => {
       if (sender.id === chrome.runtime.id && !sender.tab && message?.type === 'browsing-policy') update(message.value);

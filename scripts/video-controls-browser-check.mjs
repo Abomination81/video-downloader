@@ -45,7 +45,7 @@ try {
   const open = async path => {
     await page.mouse.move(950, 750);
     await page.goto(`http://127.0.0.1:${port}/${path}`);
-    await page.locator('#abomination-browsing-tools').waitFor({state:'attached'});
+    await page.locator('#abomination-browsing-tools[data-ready="true"]').waitFor({state:'attached'});
     await page.waitForFunction(() => [...document.querySelectorAll('video')].every(v => v.readyState >= 3));
     await page.waitForFunction(() => window.__abominationPopupGuard?.enabled);
   };
@@ -113,7 +113,7 @@ try {
   console.log('PASS runtime native-controls changes and removed-video cleanup');
   await open('frame');
   const frame = page.frames().find(f => f.url().includes('localhost:'));
-  await frame.locator('#abomination-browsing-tools').waitFor({state:'attached'});
+  await frame.locator('#abomination-browsing-tools[data-ready="true"]').waitFor({state:'attached'});
   await frame.locator('video').hover(); await controls(frame).waitFor();
   await frame.getByRole('slider',{name:'Seek video'}).click();
   assert.ok(await frame.locator('video').evaluate(v => v.currentTime > 15));
