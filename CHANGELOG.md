@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.8 — Reddit download repair, 2026-11-14
+
+- Verify actual playable packet counts when MP4 sample-table totals differ, fixing Reddit videos falsely rejected as missing frames. Metadata removal and real missing-content checks remain enforced.
+- Read the selected Reddit player’s master playlist through its shadow roots, preserving highest-quality selection even when a hidden preload video is present.
+- Keep failed downloads visible through the toolbar error badge and menu message instead of silently clearing their status.
+
 ## 0.13.7 — Hover-controls toggle, 2026-11-14
 
 - Add **Hover video controls** directly to the toolbar menu under Browsing tools.

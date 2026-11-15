@@ -87,10 +87,13 @@ export class ChromeDownloads {
       try {
         const result = z.object({ jobs: z.array(jobSchema) }).parse(await native('jobs'));
         const remaining: Record[] = [];
+        let failed = false;
         for (const item of values) {
           const job = result.jobs.find((j) => j.id === item.jobId);
           if (!job || ['done', 'cancelled', 'interrupted'].includes(job.state)) continue;
           if (job.state === 'error') {
+            failed = true;
+            await this.report(new HelperError(job.detail ?? 'download_failed', job.error ?? 'The download could not finish. Open the toolkit to see its status.'));
             if (['unverified_transfer', 'transfer_failed'].includes(job.detail ?? '')) {
               item.error = job.error ?? 'Chrome’s saved file could not be verified. Choose Save file again.';
               remaining.push(item);
@@ -130,7 +133,8 @@ export class ChromeDownloads {
           remaining.push(item);
         }
         await this.write(remaining);
-        await chrome.action.setBadgeText({ text: remaining.some((r) => r.error) ? '!' : remaining.length ? '↓' : '' });
+        const { lastError } = await chrome.storage.session.get('lastError');
+        await chrome.action.setBadgeText({ text: failed || lastError || remaining.some((r) => r.error) ? '!' : remaining.length ? '↓' : '' });
         if (remaining.some((r) => !r.error)) this.timer = setTimeout(() => void this.wake(), 1500);
         else await chrome.alarms.clear(alarm);
       } catch (error) {

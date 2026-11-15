@@ -47,6 +47,7 @@ const server = createServer(async (req, res) => {
   if (url.pathname === '/images') html = page('<h1>Original image fixture</h1><img id="photo" src="/preview.jpg" srcset="/preview.jpg 160w, /original.jpg 1200w" sizes="160px" width="160" alt="Photo fixture"><a href="/original.jpg" download="Chosen photo.jpg">Save through Chrome</a>');
   if (url.pathname === '/inline-image') html = page(`<h1>Inline image fixture</h1><img id="photo" src="data:image/jpeg;base64,${(await readFile(join(fixtureDir, 'preview.jpg'))).toString('base64')}" width="160" alt="Inline fixture">`);
   if (url.pathname === '/shadow') html = page('<h1>Closed shadow fixture</h1><div id="host"></div>', 'const root=document.querySelector("#host").attachShadow({mode:"closed"});root.innerHTML=\'<video style="width:640px;height:360px" src="/source.mp4" controls muted autoplay></video>\';');
+  if (url.pathname === '/reddit') html = page(`<h1>Reddit shadow player</h1><shreddit-player src="http://127.0.0.1:${port}/master.m3u8"></shreddit-player><video src="/source.mp4" style="display:none"></video>`, 'const root=document.querySelector("shreddit-player").attachShadow({mode:"closed"});root.innerHTML=\'<video style="width:640px;height:360px" src="/source.mp4" controls muted autoplay></video>\';');
   if (url.pathname === '/frames') html = page(`<h1>Invisible iframe fixture</h1><iframe src="http://localhost:${port}/player"></iframe><iframe src="http://127.0.0.1:${port}/blocker" style="background:transparent"></iframe>`);
   if (url.pathname === '/player') html = page(video);
   if (url.pathname === '/nodownload') html = page('<h1>Download controls disabled</h1><div class="player">' + video.replace('controls ', 'controls controlslist="nodownload noremoteplayback" disablepictureinpicture ') + '<div class="overlay" style="pointer-events:none"></div></div>');
@@ -159,7 +160,7 @@ try {
   assert.equal(await blockedEmpty.evaluate(() => { const e = new MouseEvent('contextmenu', { bubbles: true, cancelable: true }); window.dispatchEvent(e); return e.defaultPrevented; }), false);
   await blockedEmpty.close();
   console.log('PASS restoring right-click on a site without any video');
-  for (const name of ['http', 'overlay', 'blocked', 'shadow', 'frames', 'mse', 'mse-revoked', 'nodownload', 'canvas', 'sandbox', 'csp', 'auth', 'modal', 'popover', 'script-dialog']) {
+  for (const name of ['http', 'overlay', 'blocked', 'shadow', 'reddit', 'frames', 'mse', 'mse-revoked', 'nodownload', 'canvas', 'sandbox', 'csp', 'auth', 'modal', 'popover', 'script-dialog']) {
     const target = await context.newPage();
     const url = name === 'http' ? `http://video.fixture.test:${port}/blocked` : `http://127.0.0.1:${port}/${name}`;
     await target.goto(url);
@@ -196,6 +197,10 @@ try {
     assert.ok(first?.sources.length, `${name} has no source`);
     if (name !== 'canvas') assert.ok(first.exact, `${name} did not identify the clicked video`);
     if (name.startsWith('mse')) assert.ok(first.sources[0].url.includes('/opaque-manifest?signature=keep'));
+    if (name === 'reddit') {
+      assert.equal(first.sources[0].url, `http://127.0.0.1:${port}/master.m3u8`, 'Reddit must prefer its own master playlist over the playing rendition');
+      assert.ok(response.result.candidates.find(c => c.id !== first.id).sources.every(s => s.kind !== 'manifest'), 'Do not attach another player’s playlist to a hidden preload video');
+    }
     if (name === 'frames') assert.ok(first.sources.some((s) => s.url.includes('/source.mp4')));
     if (name === 'blocked') {
       const before = await target.evaluate(() => { const e = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 240, clientY: 170 }); window.dispatchEvent(e); return e.defaultPrevented; });

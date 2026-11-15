@@ -63,6 +63,23 @@ def frame_side_data(path: Path, cancelled=lambda: False):
     return [side for frame in frames for side in frame.get("side_data_list", [])]
 
 
+def verify_sample_count(source: Path, output: Path, original: dict, finished: dict, cancelled=lambda: False):
+    if not original.get("nb_frames") or not finished.get("nb_frames") or original["nb_frames"] == finished["nb_frames"]:
+        return
+    # MP4 sample tables can include padding outside an edit list (notably
+    # Reddit AAC). Remuxing drops those unplayed samples. Count the packets
+    # actually exposed by the demuxer before declaring playable content lost.
+    counts = []
+    for path, stream in ((source, original), (output, finished)):
+        raw = run([binary("ffprobe"), "-v", "error", "-select_streams", str(stream["index"]),
+                   "-count_packets", "-show_entries", "stream=nb_read_packets", "-of", "json", str(path)], cancelled)
+        streams = json.loads(raw).get("streams", [])
+        count = streams[0].get("nb_read_packets") if len(streams) == 1 else None
+        counts.append(int(count) if str(count).isdigit() else None)
+    if counts[0] is None or counts[0] != counts[1]:
+        raise MediaError("frames_missing", "Some frames were lost during processing. No incomplete file was saved.")
+
+
 def unescape_rbsp(data: bytes) -> bytes:
     out = bytearray()
     zeros = 0
@@ -356,8 +373,7 @@ def verify(source: Path, output: Path, cancelled=lambda: False) -> dict:
             new_start = float(finished["start_time"]) - after_origin
             if abs(old_start - new_start) > timing_tolerance:
                 raise MediaError("timing_changed", "The video's opening or audio/video timing changed during processing. No damaged file was saved.")
-        if original.get("nb_frames") and finished.get("nb_frames") and original["nb_frames"] != finished["nb_frames"]:
-            raise MediaError("frames_missing", "Some frames were lost during processing. No incomplete file was saved.")
+        verify_sample_count(source, output, original, finished, cancelled)
     for key in ("codec_name", "width", "height", "pix_fmt", "color_primaries", "color_transfer", "color_space"):
         if first.get(key) is not None and first.get(key) != final.get(key):
             raise MediaError("quality_changed", "The source quality could not be preserved. No lower-quality file was saved.")

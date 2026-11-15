@@ -1,5 +1,6 @@
 import json
 import subprocess
+import struct
 
 import pytest
 
@@ -100,6 +101,36 @@ def test_verification_rejects_a_delayed_video_track(media_files, tmp_path):
     with pytest.raises(MediaError) as error:
         verify(media_files / "reordered.mp4", bad)
     assert error.value.code == "timing_changed"
+
+
+def test_mp4_edit_list_padding_is_not_mistaken_for_lost_audio(media_files, tmp_path):
+    source, target = tmp_path / "edited.mp4", tmp_path / "clean.mp4"
+    data = bytearray((media_files / "source.mp4").read_bytes())
+    # This generated fixture has a v0 movie header and one v0 edit per track.
+    # End the audio edit before its last padding packets, as Reddit's packager
+    # does. The sample table still includes them, but playback does not.
+    movie = data.index(b"mvhd")
+    edit = data.index(b"elst", data.index(b"elst") + 4)  # second track: audio
+    assert data[movie + 4:movie + 8] == b"\0" * 4
+    assert data[edit + 4:edit + 12] == b"\0\0\0\0\0\0\0\1"
+    timescale = struct.unpack_from(">I", data, movie + 16)[0]
+    # 1.28 seconds is an exact AAC sample boundary at this fixture's 48 kHz.
+    struct.pack_into(">I", data, edit + 12, round(timescale * 1.28))
+    source.write_bytes(data)
+    sanitize(source, target)
+    assert probe(source)["streams"][1]["nb_frames"] != probe(target)["streams"][1]["nb_frames"]
+    assert digest(source, "0:v:0") == digest(target, "0:v:0")
+    assert digest(source, "0:a:0") == digest(target, "0:a:0")
+    assert b"PRIVATE_" not in target.read_bytes()
+
+
+def test_verification_still_rejects_missing_playable_audio(media_files, tmp_path):
+    source, target = media_files / "source.mp4", tmp_path / "missing-audio.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-nostdin", "-y", "-i", str(source),
+                    "-map", "0:v", "-map", "0:a", "-map_chapters", "-1", "-c:v", "copy", "-af", "atrim=end=0.7", "-c:a", "aac", str(target)], check=True)
+    with pytest.raises(MediaError) as error:
+        verify(source, target)
+    assert error.value.code == "frames_missing"
 
 
 @pytest.mark.skipif(__import__('sys').platform != 'darwin', reason='macOS extended attributes')

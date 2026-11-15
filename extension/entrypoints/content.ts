@@ -1,5 +1,5 @@
 import { defaults, httpUrl, settingsSchema } from '../lib/schema';
-import { contains } from '../lib/detection';
+import { contains, mediaKind } from '../lib/detection';
 import { uuid } from '../lib/uuid';
 import { isEditing, isSelectionControl } from '../lib/copy-policy';
 import { imageSources } from '../lib/images';
@@ -76,6 +76,20 @@ export default defineContentScript({
         if (!ids.has(video)) ids.set(video, uuid());
         const rect = box(video);
         const style = getComputedStyle(video);
+        // Reddit nests the rendition and preload videos in shadow roots. Its
+        // player owns the master playlist, even when that playlist has not been
+        // fetched since the extension started. Bind it to this video only.
+        const playlists: string[] = [];
+        let ancestor: Element | null = video;
+        for (let depth = 0; ancestor && depth < 16; depth++) {
+          if (ancestor.localName === 'shreddit-player') {
+            const source = ancestor.getAttribute('src');
+            if (source && mediaKind(source) === 'manifest') playlists.push(source);
+            break;
+          }
+          const root = ancestor.getRootNode();
+          ancestor = ancestor.parentElement ?? (root instanceof ShadowRoot ? root.host : null);
+        }
         let permalink: string | undefined;
         let parent: Element | null = video;
         for (let i = 0; parent && i < 5; i++, parent = parent.parentElement) {
@@ -83,7 +97,7 @@ export default defineContentScript({
           if (links.length === 1) { permalink = links[0]!.href; break; }
         }
         return {
-          id: ids.get(video)!, sources: [...new Set([video.currentSrc, video.src, ...[...video.querySelectorAll('source')].map((s) => s.src)].filter(Boolean))].slice(0, 12),
+          id: ids.get(video)!, sources: [...new Set([...playlists, video.currentSrc, video.src, ...[...video.querySelectorAll('source')].map((s) => s.src)].filter(Boolean))].slice(0, 12),
           ...(permalink ? { permalink } : {}), rect, width: video.videoWidth, height: video.videoHeight,
           duration: Number.isFinite(video.duration) ? video.duration : 0, currentTime: Number.isFinite(video.currentTime) ? video.currentTime : 0,
           playing: !video.paused && !video.ended, visible: rect.width > 20 && rect.height > 20 && style.display !== 'none' && style.visibility !== 'hidden',
